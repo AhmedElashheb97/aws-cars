@@ -23,17 +23,32 @@
     2) Build > Authentication > Sign-in method > فعّل Email/Password
        ثم من تبويب Users أضف حسابات الموظفين (3 مستخدمين مثلاً).
     3) Build > Firestore Database > Create database
-    4) Firestore > Rules والصق القواعد التالية ثم Publish:
+    4) Firestore > Rules والصق القواعد التالية ثم Publish (المدير الرئيسي = ADMIN_EMAIL في الأسفل):
 
     rules_version = '2';
     service cloud.firestore {
       match /databases/{database}/documents {
-        function staff() {   // اكتب إيميلات الموظفين فقط — أي إيميل غيرهم يترفض
-          return request.auth != null && request.auth.token.email in ['email1@gmail.com', 'email2@gmail.com', 'email3@gmail.com'];
+        function signedIn() { return request.auth != null && request.auth.token.email != null; }
+        function em() { return request.auth.token.email.lower(); }
+        function isAdmin() { return signedIn() && em() == 'ahmedesmal97@gmail.com'; }
+        function prof() { return get(/databases/$(database)/documents/users/$(em())).data; }
+        function active() { return isAdmin() || (signedIn() && exists(/databases/$(database)/documents/users/$(em())) && prof().active == true); }
+        function can(p) { return isAdmin() || (active() && prof().perms[p] == true); }
+        function only(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+
+        match /users/{id} {
+          allow get: if isAdmin() || (signedIn() && id == em());
+          allow list, create, delete: if isAdmin();
+          allow update: if isAdmin() || (signedIn() && id == em() && only(['last_login']));
         }
-        match /{document=**} { allow read, write: if staff(); }
-        match /tracking/{vin} { allow get: if true; }   // صفحة التتبع العامة (بحث برقم VIN فقط)
-        match /settings/{id}  { allow get: if true; }   // اسم المكتب ورقمه في صفحة التتبع
+        match /customers/{id} { allow read: if active(); allow create: if can('edit'); allow update: if can('edit') || (active() && only(['last_reminder'])); allow delete: if can('delete'); }
+        match /vehicles/{id}  { allow read: if active(); allow create, update: if can('edit'); allow delete: if can('delete'); }
+        match /vinternal/{id} { allow read, write: if can('profit'); allow delete: if can('delete'); }
+        match /payments/{id}  { allow read: if active(); allow create: if can('payments'); allow delete: if can('delete'); }
+        match /expenses/{id}  { allow read, create: if can('expenses'); allow delete: if can('expenses') && can('delete'); }
+        match /logs/{id}      { allow read: if can('logs'); allow create: if active(); }
+        match /settings/{id}  { allow get: if true; allow list: if active(); allow write: if can('settings'); }
+        match /tracking/{vin} { allow get: if true; allow list: if active(); allow write: if can('edit') || can('delete'); }
       }
     }
 
@@ -166,6 +181,15 @@ tr.sel{background:#eff6ff}
 .age.mid{background:#fff7ed;color:#c2410c}.age.old{background:#fef2f2;color:#b91c1c}
 .ocars{font-size:12px;color:var(--mut);line-height:1.5;white-space:normal;min-width:180px}
 .sortb{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.noprofit .pf{display:none!important}
+.perm{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;margin:2px}
+.perm.off{background:#f8fafc;color:#94a3b8;border-color:var(--line);text-decoration:line-through}
+.pchk{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer}
+.pchk input{width:19px;height:19px;margin-top:2px;flex-shrink:0}.pchk b{display:block;font-size:13.5px}.pchk span{font-size:12px;color:var(--mut)}
+.pchk:has(input:checked){border-color:#93c5fd;background:#eff6ff}
+.pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ustate{font-size:12px;font-weight:800;padding:2px 10px;border-radius:99px}.ustate.on{background:#ecfdf5;color:#047857}.ustate.off{background:#fef2f2;color:#b91c1c}
+@media(max-width:860px){.pgrid{grid-template-columns:1fr}}
 .act{display:inline-block;padding:2px 9px;border-radius:99px;font-size:11.5px;font-weight:700;background:var(--soft);border:1px solid var(--line)}
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:8px;align-items:center}
 .tst{background:var(--ink);color:#fff;padding:10px 18px;border-radius:12px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.2)}
@@ -274,6 +298,7 @@ const firebaseConfig = {
 };
 /* ============================================================================ */
 
+const ADMIN_EMAIL = 'ahmedesmal97@gmail.com';   // المدير الرئيسي — لازم يطابق الإيميل في قواعد Firestore
 const LOCAL = !firebaseConfig.apiKey || firebaseConfig.apiKey.startsWith('PASTE');
 const FBV = '10.12.2';
 
@@ -293,10 +318,19 @@ const DB = (() => {
       const base = `https://www.gstatic.com/firebasejs/${FBV}/`;
       const [app, fs, au] = await Promise.all([import(base + 'firebase-app.js'), import(base + 'firebase-firestore.js'), import(base + 'firebase-auth.js')]);
       const a = app.initializeApp(firebaseConfig);
-      fb = { fs, au, db: fs.getFirestore(a), auth: au.getAuth(a) };
+      fb = { app, fs, au, db: fs.getFirestore(a), auth: au.getAuth(a) };
     },
     refresh() { if (LOCAL) Object.keys(watchers).forEach(notify); },
-    onAuth(cb) { if (LOCAL) { cb({ email: 'demo@local' }); return; } fb.au.onAuthStateChanged(fb.auth, cb); },
+    onAuth(cb) { if (LOCAL) { cb({ email: new URLSearchParams(location.search).get('as') || 'demo@local' }); return; } fb.au.onAuthStateChanged(fb.auth, cb); },
+    async createAuthUser(email, pass) {
+      if (LOCAL) return 'local';
+      const sec = fb.app.getApps().find(x => x.name === 'secondary') || fb.app.initializeApp(firebaseConfig, 'secondary');
+      const sa = fb.au.getAuth(sec);
+      try { await fb.au.createUserWithEmailAndPassword(sa, email, pass); return 'created'; }
+      catch (e) { if (e.code === 'auth/email-already-in-use') return 'exists'; throw e; }
+      finally { try { await fb.au.signOut(sa); } catch (e) { } }
+    },
+    resetPass(email) { if (LOCAL) return Promise.resolve(); return fb.au.sendPasswordResetEmail(fb.auth, email); },
     login(e, p) { return fb.au.signInWithEmailAndPassword(fb.auth, e, p); },
     logout() { if (!LOCAL) return fb.au.signOut(fb.auth); },
     watch(c, cb, opt) {
@@ -362,7 +396,7 @@ const S = {
   settings: { office: 'AWS لاستيراد السيارات', phone: '', address: '', lateDays: 2, advDays: 7, rate: 7, note: 'شكراً لثقتكم في AWS لاستيراد السيارات' },
   lang: localStorage.getItem('cop_lang') || 'ar', route: 'dashboard', param: null,
   f: { q: '', status: '', auction: '', cust: '' }, cq: '', pf: { cust: '', cur: '' },
-  trk: {}, galTab: 'all', expenses: [], logs: [], sel: new Set(), em: new Date().toISOString().slice(0, 7), lf: { user: '', act: '' }, csort: 'age', agg: { v: {}, c: {} }, after: null
+  trk: {}, galTab: 'all', expenses: [], logs: [], sel: new Set(), em: new Date().toISOString().slice(0, 7), lf: { user: '', act: '' }, csort: 'age', users: [], internal: {}, me: null, agg: { v: {}, c: {} }, after: null
 };
 
 /* ---------------- أدوات ---------------- */
@@ -390,7 +424,8 @@ const vt = v => `${v.year || ''} ${v.make || ''} ${v.model || ''}`.trim() || '�
 const custName = id => (S.customers.find(c => c.id === id) || {}).full_name || '—';
 const statusSince = v => { const h = v.status_history || []; return h.length ? h[h.length - 1].at : (v.purchase_date || v.created_at); };
 const totalCost = v => FIN.reduce((s, f) => s + num((v.fin || {})[f.k]), 0);
-const profit = v => { const f = v.fin || {}; const act = num(f.shipping_cost_actual); return num(f.office_commission) + num(f.transfer_commission) + (act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0); };
+const actCost = v => { const iv = S.internal[v.id]; return num(iv ? iv.shipping_cost_actual : (v.fin || {}).shipping_cost_actual); };
+const profit = v => { const f = v.fin || {}; const act = actCost(v); return num(f.office_commission) + num(f.transfer_commission) + (act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0); };
 const vPaid = id => S.agg.v[id] || 0;
 const vBal = v => totalCost(v) - vPaid(v.id);
 const cAgg = id => S.agg.c[id] || { cost: 0, paid: 0, bal: 0, count: 0, active: 0 };
@@ -432,7 +467,7 @@ const ACTS = {
   veh_status: ['تغيير مرحلة', 'Stage changed', '#0891b2'], bulk: ['تحديث جماعي', 'Bulk update', '#7c3aed'], img: ['صور', 'Photos', '#64748b'],
   pay_add: ['تسجيل دفعة', 'Payment added', '#059669'], pay_del: ['حذف دفعة', 'Payment deleted', '#dc2626'],
   cust_add: ['إضافة زبون', 'Customer added', '#2563eb'], cust_edit: ['تعديل زبون', 'Customer edited', '#475569'], cust_del: ['حذف زبون', 'Customer deleted', '#dc2626'],
-  exp_add: ['مصروف', 'Expense added', '#ea580c'], exp_del: ['حذف مصروف', 'Expense deleted', '#dc2626'], settings: ['الإعدادات', 'Settings', '#64748b'], wa: ['رسالة واتساب', 'WhatsApp sent', '#16a34a']
+  exp_add: ['مصروف', 'Expense added', '#ea580c'], exp_del: ['حذف مصروف', 'Expense deleted', '#dc2626'], settings: ['الإعدادات', 'Settings', '#64748b'], user_add: ['إضافة مستخدم', 'User added', '#2563eb'], user_edit: ['تعديل مستخدم', 'User edited', '#475569'], user_del: ['حذف مستخدم', 'User removed', '#dc2626'], user_reset: ['تغيير كلمة سر', 'Password reset', '#7c3aed'], wa: ['رسالة واتساب', 'WhatsApp sent', '#16a34a']
 };
 function logAct(act, details, ref) { DB.add('logs', { at: now(), user: S.user?.email || '', act, details: details || '', ref: ref || '' }).catch(() => { }); }
 const EXP_CATS = [['rent', 'إيجار', 'Rent'], ['salaries', 'رواتب', 'Salaries'], ['utilities', 'كهرباء ومياه', 'Utilities'], ['telecom', 'إنترنت واتصالات', 'Internet & phone'], ['transport', 'مواصلات ووقود', 'Transport & fuel'], ['hospitality', 'ضيافة', 'Hospitality'], ['ads', 'إعلانات', 'Advertising'], ['other', 'أخرى', 'Other']];
@@ -440,6 +475,46 @@ const expCat = k => { const c = EXP_CATS.find(x => x[0] === k); return c ? L(c[1
 const normPhone = p => { let d = String(p || '').replace(/\D/g, ''); if (d.startsWith('00')) d = d.slice(2); if (d.startsWith('0')) d = '218' + d.slice(1); else if (d.length === 9 && d.startsWith('9')) d = '218' + d; return d; };
 const fdt = d => d ? new Date(d).toLocaleString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
 const totalExp = list => list.reduce((s, e) => s + num(e.amount_usd), 0);
+
+/* ---------------- الصلاحيات ---------------- */
+const PERMS = [
+  ['edit', 'إضافة وتعديل السيارات والزبائن', 'Add & edit vehicles and customers', 'وتحديث المراحل والصور والتحديث الجماعي', 'incl. stages, photos, bulk updates'],
+  ['payments', 'تسجيل الدفعات', 'Record payments', 'تسجيل دفعات الزبائن', 'Record customer payments'],
+  ['delete', 'الحذف', 'Delete', 'حذف السيارات والزبائن والدفعات والمصاريف', 'Delete vehicles, customers, payments, expenses'],
+  ['profit', 'مشاهدة الأرباح', 'View profit', 'الأرباح وتكلفة الشحن الفعلية والتقرير الشامل', 'Profit, actual shipping cost, full report'],
+  ['expenses', 'المصاريف', 'Expenses', 'صفحة مصاريف المكتب وتسجيلها', 'Office expenses page'],
+  ['logs', 'سجل العمليات', 'Activity log', 'مشاهدة مين سوّى شنو', 'See who did what'],
+  ['settings', 'الإعدادات', 'Settings', 'تعديل بيانات الشركة والإعدادات', 'Edit company info & settings']
+];
+const ROLES = {
+  manager: ['مدير', 'Manager', ['edit', 'payments', 'delete', 'profit', 'expenses', 'logs', 'settings']],
+  employee: ['موظف', 'Employee', ['edit', 'payments']],
+  accountant: ['محاسب', 'Accountant', ['payments', 'expenses', 'profit', 'logs']],
+  viewer: ['مشاهدة فقط', 'View only', []]
+};
+const roleName = r => r === 'admin' ? L('المدير الرئيسي', 'Main admin') : ROLES[r] ? L(ROLES[r][0], ROLES[r][1]) : L('مخصص', 'Custom');
+const isAdminEmail = e => String(e || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
+const isAdmin = () => (LOCAL && S.user?.email === 'demo@local') || isAdminEmail(S.user?.email);
+const can = p => p === 'admin' ? isAdmin() : (isAdmin() || !!(S.me && S.me.perms && S.me.perms[p]));
+const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', users: 'admin' };
+const NEED = {
+  vForm: 'edit', vSave: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
+  pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses',
+  printFull: 'profit', sSave: 'settings', seed: 'admin', unseed: 'admin', backup: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
+};
+function applyPerms(root) {
+  document.body.classList.toggle('noprofit', !can('profit'));
+  if (isAdmin()) return;
+  (root || document).querySelectorAll('[onclick],[onchange]').forEach(el => {
+    const code = (el.getAttribute('onclick') || '') + (el.getAttribute('onchange') || '');
+    const names = [...code.matchAll(/A\.(\w+)\(/g)].map(m => m[1]);
+    if (!names.some(n => NEED[n] && !can(NEED[n]))) return;
+    if (el.matches('button,a,label,input,.btn,.tab')) (el.closest('label.fileb') || el).style.display = 'none';
+    else { el.removeAttribute('onclick'); el.classList.remove('clk'); el.style.cursor = 'default'; }
+  });
+}
+let permQ = false;
+new MutationObserver(() => { if (permQ) return; permQ = true; queueMicrotask(() => { permQ = false; applyPerms(); }); }).observe(document.body, { childList: true, subtree: true });
 
 /* ---------------- الهيكل والتنقل ---------------- */
 function parseRoute() {
@@ -450,9 +525,12 @@ function parseRoute() {
 function shell(body) {
   const act = { vehicle: 'vehicles', customer: 'customers' }[S.route] || S.route;
   const late = lateList().length;
-  const nav = [['dashboard', '📊', L('لوحة التحكم', 'Dashboard'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['payments', '💵', L('الدفعات', 'Payments')], ['collect', '📞', L('التحصيل', 'Collections'), collectList().filter(x => x.age >= 30).length], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')]];
+  let nav = [['dashboard', '📊', L('لوحة التحكم', 'Dashboard'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['payments', '💵', L('الدفعات', 'Payments')], ['collect', '📞', L('التحصيل', 'Collections'), collectList().filter(x => x.age >= 30).length], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')]];
+  const okR = r => !ROUTE_PERM[r] || can(ROUTE_PERM[r]);
+  if (isAdmin()) nav.push(['users', '🔐', L('المستخدمين', 'Users')]);
+  for (let k = nav.length - 1; k >= 0; k--) if (!okR(nav[k][0])) nav.splice(k, 1);
   const bn = [['dashboard', '🏠', L('الرئيسية', 'Home'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['collect', '📞', L('التحصيل', 'Collect'), nav[4][3]]];
-  const inMore = ['payments', 'expenses', 'logs', 'settings'].includes(act);
+  const inMore = ['payments', 'expenses', 'logs', 'settings', 'users'].includes(act);
   return `<header class="mtop"><div class="lg">🚢</div><b>${esc(S.settings.office)}</b><button onclick="A.lang()">${L('EN', 'ع')}</button></header>
   <nav class="bnav">${bn.map(n => `<a href="#/${n[0]}" class="${act === n[0] ? 'on' : ''}"><i>${n[1]}</i>${n[2]}${n[3] ? `<span class="dotc">${n[3]}</span>` : ''}</a>`).join('')}
     <a href="javascript:A.more()" class="${inMore ? 'on' : ''}"><i>☰</i>${L('المزيد', 'More')}</a></nav>
@@ -462,7 +540,7 @@ function shell(body) {
     <div class="brand"><div class="lg">🚢</div><span>${esc(S.settings.office)}</span></div>
     <nav class="nav">${nav.map(n => `<a href="#/${n[0]}" class="${act === n[0] ? 'on' : ''}">${n[1]} <span>${n[2]}</span>${n[3] ? `<b class="cnt">${n[3]}</b>` : ''}</a>`).join('')}
     <a href="#/track" target="_blank">🔎 <span>${L('صفحة التتبع', 'Tracking page')}</span></a></nav>
-    <div class="side-foot"><span class="em">${esc(S.user?.email || '')}</span>
+    <div class="side-foot"><span class="em">${esc(S.me?.name || S.user?.email || '')}<br><small>${esc(roleName(isAdmin() ? 'admin' : S.me?.role))}</small></span>
       <button onclick="A.lang()">${L('English', 'العربية')}</button>
       ${LOCAL ? '' : `<button onclick="A.logout()">${L('تسجيل الخروج', 'Sign out')}</button>`}</div>
   </aside>
@@ -475,8 +553,10 @@ function render() {
   if (!S.user) return;
   const ae = document.activeElement, fid = ae && ae.id;
   let sel = null; try { if (fid && ae.selectionStart != null) sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) { }
-  const V = { vehicles: vVehicles, vehicle: vVehicle, customers: vCustomers, customer: vCustomer, payments: vPayments, collect: vCollect, expenses: vExpenses, logs: vLogs, settings: vSettings }[S.route] || vDashboard;
+  let V = { vehicles: vVehicles, vehicle: vVehicle, customers: vCustomers, customer: vCustomer, payments: vPayments, collect: vCollect, expenses: vExpenses, logs: vLogs, settings: vSettings, users: vUsers }[S.route] || vDashboard;
+  if (ROUTE_PERM[S.route] && !can(ROUTE_PERM[S.route])) V = () => `<div class="card empty">🔒 ${L('ما عندكش صلاحية لهذي الصفحة', 'You don’t have access to this page')}</div>`;
   $('#app').innerHTML = shell(V());
+  applyPerms();
   if (fid) { const el = document.getElementById(fid); if (el) { el.focus(); if (sel) try { el.setSelectionRange(...sel); } catch (e) { } } }
   if (S.after) { const f = S.after; S.after = null; f(); }
 }
@@ -490,8 +570,8 @@ function vDashboard() {
     [L('السيارات النشطة', 'Active vehicles'), V.filter(v => v.status !== 'DELIVERED').length, '🚗', '#2563eb'],
     [L('في البحر', 'At sea'), cnt('LOADED_SHIPPED'), '🚢', '#0891b2'],
     [L('وصلت الميناء المحلي', 'At local port'), cnt('ARRIVED_LOCAL_PORT'), '⚓', '#059669'],
-    [L('الأرباح والعمولات', 'Profit & commissions'), money(V.reduce((s, v) => s + profit(v), 0)), '💰', '#f97316'],
-    [L('صافي الربح (بعد المصاريف)', 'Net profit (after expenses)'), money(V.reduce((s, v) => s + profit(v), 0) - totalExp(S.expenses)), '📈', '#16a34a'],
+    [L('الأرباح والعمولات', 'Profit & commissions'), money(V.reduce((s, v) => s + profit(v), 0)), '💰', '#f97316', 'pf'],
+    [L('صافي الربح (بعد المصاريف)', 'Net profit (after expenses)'), money(V.reduce((s, v) => s + profit(v), 0) - totalExp(S.expenses)), '📈', '#16a34a', can('expenses') ? 'pf' : 'pf hide'],
     [L('ديون على الزبائن', 'Customer debts'), money(debts), '⚠️', '#dc2626'],
     [L('فلوس المكتب عند الزبائن (سلف)', 'Office advances outstanding'), money(V.reduce((s, v) => s + advOut(v), 0)), '💸', '#ea580c']
   ];
@@ -504,7 +584,7 @@ function vDashboard() {
     ${late.map(x => `<a class="alert-row" href="#/vehicle/${x.v.id}"><b>${esc(vt(x.v))}</b><span class="mono">${x.v.lot_number ? 'LOT ' + esc(x.v.lot_number) : esc(x.v.vin)}</span><span>${esc(x.v.auction_name || '')}</span><span>${esc(custName(x.v.customer_id))}</span><span class="pill-red">${x.d} ${L('يوم', 'days')}</span></a>`).join('')}</div>` : ''}
   ${adv.length ? `<div class="alert orange"><div class="alert-h">💸 ${L('سلف متأخرة', 'Overdue advances')} — ${adv.length} ${L('سيارة دفعنا ثمنها للمزاد من فلوس المكتب ومضى عليها', 'car(s) paid by the office, unpaid by customer for')} ${num(S.settings.advDays) || 7} ${L('يوم أو أكثر', 'days or more')}</div>
     ${adv.map(x => `<a class="alert-row" href="#/vehicle/${x.v.id}"><b>${esc(custName(x.v.customer_id))}</b><span>${esc(vt(x.v))}</span><span class="mono">${esc(x.v.vin.slice(-6))}</span><b class="neg">${money(x.o)}</b><span class="pill-or" style="margin-inline-start:auto">${x.d} ${L('يوم', 'days')}</span></a>`).join('')}</div>` : ''}
-  <div class="stats">${cards.map(c => `<div class="card stat" style="--c:${c[3]}"><div class="ic">${c[2]}</div><div><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div></div>`).join('')}</div>
+  <div class="stats">${cards.filter(c => !(c[4] || '').includes('hide')).map(c => `<div class="card stat ${c[4] || ''}" style="--c:${c[3]}"><div class="ic">${c[2]}</div><div><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div></div>`).join('')}</div>
   <div class="two">
     <div class="card"><h3>${L('السيارات حسب المرحلة', 'Vehicles by stage')}</h3>
       ${ST.map(s => { const n = cnt(s.k); return `<a class="sbar" href="javascript:A.goStatus('${s.k}')"><span>${esc(L(s.ar, s.en))}</span><div class="bar"><i style="width:${V.length ? n / V.length * 100 : 0}%;background:${s.c}"></i></div><b>${n}</b></a>`; }).join('')}</div>
@@ -538,7 +618,7 @@ function filteredVehicles() {
     (!q || [v.vin, v.lot_number, v.make, v.model, v.year, v.container_number, v.booking_number, custName(v.customer_id)].join(' ').toLowerCase().includes(q)))
     .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 }
-const bulkBar = () => !S.sel.size ? `<div class="hint" style="margin:0 0 8px">☑️ ${L('حدد أكثر من سيارة (مثلاً ابحث برقم الحاوية ثم حدد الكل) لتحديث مرحلتها أو رقم حاويتها مرة وحدة.', 'Select several vehicles (e.g. search a container number, then select all) to update their stage or container at once.')}</div>` :
+const bulkBar = () => !can('edit') ? '' : !S.sel.size ? `<div class="hint" style="margin:0 0 8px">☑️ ${L('حدد أكثر من سيارة (مثلاً ابحث برقم الحاوية ثم حدد الكل) لتحديث مرحلتها أو رقم حاويتها مرة وحدة.', 'Select several vehicles (e.g. search a container number, then select all) to update their stage or container at once.')}</div>` :
   `<div class="bulk"><b>${S.sel.size} ${L('سيارة محددة', 'selected')}</b>
    <select id="bkSt"><option value="">${L('— بدون تغيير المرحلة —', '— keep stage —')}</option>${ST.map(s => `<option value="${s.k}">${esc(L(s.ar, s.en))}</option>`).join('')}</select>
    <input id="bkCt" placeholder="${L('رقم الحاوية (اختياري)', 'Container # (optional)')}" dir="ltr"><input id="bkBk" placeholder="${L('رقم الحجز (اختياري)', 'Booking # (optional)')}" dir="ltr">
@@ -567,7 +647,7 @@ function vVehicle() {
   const pays = S.payments.filter(p => p.vehicle_id === v.id).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const c = S.customers.find(x => x.id === v.customer_id) || {};
   const late = lateList().find(x => x.v.id === v.id);
-  const act = num(f.shipping_cost_actual);
+  const act = actCost(v);
   S.after = () => loadTrk(v.vin);
   const inf = [
     [L('الزبون', 'Customer'), c.id ? `<a href="#/customer/${c.id}">${esc(c.full_name)}</a>` : '—'], [L('الهاتف', 'Phone'), `<span class="mono">${esc(c.phone || '—')}</span>`],
@@ -589,12 +669,12 @@ function vVehicle() {
   <div class="card"><h3>📷 ${L('صور السيارة', 'Vehicle photos')}</h3><div id="gal"><div class="empty">${L('جاري تحميل الصور...', 'Loading photos...')}</div></div></div>
   <div class="two">
     <div class="card"><h3>💲 ${L('كشف التكاليف', 'Cost breakdown')}</h3>
-      <table class="fin"><tbody>${FIN.map(x => `<tr><td>${L(x.ar, x.en)}</td><td>${money(f[x.k])}</td></tr>`).join('')}
+      <table class="fin"><tbody>${can('profit') ? FIN.map(x => `<tr><td>${L(x.ar, x.en)}</td><td>${money(f[x.k])}</td></tr>`).join('') : custFin(v).map(x => `<tr><td>${x[0]}</td><td>${money(x[1])}</td></tr>`).join('')}
       <tr class="t"><td>${L('الإجمالي', 'Total')}</td><td>${money(tot)}</td></tr>
       <tr><td>${L('المدفوع', 'Paid')}</td><td class="pos">${money(paid)}</td></tr>
       <tr class="t"><td>${L('المتبقي على الزبون', 'Balance due')}</td><td class="${bal > 0.009 ? 'neg' : 'pos'}">${money(bal)}</td></tr></tbody></table>
       ${advAmt(v) > 0 ? `<div class="internal" style="border-color:#fed7aa;background:#fff7ed">💸 ${L('سلفة المكتب (ثمن السيارة + رسوم المزاد)', 'Office advance (bid + auction fees)')}: <b>${money(advAmt(v))}</b> · ${L('المتبقي منها على الزبون', 'Still owed')}: <b class="${advOut(v) > 0.009 ? 'neg' : 'pos'}">${money(advOut(v))}</b>${advOut(v) > 0.009 ? ` · ${daysSince(v.auction_paid_date || v.purchase_date)} ${L('يوم', 'days')}` : ''}</div>` : ''}
-      <div class="internal">🔒 ${L('داخلي (لا يظهر في الفاتورة)', 'Internal (not on invoice)')}: ${L('تكلفة الشحن الفعلية', 'Actual shipping cost')} <b>${act > 0 ? money(act) : '—'}</b> · ${L('ربح المكتب من هذه السيارة', 'Office profit on this car')} <b class="pos">${money(profit(v))}</b></div></div>
+      <div class="internal pf">🔒 ${L('داخلي (لا يظهر في الفاتورة)', 'Internal (not on invoice)')}: ${L('تكلفة الشحن الفعلية', 'Actual shipping cost')} <b>${act > 0 ? money(act) : '—'}</b> · ${L('ربح المكتب من هذه السيارة', 'Office profit on this car')} <b class="pos">${money(profit(v))}</b></div></div>
     <div class="card"><div class="row-b"><h3>💵 ${L('الدفعات', 'Payments')}</h3><button class="btn sm pri" onclick="A.pForm({customer_id:'${v.customer_id}',vehicle_id:'${v.id}'})">+ ${L('دفعة', 'Payment')}</button></div>${payTable(pays, false)}</div>
   </div>`;
 }
@@ -618,11 +698,11 @@ function renderGallery(vin) {
   el.innerHTML = `<div class="tabs"><button class="tab ${tab === 'all' ? 'on' : ''}" onclick="A.gTab('all','${esc(vin)}')">${L('الكل', 'All')} (${all.length})</button>
     ${STAGES.map(s => `<button class="tab ${tab === s.k ? 'on' : ''}" onclick="A.gTab('${s.k}','${esc(vin)}')">${esc(L(s.ar, s.en))} (${all.filter(x => x.stage === s.k).length})</button>`).join('')}</div>
     ${galGrid(imgs, true, vin)}
-    <div class="addimg"><select id="imgStage">${STAGES.map(s => `<option value="${s.k}" ${tab === s.k ? 'selected' : ''}>${esc(L(s.ar, s.en))}</option>`).join('')}</select>
+    ${can('edit') ? `<div class="addimg"><select id="imgStage">${STAGES.map(s => `<option value="${s.k}" ${tab === s.k ? 'selected' : ''}>${esc(L(s.ar, s.en))}</option>`).join('')}</select>
       <input id="imgUrl" placeholder="${L('رابط صورة (https://...)', 'Image URL (https://...)')}" dir="ltr">
       <button class="btn" onclick="A.imgUrl('${esc(vin)}')">${L('إضافة رابط', 'Add URL')}</button>
       <label class="btn pri fileb">⬆️ ${L('رفع صور', 'Upload')}<input type="file" accept="image/*" multiple onchange="A.imgFiles('${esc(vin)}',this)"></label></div>
-    <div class="hint">${L('الصور المرفوعة تُضغط تلقائياً وتُحفظ مع بيانات التتبع (يفضّل حتى ~8 صور مرفوعة لكل سيارة، والروابط بلا حد تقريباً).', 'Uploaded photos are compressed and stored with tracking data (~8 uploads per car recommended; URLs are almost unlimited).')}</div>`;
+    <div class="hint">${L('الصور المرفوعة تُضغط تلقائياً وتُحفظ مع بيانات التتبع (يفضّل حتى ~8 صور مرفوعة لكل سيارة، والروابط بلا حد تقريباً).', 'Uploaded photos are compressed and stored with tracking data (~8 uploads per car recommended; URLs are almost unlimited).')}</div>` : ''}`;
 }
 function compress(file, max = 1000, q = 0.62) {
   return new Promise((res, rej) => {
@@ -749,6 +829,21 @@ function vCollect() {
       <div class="mc-a"><button class="btn sm wa" onclick="A.wa('c','${x.c.id}')">💬 ${L('تذكير', 'Remind')}</button><button class="btn sm" onclick="A.pForm({customer_id:'${x.c.id}'})">+ ${L('دفعة', 'Payment')}</button><button class="btn sm" onclick="A.printDue('${x.c.id}')">🧾</button></div></div>`).join('')}</div>` : `<div class="empty">🎉 ${L('ما فيش ديون على أي زبون', 'No customer owes anything')}</div>`}</div>`;
 }
 
+/* ---------------- المستخدمين ---------------- */
+function vUsers() {
+  const list = [...S.users].sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
+  const chips = u => PERMS.map(p => `<span class="perm ${u.perms && u.perms[p[0]] ? '' : 'off'}">${esc(L(p[1], p[2]))}</span>`).join('');
+  const ago = d => d ? fdt(d) : L('ما دخلش بعد', 'Never');
+  const acts = u => `<div class="acts" style="flex-wrap:nowrap"><button class="btn sm" onclick="A.uForm('${esc(u.id)}')">✏️ ${L('تعديل', 'Edit')}</button><button class="btn sm" onclick="A.uReset('${esc(u.id)}')" title="${L('إرسال رابط تغيير كلمة السر', 'Send password reset')}">🔑</button><button class="btn sm" onclick="A.uToggle('${esc(u.id)}')">${u.active === false ? '▶️ ' + L('تفعيل', 'Enable') : '⏸️ ' + L('إيقاف', 'Disable')}</button><button class="btn sm red" onclick="A.uDel('${esc(u.id)}')">🗑️</button></div>`;
+  return `<div class="top"><h1>🔐 ${L('المستخدمين والصلاحيات', 'Users & permissions')}</h1><button class="btn pri" onclick="A.uForm()">+ ${L('مستخدم جديد', 'New user')}</button></div>
+  <div class="card"><div class="mc-h"><div><b>👑 ${esc(ADMIN_EMAIL)}</b><div class="sub">${L('المدير الرئيسي — كل الصلاحيات، وهو الوحيد اللي يدير المستخدمين', 'Main admin — all permissions, the only one who manages users')}</div></div><span class="ustate on">${L('مدير', 'Admin')}</span></div></div>
+  <div class="card">${list.length ? `<div class="tw dt"><table><thead><tr><th>${L('المستخدم', 'User')}</th><th>${L('الدور', 'Role')}</th><th>${L('الصلاحيات', 'Permissions')}</th><th>${L('الحالة', 'Status')}</th><th>${L('آخر دخول', 'Last login')}</th><th></th></tr></thead><tbody>
+    ${list.map(u => `<tr><td><b>${esc(u.name || '—')}</b><div class="sub mono">${esc(u.id)}</div></td><td>${esc(roleName(u.role))}</td><td style="white-space:normal;max-width:340px">${chips(u)}</td><td><span class="ustate ${u.active === false ? 'off' : 'on'}">${u.active === false ? L('موقوف', 'Disabled') : L('فعّال', 'Active')}</span></td><td class="when">${ago(u.last_login)}</td><td>${acts(u)}</td></tr>`).join('')}</tbody></table></div>
+    <div class="mcards">${list.map(u => `<div class="mc"><div class="mc-h"><div><b>${esc(u.name || '—')}</b><div class="mc-s mono">${esc(u.id)}</div></div><span class="ustate ${u.active === false ? 'off' : 'on'}">${u.active === false ? L('موقوف', 'Disabled') : esc(roleName(u.role))}</span></div><div style="margin-top:6px">${chips(u)}</div><div class="mc-s">${L('آخر دخول', 'Last login')}: ${ago(u.last_login)}</div><div class="mc-a">${acts(u)}</div></div>`).join('')}</div>`
+    : `<div class="empty">${L('ما فيش مستخدمين غيرك. اضغط "مستخدم جديد" عشان تضيف حساب لشريك أو موظف.', 'No other users yet. Click "New user" to add one.')}</div>`}</div>
+  <div class="hint">${L('المستخدم الموقوف أو المحذوف ما يقدرش يدخل ولا يشوف أي بيانات، والصلاحيات محمية من قاعدة البيانات نفسها مش من الشاشة بس.', 'Disabled or deleted users cannot sign in or read data; permissions are enforced by the database rules, not just the UI.')}</div>`;
+}
+
 /* ---------------- المصاريف ---------------- */
 function vExpenses() {
   const m = S.em, list = S.expenses.filter(e => (e.date || '').startsWith(m)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
@@ -758,16 +853,16 @@ function vExpenses() {
   const exLyd = list.filter(e => e.currency === 'LYD').reduce((s, e) => s + num(e.amount), 0), exUsd = list.filter(e => e.currency !== 'LYD').reduce((s, e) => s + num(e.amount), 0);
   return `<div class="top"><h1>${L('مصاريف المكتب', 'Office expenses')}</h1><div class="acts"><input type="month" value="${esc(m)}" onchange="A.emSet(this.value)" style="width:auto"><button class="btn pri" onclick="A.eForm()">+ ${L('مصروف جديد', 'New expense')}</button></div></div>
   <div class="stats">
-    <div class="card stat" style="--c:#f97316"><div class="ic">💰</div><div><div class="k">${L('أرباح سيارات الشهر', 'Profit from this month’s cars')}</div><div class="v">${money(prof)}</div></div></div>
+    <div class="card stat pf" style="--c:#f97316"><div class="ic">💰</div><div><div class="k">${L('أرباح سيارات الشهر', 'Profit from this month’s cars')}</div><div class="v">${money(prof)}</div></div></div>
     <div class="card stat" style="--c:#dc2626"><div class="ic">🧾</div><div><div class="k">${L('مصاريف الشهر', 'Expenses this month')}</div><div class="v">${money(ex)}</div></div></div>
-    <div class="card stat" style="--c:#16a34a"><div class="ic">📈</div><div><div class="k">${L('صافي الشهر', 'Net this month')}</div><div class="v ${net < 0 ? 'neg' : 'pos'}">${money(net)}</div></div></div>
-    <div class="card stat" style="--c:#475569"><div class="ic">Σ</div><div><div class="k">${L('الصافي الكلي (من البداية)', 'Net all-time')}</div><div class="v ${allProf - allEx < 0 ? 'neg' : 'pos'}">${money(allProf - allEx)}</div></div></div>
+    <div class="card stat pf" style="--c:#16a34a"><div class="ic">📈</div><div><div class="k">${L('صافي الشهر', 'Net this month')}</div><div class="v ${net < 0 ? 'neg' : 'pos'}">${money(net)}</div></div></div>
+    <div class="card stat pf" style="--c:#475569"><div class="ic">Σ</div><div><div class="k">${L('الصافي الكلي (من البداية)', 'Net all-time')}</div><div class="v ${allProf - allEx < 0 ? 'neg' : 'pos'}">${money(allProf - allEx)}</div></div></div>
   </div>
   <div class="stats">
     <div class="card stat" style="--c:#7c3aed"><div class="ic">د.ل</div><div><div class="k">${L('مصاريف بالدينار (هذا الشهر)', 'Paid in LYD (this month)')}</div><div class="v" style="direction:${S.lang === 'ar' ? 'rtl' : 'ltr'}">${lyd(exLyd)}</div></div></div>
     <div class="card stat" style="--c:#0891b2"><div class="ic">$</div><div><div class="k">${L('مصاريف بالدولار (هذا الشهر)', 'Paid in USD (this month)')}</div><div class="v">${money(exUsd)}</div></div></div>
   </div>
-  <div class="hint" style="margin-top:-6px">${L('مصاريف الشهر بالدولار = الدولار + الدينار محوّل بسعر الصرف المسجّل مع كل مصروف. ', 'Monthly USD total = USD + LYD converted at each expense’s rate. ')}${L('أرباح الشهر = عمولات المكتب والحوالات وهامش الشحن للسيارات المشتراة في هذا الشهر.', 'Monthly profit = office/transfer commissions + shipping margin for cars purchased this month.')}</div>
+  <div class="hint pf" style="margin-top:-6px">${L('مصاريف الشهر بالدولار = الدولار + الدينار محوّل بسعر الصرف المسجّل مع كل مصروف. ', 'Monthly USD total = USD + LYD converted at each expense’s rate. ')}${L('أرباح الشهر = عمولات المكتب والحوالات وهامش الشحن للسيارات المشتراة في هذا الشهر.', 'Monthly profit = office/transfer commissions + shipping margin for cars purchased this month.')}</div>
   <div class="two">
     <div class="card"><h3>${L('مصاريف الشهر', 'This month')}</h3>${list.length ? `<div class="tw"><table><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('البند', 'Category')}</th><th>${L('المبلغ', 'Amount')}</th><th>${L('المعادل بالدولار', 'USD equiv.')}</th><th>${L('ملاحظات', 'Notes')}</th><th></th></tr></thead><tbody>
       ${list.map(e => `<tr><td>${fdate(e.date)}</td><td><b>${esc(expCat(e.category))}</b></td><td><b>${e.currency === 'LYD' ? lyd(e.amount) : money(e.amount)}</b></td><td class="sub">${e.currency === 'LYD' ? '≈ ' + money(e.amount_usd) + ' @' + esc(e.rate) : '—'}</td><td style="white-space:normal;max-width:200px">${esc(e.notes || '')}</td><td><button class="btn sm red" onclick="A.eDel('${e.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty">${L('لا توجد مصاريف في هذا الشهر', 'No expenses this month')}</div>`}</div>
@@ -838,7 +933,7 @@ function vFormHtml(v, cid) {
     ${FIN.map(x => inp('fin_' + x.k, L(x.ar, x.en), f[x.k] ?? '', 'type="number" step="0.01" min="0" oninput="A.calc()" dir="ltr"')).join('')}
   </div>
   <div class="totbox"><span>${L('الإجمالي على الزبون', 'Total charged')}</span><span id="vtot" dir="ltr">${money(totalCost(v))}</span></div>
-  <div class="grid" style="margin-top:12px">${inp('fin_shipping_cost_actual', '🔒 ' + L('تكلفة الشحن الفعلية علينا (داخلي+بحري) — لحساب هامش الربح', 'Our actual shipping cost (inland+ocean) — for margin'), f.shipping_cost_actual ?? '', 'type="number" step="0.01" min="0" dir="ltr"')}</div>
+  ${can('profit') ? `<div class="grid pf" style="margin-top:12px">${inp('fin_shipping_cost_actual', '🔒 ' + L('تكلفة الشحن الفعلية علينا (داخلي+بحري) — لحساب هامش الربح', 'Our actual shipping cost (inland+ocean) — for margin'), (S.internal[v.id] ? S.internal[v.id].shipping_cost_actual : f.shipping_cost_actual) ?? '', 'type="number" step="0.01" min="0" dir="ltr"')}</div>` : ''}
   <label class="f" style="margin-top:12px"><span>${L('ملاحظات', 'Notes')}</span><textarea name="notes" rows="2">${esc(v.notes || '')}</textarea></label>
   <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form>`;
 }
@@ -860,7 +955,7 @@ table{width:100%;border-collapse:collapse;margin-bottom:14px}td,th{border:1px so
 tr.tot td{background:#f1f5f9;font-weight:800}
 .bar{position:fixed;bottom:16px;inset-inline-end:16px}.bar button{font:inherit;padding:8px 16px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer}@media print{.bar{display:none}}`;
 const sumBox = items => `<div class="sum">${items.map(x => `<div style="--c:${x[2] || '#94a3b8'}"><span>${x[0]}</span><b class="${x[3] || ''}" dir="ltr">${x[1]}</b></div>`).join('')}</div>`;
-const shipMargin = v => { const f = v.fin || {}, act = num(f.shipping_cost_actual); return act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0; };
+const shipMargin = v => { const f = v.fin || {}, act = actCost(v); return act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0; };
 const repHead = (t, sub) => `<div class="doc"><b>${t}</b>${sub ? `<span>${sub}</span><br>` : ''}<span>${L('تاريخ التقرير', 'Report date')}: ${fdate(now())}</span></div>`;
 const custKv = c => `<table class="kv"><tbody><tr><td>${L('الزبون', 'Customer')}</td><td>${esc(c.full_name)}</td></tr><tr><td>${L('الهاتف', 'Phone')}</td><td class="mono">${esc(c.phone || '')}${c.alternate_phone ? ' / ' + esc(c.alternate_phone) : ''}</td></tr><tr><td>${L('المدينة', 'City')}</td><td>${esc(c.city || '—')}</td></tr></tbody></table>`;
 const payRows = ps => ps.map(p => { const v = S.vehicles.find(x => x.id === p.vehicle_id); return `<tr><td>${fdate(p.date)}</td><td>${v ? esc(vt(v)) + ' <span class="mono">' + esc(v.vin.slice(-6)) + '</span>' : L('على الحساب', 'On account')}</td><td>${p.currency === 'LYD' ? lyd(p.amount) + ' @' + esc(p.rate) : money(p.amount)}</td><td class="num">${money(p.amount_usd)}</td><td>${esc(p.receipt_notes || '')}</td></tr>`; }).join('') || `<tr><td colspan="5">—</td></tr>`;
@@ -885,6 +980,13 @@ function renderLogin(err) {
   <label class="f"><span>${L('كلمة المرور', 'Password')}</span><input id="lp" type="password" required dir="ltr" autocomplete="current-password"></label>
   ${err ? `<div class="err">${esc(err)}</div>` : ''}<button class="btn pri wide">${L('دخول', 'Sign in')}</button></form>
   <a href="#/track" class="lnk">🔎 ${L('تتبع سيارتك برقم الهيكل', 'Track your car by VIN')}</a><div><button class="btn sm" onclick="A.lang()">${L('English', 'العربية')}</button></div></div></div>`;
+}
+
+function renderBlocked(email, exists) {
+  applyDir();
+  $('#app').innerHTML = `<div class="login"><div class="card lcard"><div class="logo">🔒</div><h2 style="margin:0">${L('الحساب غير مفعّل', 'Account not active')}</h2>
+  <p class="mut" style="margin:0"><span class="mono">${esc(email)}</span><br>${exists ? L('حسابك موقوف حالياً.', 'Your account is disabled.') : L('هذا الحساب ما عندهش صلاحية دخول للمنظومة.', 'This account has no access to the system.')} ${L('تواصل مع المدير.', 'Please contact the admin.')}</p>
+  <button class="btn pri wide" onclick="A.logout()">${L('تسجيل الخروج', 'Sign out')}</button></div></div>`;
 }
 
 /* ---------------- صفحة التتبع العامة ---------------- */
@@ -929,7 +1031,7 @@ const A = {
     if (S.vehicles.some(v => v.vin === vin && v.id !== id)) return toast(L('رقم الهيكل مسجّل مسبقاً لسيارة أخرى', 'This VIN already exists'), 'err');
     const old = id ? S.vehicles.find(v => v.id === id) : null;
     const fin = {}; FIN.forEach(x => { const val = g('fin_' + x.k); fin[x.k] = val === '' ? 0 : r2(num(val)); });
-    fin.shipping_cost_actual = g('fin_shipping_cost_actual') === '' ? 0 : r2(num(g('fin_shipping_cost_actual')));
+    const actIn = can('profit') ? (g('fin_shipping_cost_actual') === '' ? 0 : r2(num(g('fin_shipping_cost_actual')))) : null;
     const status = g('status');
     const data = {
       customer_id: g('customer_id'), vin, lot_number: g('lot_number'), make: g('make'), model: g('model'), year: g('year'), color: g('color'), trim: g('trim'), engine: g('engine'),
@@ -955,6 +1057,7 @@ const A = {
         logAct('veh_add', `${vt(data)} · ${vin} · ${custName(data.customer_id)}`, 'v:' + vid);
         await syncTracking(data);
       }
+      if (actIn !== null) await DB.merge('vinternal', vid, { shipping_cost_actual: actIn });
       A.close(); toast(L('تم الحفظ', 'Saved'));
       if (!old) location.hash = '#/vehicle/' + vid;
     } catch (x) { toast(x.message, 'err'); }
@@ -969,7 +1072,7 @@ const A = {
     const v = S.vehicles.find(x => x.id === id); if (!v) return;
     const ps = S.payments.filter(p => p.vehicle_id === id);
     if (!confirm(L(`حذف السيارة ${vt(v)} نهائياً مع صورها${ps.length ? ` و${ps.length} دفعة مرتبطة بها` : ''}؟`, `Delete ${vt(v)} permanently with its photos${ps.length ? ` and ${ps.length} linked payment(s)` : ''}?`))) return;
-    try { for (const p of ps) await DB.del('payments', p.id); await DB.del('tracking', v.vin).catch(() => { }); await DB.del('vehicles', id); logAct('veh_del', `${vt(v)} · ${v.vin} · ${custName(v.customer_id)}`); toast(L('تم الحذف', 'Deleted')); location.hash = '#/vehicles'; }
+    try { for (const p of ps) await DB.del('payments', p.id); await DB.del('tracking', v.vin).catch(() => { }); await DB.del('vinternal', id).catch(() => { }); await DB.del('vehicles', id); logAct('veh_del', `${vt(v)} · ${v.vin} · ${custName(v.customer_id)}`); toast(L('تم الحذف', 'Deleted')); location.hash = '#/vehicles'; }
     catch (x) { toast(x.message, 'err'); }
   },
   /* رقم الهيكل */
@@ -1068,8 +1171,67 @@ const A = {
   emSet(m) { S.em = m || new Date().toISOString().slice(0, 7); render(); },
   lfSet(k, v) { S.lf[k] = v; render(); },
   csSet(k) { S.csort = k; render(); },
+  uForm(id) {
+    const u = id ? S.users.find(x => x.id === id) || {} : { role: 'employee', perms: Object.fromEntries(ROLES.employee[2].map(p => [p, true])) };
+    const pr = u.perms || {};
+    openModal(`<h2>${id ? L('تعديل مستخدم', 'Edit user') : L('مستخدم جديد', 'New user')}</h2><form id="uf" onsubmit="A.uSave(event,'${esc(id || '')}')"><div class="grid">
+      <label class="f"><span>${L('الاسم', 'Name')} *</span><input name="name" required value="${esc(u.name || '')}"></label>
+      <label class="f"><span>${L('الإيميل', 'Email')} *</span><input name="email" type="email" required dir="ltr" value="${esc(u.id || '')}" ${id ? 'readonly style="background:var(--soft)"' : ''}></label>
+      ${id ? '' : `<label class="f"><span>${L('كلمة السر (6 خانات على الأقل)', 'Password (min 6)')} *</span><input name="pass" type="text" required minlength="6" dir="ltr" autocomplete="new-password"></label>`}
+      <label class="f"><span>${L('الدور', 'Role')}</span><select name="role" onchange="A.uRole(this.value)">${Object.entries(ROLES).map(([k, r]) => `<option value="${k}" ${u.role === k ? 'selected' : ''}>${esc(L(r[0], r[1]))}</option>`).join('')}<option value="custom" ${u.role === 'custom' ? 'selected' : ''}>${L('مخصص', 'Custom')}</option></select></label></div>
+      <div class="sec">${L('الصلاحيات', 'Permissions')}</div>
+      <div class="hint" style="margin:-4px 0 8px">${L('كل المستخدمين يقدروا يشوفوا السيارات والزبائن والدفعات والتحصيل، ويبعتوا واتساب ويطبعوا الفواتير.', 'All users can view vehicles, customers, payments and collections, send WhatsApp and print invoices.')}</div>
+      <div class="pgrid">${PERMS.map(p => `<label class="pchk"><input type="checkbox" name="p_${p[0]}" ${pr[p[0]] ? 'checked' : ''} onchange="A.uCustom()"><div><b>${esc(L(p[1], p[2]))}</b><span>${esc(L(p[3], p[4]))}</span></div></label>`).join('')}</div>
+      ${id ? `<label class="pchk" style="margin-top:10px"><input type="checkbox" name="active" ${u.active === false ? '' : 'checked'}><div><b>${L('الحساب فعّال', 'Account active')}</b><span>${L('لو شلت العلامة، المستخدم ما يقدرش يدخل', 'Uncheck to block sign-in')}</span></div></label>` : ''}
+      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form>`, 'sm');
+  },
+  uRole(r) { if (!ROLES[r]) return; const f = $('#uf'); PERMS.forEach(p => f['p_' + p[0]].checked = ROLES[r][2].includes(p[0])); },
+  uCustom() {
+    const f = $('#uf'), on = PERMS.filter(p => f['p_' + p[0]].checked).map(p => p[0]).sort().join();
+    const m = Object.entries(ROLES).find(([k, r]) => [...r[2]].sort().join() === on);
+    f.role.value = m ? m[0] : 'custom';
+  },
+  async uSave(e, id) {
+    e.preventDefault(); const f = e.target, fd = new FormData(f);
+    const email = (id || fd.get('email') || '').toString().trim().toLowerCase(), name = (fd.get('name') || '').toString().trim();
+    if (isAdminEmail(email)) return toast(L('هذا إيميل المدير الرئيسي، عنده كل الصلاحيات أصلاً', 'That is the main admin email'), 'err');
+    if (!id && S.users.some(u => u.id === email)) return toast(L('هذا الإيميل مضاف مسبقاً', 'This email already exists'), 'err');
+    const perms = Object.fromEntries(PERMS.map(p => [p[0], !!fd.get('p_' + p[0])]));
+    const data = { name, email, role: fd.get('role'), perms, updated_at: now() };
+    const btn = f.querySelector('button.pri'); btn.disabled = true;
+    try {
+      let note = '';
+      if (!id) {
+        const pass = (fd.get('pass') || '').toString();
+        if (pass.length < 6) { btn.disabled = false; return toast(L('كلمة السر لازم 6 خانات على الأقل', 'Password must be at least 6 characters'), 'err'); }
+        const r = await DB.createAuthUser(email, pass);
+        if (r === 'exists') note = L(' — الإيميل كان عنده حساب من قبل، فكلمة السر القديمة هي اللي تشتغل', ' — this email already had an account; its existing password still applies');
+        Object.assign(data, { active: true, created_at: now(), created_by: S.user?.email || '' });
+      } else data.active = !!fd.get('active');
+      await DB.merge('users', email, data);
+      logAct(id ? 'user_edit' : 'user_add', `${name} · ${email} · ${roleName(data.role)}`);
+      A.close(); toast((id ? L('تم حفظ المستخدم', 'User saved') : L('تمت إضافة المستخدم', 'User added')) + note);
+    } catch (x) {
+      btn.disabled = false;
+      const msg = { 'auth/invalid-email': L('الإيميل غير صحيح', 'Invalid email'), 'auth/weak-password': L('كلمة السر ضعيفة', 'Weak password'), 'auth/operation-not-allowed': L('فعّل Email/Password في Firebase', 'Enable Email/Password in Firebase'), 'auth/admin-restricted-operation': L('فعّل إنشاء الحسابات: Firebase > Authentication > Settings > User actions', 'Enable sign-up in Firebase > Authentication > Settings > User actions') }[x.code];
+      toast(msg || x.message, 'err');
+    }
+  },
+  async uReset(id) {
+    if (!confirm(L(`نبعتوا رابط تغيير كلمة السر لـ ${id}؟`, `Send a password reset link to ${id}?`))) return;
+    try { await DB.resetPass(id); logAct('user_reset', id); toast(L('انبعت رابط تغيير كلمة السر لإيميل المستخدم (يشيك البريد المزعج لو ما لقاهش)', 'Reset link sent (check spam too)')); } catch (x) { toast(x.message, 'err'); }
+  },
+  async uToggle(id) {
+    const u = S.users.find(x => x.id === id); if (!u) return; const on = u.active === false;
+    try { await DB.merge('users', id, { active: on, updated_at: now() }); logAct('user_edit', `${u.name || id} · ${on ? L('تفعيل', 'enabled') : L('إيقاف', 'disabled')}`); toast(on ? L('تم تفعيل الحساب', 'Account enabled') : L('تم إيقاف الحساب', 'Account disabled')); } catch (x) { toast(x.message, 'err'); }
+  },
+  async uDel(id) {
+    const u = S.users.find(x => x.id === id);
+    if (!confirm(L(`حذف ${u?.name || id}؟ ما يقدرش يدخل للمنظومة بعدها.`, `Remove ${u?.name || id}? They will lose access.`))) return;
+    try { await DB.del('users', id); logAct('user_del', `${u?.name || ''} · ${id}`); toast(L('تم حذف المستخدم. لو تبي تمسح حسابه نهائياً: Firebase > Authentication > Users', 'User removed. To delete the login itself: Firebase > Authentication > Users')); } catch (x) { toast(x.message, 'err'); }
+  },
   more() {
-    const it = [['payments', '💵', L('الدفعات', 'Payments')], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')]];
+    const it = [['payments', '💵', L('الدفعات', 'Payments')], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')], ['users', '🔐', L('المستخدمين والصلاحيات', 'Users & permissions')]].filter(x => !ROUTE_PERM[x[0]] || can(ROUTE_PERM[x[0]]));
     openModal(`<div class="sheet-list">${it.map(x => `<a href="#/${x[0]}" onclick="A.close()"><span class="ic">${x[1]}</span>${x[2]}</a>`).join('')}
       <a href="#/track" target="_blank" onclick="A.close()"><span class="ic">🔎</span>${L('صفحة التتبع للزبائن', 'Customer tracking page')}</a>
       <button onclick="A.close();A.lang()"><span class="ic">🌐</span>${L('English', 'العربية')}</button>
@@ -1192,7 +1354,7 @@ const A = {
     try { await DB.merge('settings', 'main', d); S.settings = { ...S.settings, ...d }; logAct('settings', ''); render(); toast(L('تم حفظ الإعدادات', 'Settings saved')); } catch (x) { toast(x.message, 'err'); }
   },
   backup() {
-    const data = { exported_at: now(), settings: S.settings, customers: S.customers, vehicles: S.vehicles, payments: S.payments, expenses: S.expenses };
+    const data = { exported_at: now(), settings: S.settings, customers: S.customers, vehicles: S.vehicles, vehicle_internal: S.internal, payments: S.payments, expenses: S.expenses, users: S.users };
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' }));
     a.download = `backup-${today()}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
   },
@@ -1317,7 +1479,7 @@ const A = {
       mk(c2, '2T1BURHE0JC074843', '48100273', 'Toyota', 'Corolla', 2018, 'فضي', 'INLAND_TRANSIT', 9, F(4300, 650, 380, 1250, 500, 250, 45, 1400), { trim: 'LE', engine: 'L4 1.8L', auction_paid_by: 'office', auction_paid_date: d(8).slice(0, 10) }),
       mk(c3, 'KMHD84LF5HU123456', '50011234', 'Hyundai', 'Elantra', 2017, 'أحمر', 'DELIVERED', 70, F(3900, 600, 350, 1250, 500, 250, 40, 1350))
     ];
-    const ids = []; for (const v of list) { ids.push(await add('vehicles', v)); await syncTracking(v); }
+    const ids = []; for (const v of list) { const act = v.fin.shipping_cost_actual; delete v.fin.shipping_cost_actual; const nid = await add('vehicles', v); ids.push(nid); if (act) await DB.merge('vinternal', nid, { shipping_cost_actual: act, demo: true }); await syncTracking(v); }
     await add('payments', { customer_id: c1, vehicle_id: ids[1], amount: 12000, currency: 'USD', rate: 1, amount_usd: 12000, date: d(24).slice(0, 10), receipt_notes: 'دفعة أولى' });
     await add('payments', { customer_id: c2, vehicle_id: ids[2], amount: 70000, currency: 'LYD', rate: 7, amount_usd: 10000, date: d(45).slice(0, 10), receipt_notes: 'نقداً بالمكتب' });
     await add('payments', { customer_id: c3, vehicle_id: ids[4], amount: 6890, currency: 'USD', rate: 1, amount_usd: 6890, date: d(60).slice(0, 10), receipt_notes: 'سداد كامل' });
@@ -1332,12 +1494,13 @@ const A = {
     try {
       for (const p of ps) await DB.del('payments', p.id);
       for (const e of es) await DB.del('expenses', e.id);
-      for (const v of vs) { await DB.del('tracking', v.vin).catch(() => { }); delete S.trk[v.vin]; await DB.del('vehicles', v.id); }
+      for (const v of vs) { await DB.del('tracking', v.vin).catch(() => { }); await DB.del('vinternal', v.id).catch(() => { }); delete S.trk[v.vin]; await DB.del('vehicles', v.id); }
       for (const c of cs) await DB.del('customers', c.id);
       if (!silent) toast(L('تم حذف البيانات التجريبية', 'Sample data deleted'));
     } catch (x) { toast(x.message, 'err'); }
   }
 };
+Object.entries(NEED).forEach(([k, p]) => { const f = A[k]; if (typeof f !== 'function') return; A[k] = function (...a) { if (!can(p)) { toast(L('ما عندكش صلاحية لهذي العملية', 'You don’t have permission for this'), 'err'); return; } return f.apply(this, a); }; });
 window.A = A; window.$ = $;
 
 /* ---------------- التشغيل ---------------- */
@@ -1345,10 +1508,20 @@ let unsubs = [];
 function startWatch() {
   if (unsubs.length) return;
   DB.get('settings', 'main').then(d => { if (d) { S.settings = { ...S.settings, ...d }; render(); } }).catch(() => { });
-  ['customers', 'vehicles', 'payments', 'expenses'].forEach(c => unsubs.push(DB.watch(c, arr => { S[c] = arr; S.loaded[c] = true; recompute(); render(); })));
-  unsubs.push(DB.watch('logs', arr => { S.logs = arr; if (S.route === 'logs') render(); }, { order: 'at', limit: 300 }));
+  ['customers', 'vehicles', 'payments'].concat(can('expenses') ? ['expenses'] : []).forEach(c => unsubs.push(DB.watch(c, arr => { S[c] = arr; S.loaded[c] = true; recompute(); render(); migrateInternal(); })));
+  if (can('profit')) unsubs.push(DB.watch('vinternal', arr => { S.internal = Object.fromEntries(arr.map(x => [x.id, x])); S.loaded.vinternal = true; recompute(); render(); migrateInternal(); }));
+  if (can('logs')) unsubs.push(DB.watch('logs', arr => { S.logs = arr; if (S.route === 'logs') render(); }, { order: 'at', limit: 300 }));
+  if (isAdmin()) unsubs.push(DB.watch('users', arr => { S.users = arr; if (S.route === 'users') render(); }));
 }
-function stopWatch() { unsubs.forEach(u => u && u()); unsubs = []; }
+let migrated = false;
+async function migrateInternal() {
+  if (migrated || !isAdmin() || !S.loaded.vehicles || !S.loaded.vinternal) return; migrated = true;
+  for (const v of S.vehicles) {
+    const a = num((v.fin || {}).shipping_cost_actual); if (!('shipping_cost_actual' in (v.fin || {}))) continue;
+    try { if (!S.internal[v.id] && a) await DB.merge('vinternal', v.id, { shipping_cost_actual: a }); const fin = { ...v.fin }; delete fin.shipping_cost_actual; await DB.update('vehicles', v.id, { fin }); } catch (e) { }
+  }
+}
+function stopWatch() { unsubs.forEach(u => u && u()); unsubs = []; migrated = false; S.loaded = {}; S.internal = {}; S.users = []; S.logs = []; S.expenses = []; }
 
 window.addEventListener('hashchange', () => { parseRoute(); A.close(); if (isPublic()) renderPublic(); else if (S.user) { startWatch(); render(); window.scrollTo(0, 0); } else renderLogin(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') A.close(); });
@@ -1376,10 +1549,18 @@ function setupPWA() {
   try { await DB.init(); }
   catch (e) { $('#app').innerHTML = `<div class="login"><div class="card lcard"><h2>⚠️</h2><p>${L('تعذّر الاتصال بـ Firebase. تحقق من الإنترنت ومن إعدادات المشروع.', 'Could not connect to Firebase. Check your connection and config.')}</p><div class="err">${esc(e.message)}</div></div></div>`; return; }
   if (isPublic()) { renderPublic(); }
-  DB.onAuth(u => {
+  DB.onAuth(async u => {
     S.user = u;
     if (isPublic()) return;
-    if (u) { startWatch(); render(); } else { stopWatch(); S.customers = []; S.vehicles = []; S.payments = []; renderLogin(); }
+    if (!u) { stopWatch(); S.me = null; S.customers = []; S.vehicles = []; S.payments = []; renderLogin(); return; }
+    if (isAdmin()) S.me = { role: 'admin', name: LOCAL ? '' : L('المدير', 'Admin'), perms: Object.fromEntries(PERMS.map(p => [p[0], true])) };
+    else {
+      const id = u.email.trim().toLowerCase(); let p = null;
+      try { p = await DB.get('users', id); } catch (e) { }
+      if (!p || p.active === false) { S.user = null; renderBlocked(u.email, !!p); return; }
+      S.me = p; DB.merge('users', id, { last_login: now() }).catch(() => { });
+    }
+    startWatch(); render();
   });
 })();
 </script>
