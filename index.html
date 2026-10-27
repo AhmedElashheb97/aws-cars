@@ -932,6 +932,70 @@ function vVehicle() {
   </div>`;
 }
 
+/* ---------------- فاتورة المكتب (للطباعة ولصفحة التتبع) ---------------- */
+const INV_CSS = `<style>
+      .ivh{display:flex;flex-direction:column;align-items:flex-end;gap:2px}.ivh .t{font-size:26px;font-weight:800;letter-spacing:1px;color:#293138;line-height:1}.ivh .n{font-family:Consolas,monospace;font-weight:700;color:#fc5000;font-size:14px}.ivh .d{color:#64748b;font-size:12px}
+      .pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:11.5px;font-weight:800;color:#fff;background:var(--c)}
+      .ivc{display:grid;grid-template-columns:1fr 1.3fr;gap:12px;margin-bottom:16px}
+      .bx{border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;background:#fff}.bx .l{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#fc5000;margin-bottom:6px}
+      .bx b.big{font-size:15px;display:block;margin-bottom:2px}.bx .r{color:#475569;font-size:12.5px;line-height:1.7}
+      .vb{display:flex;gap:12px}.vb .ph{width:150px;flex-shrink:0;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#f1f5f9;border:1px solid #e2e8f0}.vb .ph img{width:100%;height:100%;object-fit:cover}
+      table.it{border:0;margin-bottom:0}table.it th{background:#293138;color:#fff;border:0;padding:9px 12px;font-size:11.5px;letter-spacing:.3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      table.it td{border:0;border-bottom:1px solid #eef2f6;padding:10px 12px}table.it td.i{color:#94a3b8;width:34px}
+      .ivt{display:flex;justify-content:flex-end;margin:14px 0 18px}.ivt .tb{width:310px}.ivt .r{display:flex;justify-content:space-between;align-items:center;padding:7px 14px}.ivt .r b{direction:ltr;unicode-bidi:isolate}
+      .ivt .g{border-top:2px solid #293138;font-weight:800;font-size:14px}.ivt .bd{background:#fc5000;color:#fff;font-weight:800;font-size:16px;border-radius:10px;margin-top:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ivt .bd.ok{background:#059669}
+      table.py{margin-bottom:12px}table.py th{background:#f8fafc}
+      .ivf{margin-top:26px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;align-items:end}.ivf .thx{color:#475569;font-size:12.5px;line-height:1.7}.ivf .thx b{color:#293138;font-size:14px}
+      .ivf .sg{border-top:1.5px solid #94a3b8;padding-top:6px;margin-top:56px;text-align:center;color:#64748b;font-size:12px}
+      .ivx{margin-top:18px;height:6px;border-radius:3px;background:linear-gradient(90deg,#293138 0 70%,#fc5000 70% 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .pill,.ivh{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    </style>`;
+/* لقطة من الفاتورة بدون بيانات داخلية — تُحفظ في tracking/{VIN} ليشوفها الزبون */
+function invSnap(v) {
+  const c = S.customers.find(x => x.id === v.customer_id) || {}, f = v.fin || {}, bid = num(f.bid_price), tr = num(f.transfer_commission), items = [];
+  if (bid || tr) items.push({ k: tr ? 'bid_tr' : 'bid_price', a: r2(bid + tr) });
+  FIN.filter(x => !['bid_price', 'transfer_commission'].includes(x.k) && num(f[x.k])).forEach(x => items.push({ k: x.k, a: r2(num(f[x.k])) }));
+  const tot = r2(totalCost(v)), paid = r2(vPaid(v.id));
+  const pays = S.payments.filter(p => p.vehicle_id === v.id).sort((a, b) => (a.date || '').localeCompare(b.date || '')).map(p => ({ date: p.date || '', cur: p.currency || 'USD', amt: num(p.amount), rate: p.rate || '', usd: r2(num(p.amount_usd)) }));
+  return { no: 'INV-' + v.vin.slice(-6), customer: c.full_name || '', city: c.city || '', status: v.status || '', title: vt(v), spec: vSpec(v), vin: v.vin, lot: v.lot_number || '', auction: v.auction_name || '', loc: v.auction_location || '', port: v.us_port || '', container: v.container_number || '', items, tot, paid, bal: r2(tot - paid), pays, auction_inv: !!v.auction_invoice };
+}
+const invItemLabel = k => k === 'bid_tr' ? L('سعر الشراء والتحويل', 'Purchase & transfer') : (x => x ? L(x.ar, x.en) : k)(FIN.find(x => x.k === k));
+function invoicePrint(d, auto) {
+  const bal = num(d.bal);
+  printDoc(d.no, {
+    internal: true, noAuto: !auto,
+    head: `<div class="ivh"><span class="t">${L('فاتورة', 'INVOICE')}</span><span class="n">${esc(d.no)}</span><span class="d">${L('التاريخ', 'Date')}: ${fdate(now())}</span></div>`,
+    main: INV_CSS + `<div class="ivc">
+      <div class="bx"><div class="l">${L('فاتورة إلى', 'Bill to')}</div><b class="big">${esc(d.customer || '—')}</b><div class="r">${d.phone ? `📞 <span class="mono">${esc(d.phone)}</span><br>` : ''}${d.city ? '📍 ' + esc(d.city) + '<br>' : ''}<span class="pill" style="--c:${stColor(d.status)}">${esc(stName(d.status))}</span></div></div>
+      <div class="bx"><div class="l">${L('السيارة', 'Vehicle')}</div><div class="vb">${d.img ? `<div class="ph"><img src="${esc(d.img)}"></div>` : ''}<div><b class="big">${esc(d.title)}</b><div class="r">${d.spec ? esc(d.spec) + '<br>' : ''}VIN: <span class="mono">${esc(d.vin)}</span><br>${d.lot ? `LOT: <span class="mono">${esc(d.lot)}</span> · ` : ''}${esc(d.auction)}${d.loc ? ' — ' + esc(d.loc) : ''}${d.port ? `<br>${L('ميناء الشحن', 'Port')}: ${esc(pName(d.port))} → ${L('الخمس', 'Khoms')}` : ''}${d.container ? `<br>${L('الحاوية', 'Container')}: <span class="mono">${esc(d.container)}</span>` : ''}</div></div></div></div>
+    </div>
+    <table class="it"><thead><tr><th>#</th><th>${L('البيان', 'Description')}</th><th class="num">${L('المبلغ (USD)', 'Amount (USD)')}</th></tr></thead><tbody>
+      ${(d.items || []).length ? d.items.map((x, i) => `<tr><td class="i">${i + 1}</td><td>${esc(invItemLabel(x.k))}</td><td class="num">${money(x.a)}</td></tr>`).join('') : `<tr><td></td><td>—</td><td></td></tr>`}</tbody></table>
+    <div class="ivt"><div class="tb"><div class="r g"><span>${L('الإجمالي', 'Total')}</span><b>${money(d.tot)}</b></div><div class="r"><span>${L('المدفوع', 'Paid')}</span><b>${money(d.paid)}</b></div>
+      <div class="r bd ${bal <= 0.009 ? 'ok' : ''}"><span>${bal <= 0.009 ? L('خالص ✓', 'Paid in full ✓') : L('المتبقي', 'Balance due')}</span><b>${money(Math.max(0, bal))}</b></div></div></div>
+    ${(d.pays || []).length ? `<h3>${L('الدفعات المستلمة', 'Payments received')}</h3><table class="py"><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('المبلغ', 'Amount')}</th><th class="num">USD</th></tr></thead><tbody>${d.pays.map(p => `<tr><td>${fdate(p.date)}</td><td>${p.cur === 'LYD' ? lyd(p.amt) + ' @' + esc(p.rate) : money(p.amt)}</td><td class="num">${money(p.usd)}</td></tr>`).join('')}</tbody></table>` : ''}
+    <div class="ivf"><div class="thx"><b>${esc(S.settings.note || L('شكراً لثقتكم', 'Thank you for your business'))}</b><br>${d.auction_inv ? '🧾 ' + L('فاتورة المزاد الأصلية متاحة في صفحة التتبع', 'The original auction invoice is available on the tracking page') + '<br>' : ''}🔎 ${L('تتبّع سيارتك', 'Track your car')}: <span class="mono" style="font-size:11px">${esc(trackUrl(d.vin))}</span></div>
+      <div class="sg">${L('توقيع المحاسب', 'Accountant signature')}</div><div class="sg">${L('الختم', 'Stamp')}</div></div>
+    <div class="ivx"></div>`
+  });
+}
+/* مزامنة الفاتورة مع صفحة التتبع تلقائياً عند أي تغيير في السيارة أو الدفعات */
+const hstr = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+let invSyncT = null, invSyncBusy = false;
+function queueInvSync() { clearTimeout(invSyncT); invSyncT = setTimeout(runInvSync, 1500); }
+async function runInvSync() {
+  if (invSyncBusy || !can('edit') || !S.loaded.vehicles || !S.loaded.customers || !S.loaded.payments) return;
+  invSyncBusy = true;
+  try {
+    for (const v of S.vehicles) {
+      if (!v.vin) continue;
+      const snap = invSnap(v), h = hstr(JSON.stringify(snap));
+      if (v.inv_sync === h) continue;
+      try { await DB.merge('tracking', v.vin, { office_invoice: { ...snap, updated_at: now() } }); await DB.update('vehicles', v.id, { inv_sync: h }); } catch (e) { }
+    }
+  } finally { invSyncBusy = false; }
+}
+
 /* ---------------- فاتورة المزاد (تظهر للزبون) ---------------- */
 const INV_MAX = 6 * 1024 * 1024, INV_CHUNK = 700000;
 const invId = (vin, i) => `${vin}__inv${i ? '_' + i : ''}`;
@@ -1261,7 +1325,7 @@ function printDoc(title, body) {
   <div class="bar"><button onclick="window.print()">🖨️ ${L('طباعة / حفظ PDF', 'Print / Save PDF')}</button></div>
   <div class="hd"><div class="hb"><img src="${LOGO_DATA || new URL('logo.png', location.href).href}" alt="AXS"><div><h1>${esc(s.office)}</h1><div class="m">${esc(s.address || '')}${s.phone ? ' · <span class="mono">' + esc(s.phone) + '</span>' : ''}</div></div></div>${body.head}</div>${body.main}
   ${body.internal ? '' : `<div class="ft"><div>${esc(s.note || '')}</div><div class="sig">${L('التوقيع والختم', 'Signature & stamp')}</div></div>`}
-  <script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script></body></html>`);
+  ${body.noAuto ? '' : '<script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script>'}</body></html>`);
   w.document.close();
 }
 
@@ -1734,43 +1798,8 @@ const A = {
   /* الطباعة */
   printInv(id) {
     const v = S.vehicles.find(x => x.id === id); if (!v) return;
-    const c = S.customers.find(x => x.id === v.customer_id) || {}, tot = totalCost(v), paid = vPaid(v.id), bal = tot - paid;
-    const imgs = (S.trk[v.vin] || {}).images || [], img = (imgs.find(x => x.stage === 'auction') || imgs[0] || {}).src;
-    const pays = S.payments.filter(p => p.vehicle_id === v.id).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-    const no = 'INV-' + v.vin.slice(-6), items = custFin(v);
-    const css = `<style>
-      .ivh{display:flex;flex-direction:column;align-items:flex-end;gap:2px}.ivh .t{font-size:26px;font-weight:800;letter-spacing:1px;color:#293138;line-height:1}.ivh .n{font-family:Consolas,monospace;font-weight:700;color:#fc5000;font-size:14px}.ivh .d{color:#64748b;font-size:12px}
-      .pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:11.5px;font-weight:800;color:#fff;background:var(--c)}
-      .ivc{display:grid;grid-template-columns:1fr 1.3fr;gap:12px;margin-bottom:16px}
-      .bx{border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;background:#fff}.bx .l{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#fc5000;margin-bottom:6px}
-      .bx b.big{font-size:15px;display:block;margin-bottom:2px}.bx .r{color:#475569;font-size:12.5px;line-height:1.7}
-      .vb{display:flex;gap:12px}.vb .ph{width:150px;flex-shrink:0;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#f1f5f9;border:1px solid #e2e8f0}.vb .ph img{width:100%;height:100%;object-fit:cover}
-      table.it{border:0;margin-bottom:0}table.it th{background:#293138;color:#fff;border:0;padding:9px 12px;font-size:11.5px;letter-spacing:.3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      table.it td{border:0;border-bottom:1px solid #eef2f6;padding:10px 12px}table.it td.i{color:#94a3b8;width:34px}
-      .ivt{display:flex;justify-content:flex-end;margin:14px 0 18px}.ivt .tb{width:310px}.ivt .r{display:flex;justify-content:space-between;align-items:center;padding:7px 14px}.ivt .r b{direction:ltr;unicode-bidi:isolate}
-      .ivt .g{border-top:2px solid #293138;font-weight:800;font-size:14px}.ivt .bd{background:#fc5000;color:#fff;font-weight:800;font-size:16px;border-radius:10px;margin-top:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ivt .bd.ok{background:#059669}
-      table.py{margin-bottom:12px}table.py th{background:#f8fafc}
-      .ivf{margin-top:26px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;align-items:end}.ivf .thx{color:#475569;font-size:12.5px;line-height:1.7}.ivf .thx b{color:#293138;font-size:14px}
-      .ivf .sg{border-top:1.5px solid #94a3b8;padding-top:6px;margin-top:56px;text-align:center;color:#64748b;font-size:12px}
-      .ivx{margin-top:18px;height:6px;border-radius:3px;background:linear-gradient(90deg,#293138 0 70%,#fc5000 70% 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact}
-      .pill,.ivh{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    </style>`;
-    printDoc(no, {
-      internal: true,
-      head: `<div class="ivh"><span class="t">${L('فاتورة', 'INVOICE')}</span><span class="n">${esc(no)}</span><span class="d">${L('التاريخ', 'Date')}: ${fdate(now())}</span></div>`,
-      main: css + `<div class="ivc">
-        <div class="bx"><div class="l">${L('فاتورة إلى', 'Bill to')}</div><b class="big">${esc(c.full_name || '—')}</b><div class="r">${c.phone ? `📞 <span class="mono">${esc(c.phone)}</span><br>` : ''}${c.city ? '📍 ' + esc(c.city) + '<br>' : ''}<span class="pill" style="--c:${stColor(v.status)}">${esc(stName(v.status))}</span></div></div>
-        <div class="bx"><div class="l">${L('السيارة', 'Vehicle')}</div><div class="vb">${img ? `<div class="ph"><img src="${esc(img)}"></div>` : ''}<div><b class="big">${esc(vt(v))}</b><div class="r">${vSpec(v) ? esc(vSpec(v)) + '<br>' : ''}VIN: <span class="mono">${esc(v.vin)}</span><br>${v.lot_number ? `LOT: <span class="mono">${esc(v.lot_number)}</span> · ` : ''}${esc(v.auction_name || '')}${v.auction_location ? ' — ' + esc(v.auction_location) : ''}${v.us_port ? `<br>${L('ميناء الشحن', 'Port')}: ${esc(pName(v.us_port))} → ${L('الخمس', 'Khoms')}` : ''}${v.container_number ? `<br>${L('الحاوية', 'Container')}: <span class="mono">${esc(v.container_number)}</span>` : ''}</div></div></div></div>
-      </div>
-      <table class="it"><thead><tr><th>#</th><th>${L('البيان', 'Description')}</th><th class="num">${L('المبلغ (USD)', 'Amount (USD)')}</th></tr></thead><tbody>
-        ${items.length ? items.map((x, i) => `<tr><td class="i">${i + 1}</td><td>${x[0]}</td><td class="num">${money(x[1])}</td></tr>`).join('') : `<tr><td></td><td>—</td><td></td></tr>`}</tbody></table>
-      <div class="ivt"><div class="tb"><div class="r g"><span>${L('الإجمالي', 'Total')}</span><b>${money(tot)}</b></div><div class="r"><span>${L('المدفوع', 'Paid')}</span><b>${money(paid)}</b></div>
-        <div class="r bd ${bal <= 0.009 ? 'ok' : ''}"><span>${bal <= 0.009 ? L('خالص ✓', 'Paid in full ✓') : L('المتبقي', 'Balance due')}</span><b>${money(Math.max(0, bal))}</b></div></div></div>
-      ${pays.length ? `<h3>${L('الدفعات المستلمة', 'Payments received')}</h3><table class="py"><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('المبلغ', 'Amount')}</th><th class="num">USD</th><th>${L('ملاحظات', 'Notes')}</th></tr></thead><tbody>${pays.map(p => `<tr><td>${fdate(p.date)}</td><td>${p.currency === 'LYD' ? lyd(p.amount) + ' @' + esc(p.rate) : money(p.amount)}</td><td class="num">${money(p.amount_usd)}</td><td>${esc(p.receipt_notes || '')}</td></tr>`).join('')}</tbody></table>` : ''}
-      <div class="ivf"><div class="thx"><b>${esc(S.settings.note || L('شكراً لثقتكم', 'Thank you for your business'))}</b><br>${v.auction_invoice ? '🧾 ' + L('فاتورة المزاد الأصلية متاحة في صفحة التتبع', 'The original auction invoice is available on the tracking page') + '<br>' : ''}🔎 ${L('تتبّع سيارتك', 'Track your car')}: <span class="mono" style="font-size:11px">${esc(trackUrl(v.vin))}</span></div>
-        <div class="sg">${L('توقيع المحاسب', 'Accountant signature')}</div><div class="sg">${L('الختم', 'Stamp')}</div></div>
-      <div class="ivx"></div>`
-    });
+    const c = S.customers.find(x => x.id === v.customer_id) || {}, imgs = (S.trk[v.vin] || {}).images || [];
+    invoicePrint({ ...invSnap(v), phone: c.phone || '', img: (imgs.find(x => x.stage === 'auction') || imgs[0] || {}).src || '' }, true);
   },
   printVeh(id) {
     const v = S.vehicles.find(x => x.id === id); if (!v) return;
@@ -1835,17 +1864,21 @@ const A = {
   },
 
   /* التتبع العام */
+  pubInv() { const d = S.pubTrk; if (!d || !d.office_invoice) return; const imgs = d.images || []; invoicePrint({ ...d.office_invoice, img: (imgs.find(x => x.stage === 'auction') || imgs[0] || {}).src || '' }, false); },
   async pubSearch() {
     const vin = $('#pv').value.trim().toUpperCase(), out = $('#pres'); if (!vin) return;
     out.innerHTML = `<div class="card empty">${L('جاري البحث...', 'Searching...')}</div>`;
     let d = null; try { d = await DB.get('tracking', vin); } catch (e) { }
     if (!d) { out.innerHTML = `<div class="card empty">❌ ${L('لم يتم العثور على سيارة بهذا الرقم. تأكد من رقم الهيكل (17 خانة) أو تواصل مع المكتب.', 'No vehicle found with this VIN. Check the 17-character VIN or contact the office.')}</div>`; return; }
     const imgs = (d.images || []).map((x, i) => ({ ...x, i })); S.lbList = imgs.map(x => x.src); S.pubTrk = d;
+    const oi = d.office_invoice, oinv = oi ? `<div class="card"><div class="row-b"><h3 style="margin:0">💼 ${L('فاتورة المكتب', 'Office invoice')} <span class="sub mono">${esc(oi.no)}</span></h3><button class="btn pri" onclick="A.pubInv()">🖨️ ${L('عرض / طباعة الفاتورة', 'View / print invoice')}</button></div>
+      <div class="ytiles" style="margin-top:12px"><div class="ytile"><span>${L('الإجمالي', 'Total')}</span><b>${money(oi.tot)}</b></div><div class="ytile"><span>${L('المدفوع', 'Paid')}</span><b>${money(oi.paid)}</b></div><div class="ytile ${num(oi.bal) > 0.009 ? 'tot' : ''}" ${num(oi.bal) > 0.009 ? '' : 'style="background:#ecfdf5;border-color:#a7f3d0"'}><span>${num(oi.bal) > 0.009 ? L('المتبقي', 'Balance due') : L('الحالة', 'Status')}</span><b ${num(oi.bal) > 0.009 ? '' : 'style="color:#047857;direction:inherit"'}>${num(oi.bal) > 0.009 ? money(oi.bal) : L('خالص ✓', 'Paid in full ✓')}</b></div></div>
+      <div class="hint">${L('آخر تحديث', 'Last updated')}: ${fdate(oi.updated_at)}</div></div>` : '';
     const inv = d.invoice ? `<div class="card"><h3>🧾 ${L('فاتورة المزاد', 'Auction invoice')}</h3><div class="invf"><div class="ic">${/pdf/.test(d.invoice.type) ? '📄' : '🖼️'}</div><div class="nm"><b>${esc(d.invoice.name)}</b><small><span dir="ltr">${fsize(d.invoice.size)}</span> · ${fdate(d.invoice.at)}</small></div><div class="acts"><button class="btn pri" onclick="A.invOpen('${esc(d.vin)}')">👁️ ${L('عرض الفاتورة', 'View invoice')}</button><button class="btn" onclick="A.invDl('${esc(d.vin)}')">⬇️ ${L('تنزيل', 'Download')}</button></div></div></div>` : '';
     out.innerHTML = `<div class="card"><div class="row-b"><div><h2 style="margin:0">🚗 ${esc(vt(d))}</h2><div class="sub mono">VIN: ${esc(d.vin)}</div></div>${badge(d.status)}</div>
       ${pipeline(d.status, d.status_history)}
       <div class="info" style="margin-top:14px">${d.trim ? `<div><span>${L('الفئة', 'Trim')}</span><b>${esc(d.trim)}</b></div>` : ''}${d.engine ? `<div><span>${L('المحرك', 'Engine')}</span><b>${esc(d.engine)}</b></div>` : ''}${d.color ? `<div><span>${L('اللون', 'Color')}</span><b>${esc(d.color)}</b></div>` : ''}${d.container_number ? `<div><span>${L('رقم الحاوية', 'Container #')}</span><b class="mono">${esc(d.container_number)}</b></div>` : ''}<div><span>${L('آخر تحديث', 'Last update')}</span><b>${fdate(d.updated_at)}</b></div></div></div>
-      ${inv}<div class="card"><h3>📷 ${L('صور السيارة', 'Photos')}</h3>${galGrid(imgs, false)}</div>`;
+      ${oinv}${inv}<div class="card"><h3>📷 ${L('صور السيارة', 'Photos')}</h3>${galGrid(imgs, false)}</div>`;
     try { history.replaceState(null, '', location.pathname + '?vin=' + encodeURIComponent(vin)); } catch (e) { }
   },
 
@@ -1905,7 +1938,7 @@ let unsubs = [];
 function startWatch() {
   if (unsubs.length) return;
   DB.get('settings', 'main').then(d => { if (d) { S.settings = { ...S.settings, ...d }; render(); } }).catch(() => { });
-  ['customers', 'vehicles', 'payments'].concat(can('expenses') ? ['expenses'] : []).forEach(c => unsubs.push(DB.watch(c, arr => { S[c] = arr; S.loaded[c] = true; recompute(); render(); migrateInternal(); })));
+  ['customers', 'vehicles', 'payments'].concat(can('expenses') ? ['expenses'] : []).forEach(c => unsubs.push(DB.watch(c, arr => { S[c] = arr; S.loaded[c] = true; recompute(); render(); queueInvSync(); migrateInternal(); })));
   if (can('profit')) unsubs.push(DB.watch('vinternal', arr => { S.internal = Object.fromEntries(arr.map(x => [x.id, x])); S.loaded.vinternal = true; recompute(); render(); migrateInternal(); }));
   if (can('logs')) unsubs.push(DB.watch('logs', arr => { S.logs = arr; if (S.route === 'logs') render(); }, { order: 'at', limit: 300 }));
   if (isAdmin()) unsubs.push(DB.watch('users', arr => { S.users = arr; if (S.route === 'users') render(); }));
