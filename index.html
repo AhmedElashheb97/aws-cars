@@ -9,6 +9,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AWS">
 <title>AWS لاستيراد السيارات</title>
+<link rel="icon" type="image/png" href="favicon.png">
+<link rel="apple-touch-icon" href="icon-180.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -60,7 +62,7 @@
 ================================================================
 -->
 <style>
-:root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--mut:#64748b;--line:#e2e8f0;--soft:#f8fafc;--pri:#2563eb;--pri2:#1d4ed8;--acc:#f97316;--red:#dc2626;--green:#059669;--side:#0f172a;--r:14px}
+:root{--bg:#f1f5f9;--card:#fff;--ink:#0f172a;--mut:#64748b;--line:#e2e8f0;--soft:#f8fafc;--pri:#e8590c;--pri2:#c2410c;--acc:#fc5000;--brand:#293138;--red:#dc2626;--green:#059669;--side:#1f262d;--r:14px}
 *{box-sizing:border-box}
 body{margin:0;font-family:'Cairo',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.55}
 a{color:var(--pri)}
@@ -109,7 +111,7 @@ tr.late{background:#fef2f2} tr.late:hover{background:#fee2e2}
 .badge{display:inline-block;padding:3px 11px;border-radius:99px;font-size:12px;font-weight:700;color:var(--c);background:color-mix(in srgb,var(--c) 13%,white);border:1px solid color-mix(in srgb,var(--c) 30%,white);white-space:nowrap}
 .mono{font-family:ui-monospace,Consolas,monospace;direction:ltr;unicode-bidi:isolate;letter-spacing:.4px}
 input,select,textarea{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;color:var(--ink)}
-input:focus,select:focus,textarea:focus{outline:2px solid #bfdbfe;border-color:var(--pri)}
+input:focus,select:focus,textarea:focus{outline:2px solid #fed7aa;border-color:var(--pri)}
 .filters{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:10px}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:12px}
 label.f{display:block}
@@ -146,7 +148,7 @@ label.f span{display:block;font-size:12px;color:var(--mut);margin-bottom:4px;fon
 .step.clk{cursor:pointer} .step.clk:hover .dot{border-color:var(--pri)}
 .dot{width:32px;height:32px;border-radius:50%;background:#fff;border:3px solid var(--line);margin:0 auto;display:grid;place-items:center;font-weight:800;position:relative;z-index:1;font-size:13px;color:var(--mut)}
 .done .dot{background:var(--green);border-color:var(--green);color:#fff}
-.cur .dot{border-color:var(--pri);color:#fff;background:var(--pri);box-shadow:0 0 0 5px #dbeafe}
+.cur .dot{border-color:var(--pri);color:#fff;background:var(--pri);box-shadow:0 0 0 5px #ffedd5}
 .lbl{font-size:11.5px;margin-top:7px;font-weight:700;color:var(--mut);padding:0 3px}
 .cur .lbl{color:var(--pri)} .done .lbl{color:var(--ink)}
 .dt{font-size:10.5px;color:var(--mut)}
@@ -171,10 +173,10 @@ label.f span{display:block;font-size:12px;color:var(--mut);margin-bottom:4px;fon
 .ccard{display:flex;justify-content:space-between;gap:10px}
 .vinrow{display:flex;gap:6px}.vinrow input{flex:1}
 .vmsg{font-size:12px;margin-top:3px;min-height:16px}.vmsg.ok{color:var(--green)}.vmsg.bad{color:var(--red)}
-.bulk{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:10px 12px;margin-bottom:10px}
+.bulk{display:flex;gap:8px;align-items:center;flex-wrap:wrap;background:#fff7ed;border:1px solid #fed7aa;border-radius:12px;padding:10px 12px;margin-bottom:10px}
 .bulk b{color:var(--pri2)}.bulk select,.bulk input{width:auto;min-width:150px}
 td.cb,th.cb{width:36px;padding-inline-end:0}td.cb input,th.cb input{width:17px;height:17px;cursor:pointer}
-tr.sel{background:#eff6ff}
+tr.sel{background:#fff7ed}
 .btn.wa{background:#16a34a;border-color:#16a34a;color:#fff}.btn.wa:hover{background:#15803d}
 .when{font-size:12px;color:var(--mut);white-space:nowrap}
 .age{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:800;background:#f1f5f9;color:#475569}
@@ -182,11 +184,11 @@ tr.sel{background:#eff6ff}
 .ocars{font-size:12px;color:var(--mut);line-height:1.5;white-space:normal;min-width:180px}
 .sortb{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
 .noprofit .pf{display:none!important}
-.perm{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;margin:2px}
+.perm{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;background:#fff7ed;color:#c2410c;border:1px solid #fed7aa;margin:2px}
 .perm.off{background:#f8fafc;color:#94a3b8;border-color:var(--line);text-decoration:line-through}
 .pchk{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer}
 .pchk input{width:19px;height:19px;margin-top:2px;flex-shrink:0}.pchk b{display:block;font-size:13.5px}.pchk span{font-size:12px;color:var(--mut)}
-.pchk:has(input:checked){border-color:#93c5fd;background:#eff6ff}
+.pchk:has(input:checked){border-color:#fdba74;background:#fff7ed}
 .pgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .ustate{font-size:12px;font-weight:800;padding:2px 10px;border-radius:99px}.ustate.on{background:#ecfdf5;color:#047857}.ustate.off{background:#fef2f2;color:#b91c1c}
 @media(max-width:860px){.pgrid{grid-template-columns:1fr}}
@@ -194,7 +196,7 @@ tr.sel{background:#eff6ff}
 #toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:99;display:flex;flex-direction:column;gap:8px;align-items:center}
 .tst{background:var(--ink);color:#fff;padding:10px 18px;border-radius:12px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.2)}
 .tst.err{background:var(--red)}
-.login,.pub{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 20% 0%,#1e3a8a 0,#0f172a 60%)}
+.login,.pub{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;background:radial-gradient(circle at 15% 0%,#5a2a0c 0,#1f262d 55%,#15191d 100%)}
 .lcard{width:100%;max-width:400px;text-align:center;display:flex;flex-direction:column;gap:12px}
 .lcard form{display:flex;flex-direction:column;gap:12px;text-align:start}
 .logo{width:62px;height:62px;border-radius:18px;margin:0 auto;background:linear-gradient(135deg,var(--acc),#fb923c);display:grid;place-items:center;font-size:32px}
@@ -219,7 +221,7 @@ tr.sel{background:#eff6ff}
 .sheet-list .cnt{margin-inline-start:auto;background:var(--red);color:#fff;border-radius:99px;font-size:11px;padding:0 8px}
 .mc{display:block;background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 14px;cursor:pointer;position:relative}
 .mc+.mc{margin-top:10px}
-.mc.late{border-color:#fecaca;background:#fef2f2}.mc.sel{border-color:#93c5fd;background:#eff6ff}
+.mc.late{border-color:#fecaca;background:#fef2f2}.mc.sel{border-color:#fdba74;background:#fff7ed}
 .mc-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .mc-h b{font-size:15px}
 .mc-s{font-size:12px;color:var(--mut);margin-top:2px}
@@ -317,9 +319,62 @@ tr.sel{background:#eff6ff}
 .pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
 .pcard{cursor:pointer;text-align:start;font:inherit;color:inherit}.pcard.on{outline:2px solid var(--ink)}
 .pcard .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.pcard .tags span{font-size:11px;background:var(--soft);border-radius:5px;padding:1px 6px;font-weight:700}
-.yinfo{grid-column:1/-1;padding:10px 12px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;font-size:13px;line-height:1.7}
+.yinfo{grid-column:1/-1;padding:10px 12px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;font-size:13px;line-height:1.7}
 .yinfo.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
 .yinfo:empty{display:none}
+
+/* الشعار */
+.brand.withlogo{flex-direction:column;align-items:flex-start;gap:6px;padding:6px 10px 18px}
+.brand .blogo{width:150px;height:auto;display:block}
+.brand small{font-size:11.5px;font-weight:700;color:#94a3b8;letter-spacing:.2px}
+.mtop .mlogo{height:28px;width:auto;display:block}
+.llogo{width:220px;max-width:80%;height:auto;margin:4px auto 2px;display:block}
+.pub-h .plogo{width:240px;max-width:70vw;height:auto;display:block;margin:0 auto}
+.boot-logo{width:200px;max-width:60vw;opacity:.95;animation:bl 1.2s ease-in-out infinite alternate}
+@keyframes bl{from{opacity:.55}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.boot-logo{animation:none}}
+/* نموذج السيارة */
+.modal .vfm{margin:-22px -22px 0;padding:16px 22px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);position:sticky;top:-30px;background:#fff;z-index:3;border-radius:16px 16px 0 0}
+.modal .vfm h2{margin:0;display:flex;align-items:center;gap:10px}
+.modal .vfm .vfm-sub{font-size:12px;color:var(--mut);font-weight:700}
+.mx{border:0;background:var(--soft);width:34px;height:34px;border-radius:10px;font-size:20px;line-height:1;cursor:pointer;color:var(--mut)}
+.mx:hover{background:var(--line);color:var(--ink)}
+#vf .sec{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink);border:0;margin:22px 0 12px;padding:0}
+#vf .sec::after{content:'';flex:1;height:1px;background:var(--line)}
+#vf .sec i{font-style:normal;width:28px;height:28px;border-radius:8px;background:#fff7ed;display:grid;place-items:center;font-size:15px}
+#vf .grid{align-items:start}
+#vf label.f>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#vf input,#vf select,#vf textarea{min-height:42px}
+#vf input[type=number],#vf input[dir=ltr]{text-align:left}
+.shipbox{background:linear-gradient(180deg,#fff7ed,#fff);border:1px solid #fed7aa;border-radius:14px;padding:14px;margin-bottom:14px}
+.shiprow{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:12px;align-items:end}
+.yardin{position:relative}
+.yardin input{padding-left:36px;font-weight:700}
+.yardin::before{content:'🔍';position:absolute;left:11px;bottom:12px;font-size:14px;opacity:.7;pointer-events:none}
+.shipbox .pseg{background:#fff}
+.shipbox .pseg button{min-width:44px;padding:9px 12px}
+.yhint{font-size:12px;color:var(--mut);margin-top:8px}
+.ytiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:12px}
+.ytile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+.ytile span{display:block;font-size:11.5px;color:var(--mut);font-weight:700}
+.ytile b{font-size:16px;direction:ltr;unicode-bidi:isolate;display:inline-flex;align-items:center;gap:6px}
+.ytile.port b{direction:inherit}
+.ytile.tot{background:var(--brand);border-color:var(--brand)}.ytile.tot span{color:#cbd5e1}.ytile.tot b{color:#fff}
+.ytile.own{border-style:dashed;background:#fffbeb}
+.ywarn{margin-top:12px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:700}
+.vtots{margin-top:14px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:stretch}
+.vtots .totbox{margin:0;background:var(--brand);color:#fff;border-color:var(--brand);align-items:center}
+.vtots .totbox #vtot{font-size:20px;color:#fff}
+.vtots .profbox{border:1px dashed #86efac;background:#f0fdf4;border-radius:12px;padding:8px 14px;min-width:170px}
+.vtots .profbox span{display:block;font-size:11.5px;color:#166534;font-weight:700}.vtots .profbox b{font-size:17px;color:#15803d;direction:ltr;unicode-bidi:isolate}
+@media(max-width:860px){.shiprow{grid-template-columns:1fr}.vtots{grid-template-columns:1fr}.modal .vfm{margin:-16px -16px 0;padding:12px 16px;top:-16px}}
+/* فاتورة المزاد */
+.invf{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--soft)}
+.invf .ic{width:44px;height:44px;border-radius:10px;background:#fff7ed;border:1px solid #fed7aa;display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.invf .nm{flex:1;min-width:160px}.invf .nm b{display:block;word-break:break-all}.invf .nm small{color:var(--mut)}
+.invf .acts{display:flex;gap:6px;flex-wrap:wrap}
+.inv-empty{border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;color:var(--mut)}
+.pubinv{width:100%;max-width:860px}
 </style>
 </head>
 <body>
@@ -539,7 +594,7 @@ const isAdmin = () => (LOCAL && S.user?.email === 'demo@local') || isAdminEmail(
 const can = p => p === 'admin' ? isAdmin() : (isAdmin() || !!(S.me && S.me.perms && S.me.perms[p]));
 const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', users: 'admin' };
 const NEED = {
-  vForm: 'edit', vSave: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
+  vForm: 'edit', vSave: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
   pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses',
   printFull: 'profit', sSave: 'settings', seed: 'admin', unseed: 'admin', backup: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
 };
@@ -702,13 +757,14 @@ function pmPrintHtml(rows, title) {
 /* حقل الساحة في نموذج السيارة */
 function yardInfoHtml(y, n, port) {
   if (!PD()) return '';
-  if (!y && !port) return '';
   const pid = y ? y.p : port;
-  if (!pPort(pid)) return '';
-  const oc = pmOcean(pid, n);
-  if (y && y.tow == null) return `<div class="yinfo warn">⚠️ ${L('هذه الساحة لا يوجد لها سعر سحب بعد إلى', 'This yard has no towing price yet to')} ${esc(pName(pid))}. ${L('تمت تعبئة الشحن البحري فقط', 'Only ocean was filled')} (<b dir="ltr">${usd0(oc)}</b>/${L('سيارة', 'car')}). ${L('اكتب سعر السحب بيدك.', 'Enter the towing price by hand.')}</div>`;
-  return `<div class="yinfo">🗺️ ${L('الميناء', 'Port')}: <b><span class="pdot" style="background:${PCLR[pid]}"></span>${esc(pName(pid))}</b>${y ? ` · ${L('السحب', 'Towing')} <b dir="ltr">${usd0(pmTow(y))}</b>` : ''} · ${L('البحري', 'Ocean')} <b dir="ltr">${money(r2(oc))}</b>/${L('سيارة', 'car')} (${n} ${L('سيارات في الحاوية', 'cars per container')})${y ? ` · ${L('الإجمالي', 'Total')} <b dir="ltr">${money(r2(pmTotal(y, n)))}</b>` : ''}
-    ${y ? `<span class="pf"> · 🔒 ${L('تكلفتنا', 'Our cost')} <b dir="ltr">${money(r2(pmCost(y, n)))}</b></span>` : ''}<br><span class="sub">${L('تمت تعبئة الشحن الداخلي والبحري تلقائياً في الحساب المالي، ويمكنك تعديلها.', 'Inland and ocean shipping were filled in below automatically. You can still edit them.')}</span></div>`;
+  if (!pid || !pPort(pid)) return '';
+  const oc = pmOcean(pid, n), tile = (k, v, c = '') => `<div class="ytile ${c}"><span>${k}</span><b>${v}</b></div>`;
+  const t = [tile(L('ميناء الشحن', 'US port'), `<i class="pdot" style="background:${PCLR[pid]};margin:0"></i>${esc(pName(pid))}`, 'port')];
+  if (y && y.tow != null) t.push(tile(L('السحب للميناء', 'Towing'), money(pmTow(y))));
+  t.push(tile(L('البحري للسيارة', 'Ocean / car') + ` (${n})`, money(r2(oc))));
+  if (y && y.tow != null) { t.push(tile(L('الإجمالي للسيارة', 'Total / car'), money(r2(pmTotal(y, n))), 'tot')); t.push(tile('🔒 ' + L('تكلفتنا', 'Our cost'), money(r2(pmCost(y, n))), 'own pf')); }
+  return `<div class="ytiles">${t.join('')}</div>` + (y && y.tow == null ? `<div class="ywarn">⚠️ ${L('هذه الساحة ما عندهاش سعر سحب بعد إلى', 'No towing price yet from this yard to')} ${esc(pName(pid))}. ${L('تعبّى الشحن البحري فقط — اكتب السحب بيدك.', 'Only ocean was filled — enter towing by hand.')}</div>` : `<div class="yhint">✓ ${L('تعبّى الشحن الداخلي والبحري في الحساب المالي تحت. تقدر تعدّلهم.', 'Inland and ocean shipping were filled in below. You can still edit them.')}</div>`);
 }
 
 /* ---------------- الهيكل والتنقل ---------------- */
@@ -726,13 +782,13 @@ function shell(body) {
   for (let k = nav.length - 1; k >= 0; k--) if (!okR(nav[k][0])) nav.splice(k, 1);
   const bn = [['dashboard', '🏠', L('الرئيسية', 'Home'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['collect', '📞', L('التحصيل', 'Collect'), nav[4][3]]];
   const inMore = ['ports', 'payments', 'expenses', 'logs', 'settings', 'users'].includes(act);
-  return `<header class="mtop"><div class="lg">🚢</div><b>${esc(S.settings.office)}</b><button onclick="A.lang()">${L('EN', 'ع')}</button></header>
+  return `<header class="mtop"><img class="mlogo" src="logo-light.png" alt="AXS"><b style="font-size:14px">${esc(S.settings.office)}</b><button onclick="A.lang()">${L('EN', 'ع')}</button></header>
   <nav class="bnav">${bn.map(n => `<a href="#/${n[0]}" class="${act === n[0] ? 'on' : ''}"><i>${n[1]}</i>${n[2]}${n[3] ? `<span class="dotc">${n[3]}</span>` : ''}</a>`).join('')}
     <a href="javascript:A.more()" class="${inMore ? 'on' : ''}"><i>☰</i>${L('المزيد', 'More')}</a></nav>
   <button class="fab" onclick="A.quick()" aria-label="${L('إضافة', 'Add')}">+</button>
   <div class="layout">
   <aside class="side">
-    <div class="brand"><div class="lg">🚢</div><span>${esc(S.settings.office)}</span></div>
+    <div class="brand withlogo"><img class="blogo" src="logo-light.png" alt="AXS"><small>${esc(S.settings.office)}</small></div>
     <nav class="nav">${nav.map(n => `<a href="#/${n[0]}" class="${act === n[0] ? 'on' : ''}">${n[1]} <span>${n[2]}</span>${n[3] ? `<b class="cnt">${n[3]}</b>` : ''}</a>`).join('')}
     <a href="#/track" target="_blank">🔎 <span>${L('صفحة التتبع', 'Tracking page')}</span></a></nav>
     <div class="side-foot"><span class="em">${esc(S.me?.name || S.user?.email || '')}<br><small>${esc(roleName(isAdmin() ? 'admin' : S.me?.role))}</small></span>
@@ -863,6 +919,7 @@ function vVehicle() {
     ${pipeline(v.status, v.status_history, v.id)}<div class="hint">${L('يمكنك الضغط على أي مرحلة لنقل السيارة إليها مباشرة. التحديث يظهر فوراً في صفحة تتبع الزبون.', 'Click any stage to move the vehicle there. Updates appear instantly on the customer tracking page.')}</div></div>
   <div class="card"><h3>${L('بيانات السيارة', 'Vehicle details')}</h3><div class="info">${inf.map(x => `<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>${v.notes ? `<div class="hint">📝 ${esc(v.notes)}</div>` : ''}</div>
   <div class="card"><h3>📷 ${L('صور السيارة', 'Vehicle photos')}</h3><div id="gal"><div class="empty">${L('جاري تحميل الصور...', 'Loading photos...')}</div></div></div>
+  ${invCard(v)}
   <div class="two">
     <div class="card"><h3>💲 ${L('كشف التكاليف', 'Cost breakdown')}</h3>
       <table class="fin"><tbody>${can('profit') ? FIN.map(x => `<tr><td>${L(x.ar, x.en)}</td><td>${money(f[x.k])}</td></tr>`).join('') : custFin(v).map(x => `<tr><td>${x[0]}</td><td>${money(x[1])}</td></tr>`).join('')}
@@ -873,6 +930,98 @@ function vVehicle() {
       <div class="internal pf">🔒 ${L('داخلي (لا يظهر في الفاتورة)', 'Internal (not on invoice)')}: ${L('تكلفة الشحن الفعلية', 'Actual shipping cost')} <b>${act > 0 ? money(act) : '—'}</b> · ${L('ربح المكتب من هذه السيارة', 'Office profit on this car')} <b class="pos">${money(profit(v))}</b></div></div>
     <div class="card"><div class="row-b"><h3>💵 ${L('الدفعات', 'Payments')}</h3><button class="btn sm pri" onclick="A.pForm({customer_id:'${v.customer_id}',vehicle_id:'${v.id}'})">+ ${L('دفعة', 'Payment')}</button></div>${payTable(pays, false)}</div>
   </div>`;
+}
+
+/* ---------------- فاتورة المكتب (للطباعة ولصفحة التتبع) ---------------- */
+const INV_CSS = `<style>
+      .ivh{display:flex;flex-direction:column;align-items:flex-end;gap:2px}.ivh .t{font-size:26px;font-weight:800;letter-spacing:1px;color:#293138;line-height:1}.ivh .n{font-family:Consolas,monospace;font-weight:700;color:#fc5000;font-size:14px}.ivh .d{color:#64748b;font-size:12px}
+      .pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:11.5px;font-weight:800;color:#fff;background:var(--c)}
+      .ivc{display:grid;grid-template-columns:1fr 1.3fr;gap:12px;margin-bottom:16px}
+      .bx{border:1px solid #e2e8f0;border-radius:12px;padding:12px 14px;background:#fff}.bx .l{font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#fc5000;margin-bottom:6px}
+      .bx b.big{font-size:15px;display:block;margin-bottom:2px}.bx .r{color:#475569;font-size:12.5px;line-height:1.7}
+      .vb{display:flex;gap:12px}.vb .ph{width:150px;flex-shrink:0;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#f1f5f9;border:1px solid #e2e8f0}.vb .ph img{width:100%;height:100%;object-fit:cover}
+      table.it{border:0;margin-bottom:0}table.it th{background:#293138;color:#fff;border:0;padding:9px 12px;font-size:11.5px;letter-spacing:.3px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      table.it td{border:0;border-bottom:1px solid #eef2f6;padding:10px 12px}table.it td.i{color:#94a3b8;width:34px}
+      .ivt{display:flex;justify-content:flex-end;margin:14px 0 18px}.ivt .tb{width:310px}.ivt .r{display:flex;justify-content:space-between;align-items:center;padding:7px 14px}.ivt .r b{direction:ltr;unicode-bidi:isolate}
+      .ivt .g{border-top:2px solid #293138;font-weight:800;font-size:14px}.ivt .bd{background:#fc5000;color:#fff;font-weight:800;font-size:16px;border-radius:10px;margin-top:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}.ivt .bd.ok{background:#059669}
+      table.py{margin-bottom:12px}table.py th{background:#f8fafc}
+      .ivf{margin-top:26px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:14px;align-items:end}.ivf .thx{color:#475569;font-size:12.5px;line-height:1.7}.ivf .thx b{color:#293138;font-size:14px}
+      .ivf .sg{border-top:1.5px solid #94a3b8;padding-top:6px;margin-top:56px;text-align:center;color:#64748b;font-size:12px}
+      .ivx{margin-top:18px;height:6px;border-radius:3px;background:linear-gradient(90deg,#293138 0 70%,#fc5000 70% 100%);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      .pill,.ivh{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    </style>`;
+/* لقطة من الفاتورة بدون بيانات داخلية — تُحفظ في tracking/{VIN} ليشوفها الزبون */
+function invSnap(v) {
+  const c = S.customers.find(x => x.id === v.customer_id) || {}, f = v.fin || {}, bid = num(f.bid_price), tr = num(f.transfer_commission), items = [];
+  if (bid || tr) items.push({ k: tr ? 'bid_tr' : 'bid_price', a: r2(bid + tr) });
+  FIN.filter(x => !['bid_price', 'transfer_commission'].includes(x.k) && num(f[x.k])).forEach(x => items.push({ k: x.k, a: r2(num(f[x.k])) }));
+  const tot = r2(totalCost(v)), paid = r2(vPaid(v.id));
+  const pays = S.payments.filter(p => p.vehicle_id === v.id).sort((a, b) => (a.date || '').localeCompare(b.date || '')).map(p => ({ date: p.date || '', cur: p.currency || 'USD', amt: num(p.amount), rate: p.rate || '', usd: r2(num(p.amount_usd)) }));
+  return { no: 'INV-' + v.vin.slice(-6), customer: c.full_name || '', city: c.city || '', status: v.status || '', title: vt(v), spec: vSpec(v), vin: v.vin, lot: v.lot_number || '', auction: v.auction_name || '', loc: v.auction_location || '', port: v.us_port || '', container: v.container_number || '', items, tot, paid, bal: r2(tot - paid), pays, auction_inv: !!v.auction_invoice };
+}
+const invItemLabel = k => k === 'bid_tr' ? L('سعر الشراء والتحويل', 'Purchase & transfer') : (x => x ? L(x.ar, x.en) : k)(FIN.find(x => x.k === k));
+function invoicePrint(d, auto) {
+  const bal = num(d.bal);
+  printDoc(d.no, {
+    internal: true, noAuto: !auto,
+    head: `<div class="ivh"><span class="t">${L('فاتورة', 'INVOICE')}</span><span class="n">${esc(d.no)}</span><span class="d">${L('التاريخ', 'Date')}: ${fdate(now())}</span></div>`,
+    main: INV_CSS + `<div class="ivc">
+      <div class="bx"><div class="l">${L('فاتورة إلى', 'Bill to')}</div><b class="big">${esc(d.customer || '—')}</b><div class="r">${d.phone ? `📞 <span class="mono">${esc(d.phone)}</span><br>` : ''}${d.city ? '📍 ' + esc(d.city) + '<br>' : ''}<span class="pill" style="--c:${stColor(d.status)}">${esc(stName(d.status))}</span></div></div>
+      <div class="bx"><div class="l">${L('السيارة', 'Vehicle')}</div><div class="vb">${d.img ? `<div class="ph"><img src="${esc(d.img)}"></div>` : ''}<div><b class="big">${esc(d.title)}</b><div class="r">${d.spec ? esc(d.spec) + '<br>' : ''}VIN: <span class="mono">${esc(d.vin)}</span><br>${d.lot ? `LOT: <span class="mono">${esc(d.lot)}</span> · ` : ''}${esc(d.auction)}${d.loc ? ' — ' + esc(d.loc) : ''}${d.port ? `<br>${L('ميناء الشحن', 'Port')}: ${esc(pName(d.port))} → ${L('الخمس', 'Khoms')}` : ''}${d.container ? `<br>${L('الحاوية', 'Container')}: <span class="mono">${esc(d.container)}</span>` : ''}</div></div></div></div>
+    </div>
+    <table class="it"><thead><tr><th>#</th><th>${L('البيان', 'Description')}</th><th class="num">${L('المبلغ (USD)', 'Amount (USD)')}</th></tr></thead><tbody>
+      ${(d.items || []).length ? d.items.map((x, i) => `<tr><td class="i">${i + 1}</td><td>${esc(invItemLabel(x.k))}</td><td class="num">${money(x.a)}</td></tr>`).join('') : `<tr><td></td><td>—</td><td></td></tr>`}</tbody></table>
+    <div class="ivt"><div class="tb"><div class="r g"><span>${L('الإجمالي', 'Total')}</span><b>${money(d.tot)}</b></div><div class="r"><span>${L('المدفوع', 'Paid')}</span><b>${money(d.paid)}</b></div>
+      <div class="r bd ${bal <= 0.009 ? 'ok' : ''}"><span>${bal <= 0.009 ? L('خالص ✓', 'Paid in full ✓') : L('المتبقي', 'Balance due')}</span><b>${money(Math.max(0, bal))}</b></div></div></div>
+    ${(d.pays || []).length ? `<h3>${L('الدفعات المستلمة', 'Payments received')}</h3><table class="py"><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('المبلغ', 'Amount')}</th><th class="num">USD</th></tr></thead><tbody>${d.pays.map(p => `<tr><td>${fdate(p.date)}</td><td>${p.cur === 'LYD' ? lyd(p.amt) + ' @' + esc(p.rate) : money(p.amt)}</td><td class="num">${money(p.usd)}</td></tr>`).join('')}</tbody></table>` : ''}
+    <div class="ivf"><div class="thx"><b>${esc(S.settings.note || L('شكراً لثقتكم', 'Thank you for your business'))}</b><br>${d.auction_inv ? '🧾 ' + L('فاتورة المزاد الأصلية متاحة في صفحة التتبع', 'The original auction invoice is available on the tracking page') + '<br>' : ''}🔎 ${L('تتبّع سيارتك', 'Track your car')}: <span class="mono" style="font-size:11px">${esc(trackUrl(d.vin))}</span></div>
+      <div class="sg">${L('توقيع المحاسب', 'Accountant signature')}</div><div class="sg">${L('الختم', 'Stamp')}</div></div>
+    <div class="ivx"></div>`
+  });
+}
+/* مزامنة الفاتورة مع صفحة التتبع تلقائياً عند أي تغيير في السيارة أو الدفعات */
+const hstr = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+let invSyncT = null, invSyncBusy = false;
+function queueInvSync() { clearTimeout(invSyncT); invSyncT = setTimeout(runInvSync, 1500); }
+async function runInvSync() {
+  if (invSyncBusy || !can('edit') || !S.loaded.vehicles || !S.loaded.customers || !S.loaded.payments) return;
+  invSyncBusy = true;
+  try {
+    for (const v of S.vehicles) {
+      if (!v.vin) continue;
+      const snap = invSnap(v), h = hstr(JSON.stringify(snap));
+      if (v.inv_sync === h) continue;
+      try { await DB.merge('tracking', v.vin, { office_invoice: { ...snap, updated_at: now() } }); await DB.update('vehicles', v.id, { inv_sync: h }); } catch (e) { }
+    }
+  } finally { invSyncBusy = false; }
+}
+
+/* ---------------- فاتورة المزاد (تظهر للزبون) ---------------- */
+const INV_MAX = 6 * 1024 * 1024, INV_CHUNK = 700000;
+const invId = (vin, i) => `${vin}__inv${i ? '_' + i : ''}`;
+const fsize = b => b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
+const readUrl = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
+const invMetaFor = vin => { const v = S.vehicles.find(x => x.vin === vin); return (v && v.auction_invoice) || (S.pubTrk && S.pubTrk.vin === vin ? S.pubTrk.invoice : null) || null; };
+async function invData(vin, meta) {
+  const parts = await Promise.all(Array.from({ length: meta.parts || 1 }, (_, i) => DB.get('tracking', invId(vin, i))));
+  if (parts.some(x => !x || !x.d)) throw new Error(L('ملف الفاتورة غير مكتمل', 'Invoice file is incomplete'));
+  return parts.map(x => x.d).join('');
+}
+async function invBlob(vin, meta) { return await (await fetch(await invData(vin, meta))).blob(); }
+async function invDelParts(vin, from, to) { for (let i = from; i < to; i++) await DB.del('tracking', invId(vin, i)).catch(() => { }); }
+async function invMove(oldVin, newVin, meta) {
+  if (!meta) return;
+  for (let i = 0; i < (meta.parts || 1); i++) { const d = await DB.get('tracking', invId(oldVin, i)).catch(() => null); if (d) await DB.merge('tracking', invId(newVin, i), { ...d, vin: newVin }); }
+  await invDelParts(oldVin, 0, meta.parts || 1);
+}
+function invCard(v) {
+  const m = v.auction_invoice, vin = esc(v.vin);
+  const up = can('edit') ? `<label class="btn ${m ? 'sm' : 'pri'} fileb">⬆️ ${m ? L('استبدال', 'Replace') : L('رفع فاتورة المزاد', 'Upload auction invoice')}<input type="file" accept="application/pdf,image/*" onchange="A.invUp('${v.id}',this)"></label>` : '';
+  return `<div class="card"><div class="row-b"><h3 style="margin:0">🧾 ${L('فاتورة المزاد', 'Auction invoice')}</h3>${m ? '' : up}</div>
+    ${m ? `<div class="invf" style="margin-top:12px"><div class="ic">${/pdf/.test(m.type) ? '📄' : '🖼️'}</div><div class="nm"><b>${esc(m.name)}</b><small><span dir="ltr">${fsize(m.size)}</span> · ${fdate(m.at)}</small></div>
+      <div class="acts"><button class="btn sm pri" onclick="A.invOpen('${vin}')">👁️ ${L('عرض', 'View')}</button><button class="btn sm" onclick="A.invDl('${vin}')">⬇️ ${L('تنزيل', 'Download')}</button>${up}${can('edit') ? `<button class="btn sm red" onclick="A.invDel('${v.id}')">🗑️</button>` : ''}</div></div>`
+    : `<div class="inv-empty" style="margin-top:12px">${L('ما فيش فاتورة مزاد مرفوعة لهذه السيارة بعد.', 'No auction invoice uploaded for this car yet.')}<br><small>PDF ${L('أو صورة', 'or image')} · ${L('حتى', 'up to')} 6 MB</small></div>`}
+    <div class="hint">👁️ ${L('الفاتورة تظهر للزبون في صفحة تتبع السيارة برقم الهيكل.', 'The invoice is visible to the customer on the car tracking page (by VIN).')}</div></div>`;
 }
 
 /* ---------------- الصور ---------------- */
@@ -1102,9 +1251,10 @@ function vSettings() {
 function vFormHtml(v, cid) {
   const f = v.fin || {}, isNew = !v.id;
   const inp = (n, lab, val, attr = '') => `<label class="f"><span>${lab}</span><input name="${n}" value="${esc(val ?? '')}" ${attr}></label>`;
-  return `<h2>${isNew ? L('إضافة سيارة', 'Add vehicle') : L('تعديل السيارة', 'Edit vehicle')}</h2>
+  const ncar = num(v.cars_per_container) || 4;
+  return `<div class="vfm"><div><h2>${isNew ? '🚗 ' + L('إضافة سيارة', 'Add vehicle') : '✏️ ' + L('تعديل السيارة', 'Edit vehicle')}</h2>${isNew ? '' : `<div class="vfm-sub">${esc(vt(v))} · <span class="mono">${esc(v.vin || '')}</span></div>`}</div><button type="button" class="mx" onclick="A.close()" aria-label="${L('إغلاق', 'Close')}">×</button></div>
   <form id="vf" data-id="${v.id || ''}" onsubmit="A.vSave(event,'${v.id || ''}')">
-  <div class="sec">${L('البيانات الأساسية', 'Basic info')}</div><div class="grid">
+  <div class="sec"><i>🚗</i>${L('البيانات الأساسية', 'Basic info')}</div><div class="grid">
     <label class="f"><span>${L('الزبون', 'Customer')} *</span><select name="customer_id" required>${custOpts(v.customer_id || cid)}</select></label>
     <label class="f"><span>${L('رقم الهيكل VIN (17 خانة)', 'VIN (17 chars)')} *</span><div class="vinrow"><input name="vin" id="vinIn" value="${esc(v.vin || '')}" required maxlength="17" class="mono" dir="ltr" oninput="A.vinIn(this)"><button type="button" class="btn" onclick="A.vinDecode(true)" title="${L('جلب الشركة والموديل والسنة', 'Fetch make, model & year')}">🔎</button></div><div class="vmsg" id="vinMsg">${isNew ? L('اكتب رقم الهيكل وتتعبى الشركة والموديل والسنة تلقائياً', 'Type the VIN to auto-fill make, model & year') : ''}</div></label>
     ${inp('lot_number', L('رقم اللوت', 'Lot number'), v.lot_number, 'dir="ltr"')}
@@ -1115,13 +1265,16 @@ function vFormHtml(v, cid) {
     ${inp('trim', L('الفئة (Trim)', 'Trim'), v.trim, 'placeholder="XLE / Limited / Sport..." dir="ltr"')}
     ${inp('engine', L('المحرك', 'Engine'), v.engine, 'placeholder="V6 3.5L" dir="ltr"')}
   </div><datalist id="mk">${['Toyota', 'Hyundai', 'Kia', 'Nissan', 'Honda', 'Ford', 'Chevrolet', 'Jeep', 'Dodge', 'Mercedes-Benz', 'BMW', 'Lexus', 'Audi', 'Volkswagen', 'Mazda', 'GMC', 'Tesla'].map(x => `<option>${x}</option>`).join('')}</datalist>
-  <div class="sec">${L('المزاد والشحن', 'Auction & shipping')}</div><div class="grid">
+  <div class="sec"><i>🚚</i>${L('المزاد والشحن إلى الخمس', 'Auction & shipping to Khoms')}</div>
+  <div class="shipbox"><div class="shiprow">
     <label class="f"><span>${L('المزاد', 'Auction')}</span><select name="auction_name" onchange="A.yardFill()">${AUCTIONS.map(a => `<option ${v.auction_name === a ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
-    <label class="f"><span>🗺️ ${L('الساحة من قائمة الأسعار (تعبّي السحب والبحري)', 'Yard from price list (fills towing & ocean)')}</span><input id="yardIn" list="yardDl" value="${esc(v.yard ? `${v.yard}, ${v.yard_state} · ${v.auction_name} → ${PSHORT[v.us_port] ? PSHORT[v.us_port][1] : v.us_port}` : '')}" placeholder="${L('اكتب المدينة أو الولاية… مثلاً Dallas', 'Type the city or state… e.g. Dallas')}" oninput="A.yardPick()" autocomplete="off" dir="ltr"><datalist id="yardDl"></datalist>
+    <label class="f yardin"><span>${L('الساحة (من قائمة الأسعار)', 'Yard (from price list)')}</span><input id="yardIn" list="yardDl" value="${esc(v.yard ? `${v.yard}, ${v.yard_state} · ${v.auction_name} → ${PSHORT[v.us_port] ? PSHORT[v.us_port][1] : v.us_port}` : '')}" placeholder="${L('اكتب المدينة أو الولاية… مثلاً Dallas', 'Type the city or state… e.g. Dallas')}" oninput="A.yardPick()" autocomplete="off" dir="ltr"><datalist id="yardDl"></datalist>
       <input type="hidden" name="us_port" value="${esc(v.us_port || '')}"><input type="hidden" name="yard" value="${esc(v.yard || '')}"><input type="hidden" name="yard_state" value="${esc(v.yard_state || '')}"></label>
-    <label class="f"><span>${L('عدد السيارات في الحاوية', 'Cars per container')}</span><select name="cars_per_container" onchange="A.yardPick(true)">${[2, 3, 4].map(k => `<option value="${k}" ${num(v.cars_per_container || 4) === k ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
+    <div class="f"><span style="display:block;font-size:12px;color:var(--mut);margin-bottom:4px;font-weight:700">${L('سيارات في الحاوية', 'Cars / container')}</span><input type="hidden" name="cars_per_container" value="${ncar}"><div class="pseg" id="carsSeg">${[2, 3, 4].map(k => `<button type="button" class="${ncar === k ? 'on' : ''}" onclick="A.carsSet(${k})">${k}</button>`).join('')}</div></div>
+  </div>
+  <div id="yardInfo"><div class="yhint">${L('اختار الساحة وتتعبّى أجرة السحب والشحن البحري تلقائياً في الحساب المالي.', 'Pick the yard and towing and ocean freight are filled in automatically below.')}</div></div></div>
+  <div class="grid">
     ${inp('auction_location', L('الولاية / الساحة', 'State / yard'), v.auction_location)}
-    <div id="yardInfo" style="grid-column:1/-1"></div>
     ${inp('purchase_date', L('تاريخ الشراء', 'Purchase date'), v.purchase_date || today(), 'type="date"')}
     <label class="f"><span>${L('دفع ثمن المزاد', 'Auction paid by')}</span><select name="auction_paid_by"><option value="">${L('لم يُدفع بعد', 'Not paid yet')}</option><option value="customer" ${v.auction_paid_by === 'customer' ? 'selected' : ''}>${L('الزبون', 'Customer')}</option><option value="office" ${v.auction_paid_by === 'office' ? 'selected' : ''}>${L('المكتب (سلفة)', 'Office (advance)')}</option></select></label>
     ${inp('auction_paid_date', L('تاريخ الدفع للمزاد', 'Auction paid on'), v.auction_paid_date || '', 'type="date"')}
@@ -1129,12 +1282,12 @@ function vFormHtml(v, cid) {
     ${inp('booking_number', L('رقم الحجز', 'Booking #'), v.booking_number, 'dir="ltr"')}
     <label class="f"><span>${L('الحالة', 'Status')}</span><select name="status">${ST.map(s => `<option value="${s.k}" ${(v.status || 'WON_PENDING_PAYMENT') === s.k ? 'selected' : ''}>${esc(L(s.ar, s.en))}</option>`).join('')}</select></label>
   </div>
-  <div class="sec">${L('الحساب المالي (بالدولار)', 'Financials (USD)')}</div><div class="grid">
-    ${FIN.map(x => inp('fin_' + x.k, L(x.ar, x.en), f[x.k] ?? '', 'type="number" step="0.01" min="0" oninput="A.calc()" dir="ltr"')).join('')}
+  <div class="sec"><i>💵</i>${L('الحساب المالي (بالدولار)', 'Financials (USD)')}</div><div class="grid">
+    ${FIN.map(x => inp('fin_' + x.k, L(x.ar, x.en), f[x.k] ?? '', 'type="number" step="0.01" min="0" oninput="A.calc()" dir="ltr" placeholder="0"')).join('')}
   </div>
-  <div class="totbox"><span>${L('الإجمالي على الزبون', 'Total charged')}</span><span id="vtot" dir="ltr">${money(totalCost(v))}</span></div>
-  ${can('profit') ? `<div class="grid pf" style="margin-top:12px">${inp('fin_shipping_cost_actual', '🔒 ' + L('تكلفة الشحن الفعلية علينا (داخلي+بحري) — لحساب هامش الربح', 'Our actual shipping cost (inland+ocean) — for margin'), (S.internal[v.id] ? S.internal[v.id].shipping_cost_actual : f.shipping_cost_actual) ?? '', 'type="number" step="0.01" min="0" dir="ltr"')}</div>` : ''}
-  <label class="f" style="margin-top:12px"><span>${L('ملاحظات', 'Notes')}</span><textarea name="notes" rows="2">${esc(v.notes || '')}</textarea></label>
+  ${can('profit') ? `<div class="grid pf" style="margin-top:12px">${inp('fin_shipping_cost_actual', '🔒 ' + L('تكلفتنا الفعلية للشحن (داخلي + بحري)', 'Our actual shipping cost (inland + ocean)'), (S.internal[v.id] ? S.internal[v.id].shipping_cost_actual : f.shipping_cost_actual) ?? '', 'type="number" step="0.01" min="0" dir="ltr" placeholder="0" oninput="A.calc()"')}<div class="hint" style="align-self:end">${L('داخلي فقط — لا يظهر للزبون. يُستخدم لحساب الربح.', 'Internal only, never shown to the customer. Used for profit.')}</div></div>` : ''}
+  <div class="vtots"><div class="totbox"><span>${L('الإجمالي على الزبون', 'Total charged')}</span><span id="vtot" dir="ltr">${money(totalCost(v))}</span></div>${can('profit') ? `<div class="profbox pf"><span>🔒 ${L('ربح المكتب المتوقع', 'Expected office profit')}</span><b id="vprof">—</b></div>` : ''}</div>
+  <div class="sec"><i>📝</i>${L('ملاحظات', 'Notes')}</div><label class="f"><span style="display:none">${L('ملاحظات', 'Notes')}</span><textarea name="notes" rows="2">${esc(v.notes || '')}</textarea></label>
   <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form>`;
 }
 const vehOpts = (cid, sel) => `<option value="">— ${L('دفعة عامة على حساب الزبون', 'General (on account)')} —</option>` +
@@ -1142,8 +1295,10 @@ const vehOpts = (cid, sel) => `<option value="">— ${L('دفعة عامة عل�
 
 /* ---------------- الطباعة ---------------- */
 const PRINT_CSS = `@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:'Cairo',sans-serif;color:#0f172a;font-size:13px;margin:0}
-.hd{display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid #f97316;padding-bottom:12px;margin-bottom:16px}
-.hd h1{margin:0;font-size:22px}.hd .m{color:#64748b;font-size:12px}.doc{text-align:end}.doc b{font-size:18px;color:#1d4ed8;display:block}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:16px;padding-bottom:14px;margin-bottom:18px;border-bottom:2px solid #293138;position:relative}
+.hd::after{content:'';position:absolute;bottom:-2px;inset-inline-start:0;width:120px;height:4px;background:#fc5000;border-radius:2px}
+.hb{display:flex;align-items:center;gap:14px}.hb img{height:54px;width:auto;display:block}
+.hd h1{margin:0;font-size:17px;color:#293138}.hd .m{color:#64748b;font-size:11.5px}.doc{text-align:end}.doc b{font-size:18px;color:#293138;display:block}
 .row{display:flex;gap:16px;margin-bottom:14px}.ph{width:42%;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;aspect-ratio:4/3;background:#f8fafc}.ph img{width:100%;height:100%;object-fit:cover}
 table{width:100%;border-collapse:collapse;margin-bottom:14px}td,th{border:1px solid #e2e8f0;padding:7px 10px;text-align:start}th{background:#f1f5f9;font-size:12px}
 .kv td:first-child{background:#f8fafc;color:#475569;width:38%;font-weight:700}.num{text-align:end;direction:ltr;font-weight:700}
@@ -1153,29 +1308,31 @@ table{width:100%;border-collapse:collapse;margin-bottom:14px}td,th{border:1px so
 .sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}.sum div{border:1px solid #e2e8f0;border-radius:8px;padding:8px 10px;border-top:3px solid var(--c,#94a3b8)}.sum span{display:block;font-size:11px;color:#64748b;font-weight:700}.sum b{font-size:16px}
 .int{background:#fff7ed;border:1px dashed #fb923c;color:#9a3412;border-radius:8px;padding:6px 12px;font-weight:700;margin-bottom:12px;text-align:center}.red{color:#b91c1c}.grn{color:#047857}.tag{background:#fff7ed;color:#c2410c;border-radius:99px;padding:0 6px;font-size:11px;font-weight:700}
 tr.tot td{background:#f1f5f9;font-weight:800}
-.bar{position:fixed;bottom:16px;inset-inline-end:16px}.bar button{font:inherit;padding:8px 16px;border-radius:8px;border:0;background:#2563eb;color:#fff;cursor:pointer}@media print{.bar{display:none}}`;
+.bar{position:fixed;bottom:16px;inset-inline-end:16px}.bar button{font:inherit;font-weight:700;padding:10px 18px;border-radius:10px;border:0;background:#fc5000;color:#fff;cursor:pointer;box-shadow:0 6px 20px rgba(252,80,0,.35)}@media print{.bar{display:none}}`;
 const sumBox = items => `<div class="sum">${items.map(x => `<div style="--c:${x[2] || '#94a3b8'}"><span>${x[0]}</span><b class="${x[3] || ''}" dir="ltr">${x[1]}</b></div>`).join('')}</div>`;
 const shipMargin = v => { const f = v.fin || {}, act = actCost(v); return act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0; };
 const repHead = (t, sub) => `<div class="doc"><b>${t}</b>${sub ? `<span>${sub}</span><br>` : ''}<span>${L('تاريخ التقرير', 'Report date')}: ${fdate(now())}</span></div>`;
 const custKv = c => `<table class="kv"><tbody><tr><td>${L('الزبون', 'Customer')}</td><td>${esc(c.full_name)}</td></tr><tr><td>${L('الهاتف', 'Phone')}</td><td class="mono">${esc(c.phone || '')}${c.alternate_phone ? ' / ' + esc(c.alternate_phone) : ''}</td></tr><tr><td>${L('المدينة', 'City')}</td><td>${esc(c.city || '—')}</td></tr></tbody></table>`;
 const payRows = ps => ps.map(p => { const v = S.vehicles.find(x => x.id === p.vehicle_id); return `<tr><td>${fdate(p.date)}</td><td>${v ? esc(vt(v)) + ' <span class="mono">' + esc(v.vin.slice(-6)) + '</span>' : L('على الحساب', 'On account')}</td><td>${p.currency === 'LYD' ? lyd(p.amount) + ' @' + esc(p.rate) : money(p.amount)}</td><td class="num">${money(p.amount_usd)}</td><td>${esc(p.receipt_notes || '')}</td></tr>`; }).join('') || `<tr><td colspan="5">—</td></tr>`;
 const payHead = () => `<thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('السيارة', 'Vehicle')}</th><th>${L('المبلغ', 'Amount')}</th><th class="num">USD</th><th>${L('ملاحظات', 'Notes')}</th></tr></thead>`;
+let LOGO_DATA = null;
+function loadLogoData() { if (LOGO_DATA || !location.protocol.startsWith('http')) return; fetch('logo.png').then(r => r.ok ? r.blob() : null).then(b => b && readUrl(b)).then(d => { if (d) LOGO_DATA = d; }).catch(() => { }); }
 function printDoc(title, body) {
   const w = window.open('', '_blank');
   if (!w) return toast(L('اسمح بالنوافذ المنبثقة للطباعة', 'Please allow pop-ups to print'), 'err');
   const s = S.settings;
   w.document.write(`<!DOCTYPE html><html lang="${S.lang}" dir="${S.lang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${esc(title)}</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet"><style>${PRINT_CSS}</style></head><body>
   <div class="bar"><button onclick="window.print()">🖨️ ${L('طباعة / حفظ PDF', 'Print / Save PDF')}</button></div>
-  <div class="hd"><div><h1>🚢 ${esc(s.office)}</h1><div class="m">${esc(s.address || '')}${s.phone ? ' · <span class="mono">' + esc(s.phone) + '</span>' : ''}</div></div>${body.head}</div>${body.main}
+  <div class="hd"><div class="hb"><img src="${LOGO_DATA || new URL('logo.png', location.href).href}" alt="AXS"><div><h1>${esc(s.office)}</h1><div class="m">${esc(s.address || '')}${s.phone ? ' · <span class="mono">' + esc(s.phone) + '</span>' : ''}</div></div></div>${body.head}</div>${body.main}
   ${body.internal ? '' : `<div class="ft"><div>${esc(s.note || '')}</div><div class="sig">${L('التوقيع والختم', 'Signature & stamp')}</div></div>`}
-  <script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script></body></html>`);
+  ${body.noAuto ? '' : '<script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script>'}</body></html>`);
   w.document.close();
 }
 
 /* ---------------- صفحة الدخول ---------------- */
 function renderLogin(err) {
   applyDir();
-  $('#app').innerHTML = `<div class="login"><div class="card lcard"><div class="logo">🚢</div><h2 style="margin:0">${esc(S.settings.office)}</h2><p class="mut" style="margin:0">${L('تسجيل الدخول إلى المنظومة', 'Sign in to the system')}</p>
+  $('#app').innerHTML = `<div class="login"><div class="card lcard"><img class="llogo" src="logo.png" alt="AXS"><h2 style="margin:0">${esc(S.settings.office)}</h2><p class="mut" style="margin:0">${L('تسجيل الدخول إلى المنظومة', 'Sign in to the system')}</p>
   <form onsubmit="A.login(event)"><label class="f"><span>${L('البريد الإلكتروني', 'Email')}</span><input id="le" type="email" required dir="ltr" autocomplete="username"></label>
   <label class="f"><span>${L('كلمة المرور', 'Password')}</span><input id="lp" type="password" required dir="ltr" autocomplete="current-password"></label>
   ${err ? `<div class="err">${esc(err)}</div>` : ''}<button class="btn pri wide">${L('دخول', 'Sign in')}</button></form>
@@ -1195,7 +1352,7 @@ async function renderPublic() {
   const q = (new URLSearchParams(location.search).get('vin') || S.param || '').toUpperCase();
   if (!S.pubSettings) { S.pubSettings = true; try { const d = await DB.get('settings', 'main'); if (d) S.settings = { ...S.settings, ...d }; } catch (e) { } }
   const s = S.settings;
-  $('#app').innerHTML = `<div class="pub"><div class="pub-h"><div class="logo">🚢</div><h1>${esc(s.office)}</h1><p>${L('تتبّع شحنة سيارتك برقم الهيكل (VIN)', 'Track your car shipment by VIN')}</p></div>
+  $('#app').innerHTML = `<div class="pub"><div class="pub-h"><img class="plogo" src="logo-light.png" alt="AXS"><h1>${esc(s.office)}</h1><p>${L('تتبّع شحنة سيارتك برقم الهيكل (VIN)', 'Track your car shipment by VIN')}</p></div>
   <div class="card pub-s"><form onsubmit="event.preventDefault();A.pubSearch()"><input id="pv" class="mono big" placeholder="${L('أدخل رقم الهيكل - 17 خانة', 'Enter 17-character VIN')}" value="${esc(q)}" maxlength="17" oninput="this.value=this.value.toUpperCase()"><button class="btn pri">${L('تتبّع', 'Track')}</button></form></div>
   <div id="pres"></div>
   <div class="pub-f">${s.phone ? `📞 <span class="mono">${esc(s.phone)}</span> · ` : ''}<a href="javascript:A.lang()">${L('English', 'العربية')}</a></div></div>`;
@@ -1204,6 +1361,42 @@ async function renderPublic() {
 
 /* ---------------- الإجراءات ---------------- */
 const A = {
+  /* فاتورة المزاد */
+  async invUp(id, input) {
+    const v = S.vehicles.find(x => x.id === id), f = input.files[0]; input.value = ''; if (!v || !f) return;
+    const isPdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name), isImg = /^image\//.test(f.type);
+    if (!isPdf && !isImg) return toast(L('الملف لازم يكون PDF أو صورة', 'File must be a PDF or an image'), 'err');
+    if (f.size > INV_MAX && isPdf) return toast(L('حجم الملف أكبر من 6 ميجا', 'File is larger than 6 MB'), 'err');
+    toast(L('جاري رفع الفاتورة...', 'Uploading invoice...'));
+    try {
+      const data = isPdf ? await readUrl(f) : await compress(f, 2200, 0.82);
+      const parts = []; for (let i = 0; i < data.length; i += INV_CHUNK) parts.push(data.slice(i, i + INV_CHUNK));
+      for (let i = 0; i < parts.length; i++) await DB.merge('tracking', invId(v.vin, i), { vin: v.vin, part: i, d: parts[i] });
+      const old = v.auction_invoice; if (old && (old.parts || 1) > parts.length) await invDelParts(v.vin, parts.length, old.parts || 1);
+      const meta = { name: f.name, type: isPdf ? 'application/pdf' : 'image/jpeg', size: Math.round(data.length * 0.75), parts: parts.length, at: now() };
+      await DB.merge('tracking', v.vin, { invoice: meta });
+      await DB.update('vehicles', v.id, { auction_invoice: meta });
+      logAct('veh_edit', `${vt(v)} · ${v.vin} · ${L('فاتورة المزاد', 'Auction invoice')}: ${f.name}`, 'v:' + v.id);
+      toast(L('تم رفع الفاتورة — تظهر الآن للزبون', 'Invoice uploaded — now visible to the customer'));
+    } catch (x) { toast(x.message, 'err'); }
+  },
+  async invDel(id) {
+    const v = S.vehicles.find(x => x.id === id); if (!v || !v.auction_invoice) return;
+    if (!confirm(L('حذف فاتورة المزاد؟ ما عادش تظهر للزبون.', 'Delete the auction invoice? The customer will no longer see it.'))) return;
+    try { await invDelParts(v.vin, 0, v.auction_invoice.parts || 1); await DB.merge('tracking', v.vin, { invoice: null }); await DB.update('vehicles', v.id, { auction_invoice: null }); toast(L('تم الحذف', 'Deleted')); } catch (x) { toast(x.message, 'err'); }
+  },
+  async invOpen(vin) {
+    const m = invMetaFor(vin); if (!m) return;
+    const w = window.open('', '_blank');
+    if (w) w.document.write(`<p style="font-family:sans-serif;padding:20px">${L('جاري فتح الفاتورة...', 'Opening invoice...')}</p>`);
+    try { const u = URL.createObjectURL(await invBlob(vin, m)); if (w) w.location.href = u; else location.href = u; }
+    catch (x) { if (w) w.close(); toast(x.message, 'err'); }
+  },
+  async invDl(vin) {
+    const m = invMetaFor(vin); if (!m) return;
+    try { const a = document.createElement('a'); a.href = URL.createObjectURL(await invBlob(vin, m)); a.download = m.name || ('auction-invoice-' + vin + (/pdf/.test(m.type) ? '.pdf' : '.jpg')); document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 5000); }
+    catch (x) { toast(x.message, 'err'); }
+  },
   /* خريطة الموانئ */
   pmCars(n) { S.pm.cars = n; render(); },
   pmState(a) { S.pm.st = S.pm.st === a ? null : a; S.pm.port = null; render(); },
@@ -1222,14 +1415,14 @@ const A = {
     const au = f.elements.auction_name.value;
     dl.innerHTML = PD().yards.filter(y => !['Copart', 'IAAI'].includes(au) || y.a === au).sort(pmByPort(4)).map(y => `<option value="${esc(yLabel(y))}">${y.tow == null ? esc(L('بانتظار السعر', 'Waiting for price')) : ''}</option>`).join('');
     const port = f.elements.us_port.value;
-    if (port && !$('#yardInfo').innerHTML) $('#yardInfo').innerHTML = yardInfoHtml(PD().yards.find(y => yLabel(y) === $('#yardIn').value) || null, num(f.elements.cars_per_container.value) || 4, port);
+    if (port && !$('#yardInfo .ytiles')) $('#yardInfo').innerHTML = yardInfoHtml(PD().yards.find(y => yLabel(y) === $('#yardIn').value) || null, num(f.elements.cars_per_container.value) || 4, port);
   },
   yardPick(recalc) {
     const f = $('#vf'); if (!f || !PD()) return;
     const E = f.elements, val = $('#yardIn').value.trim(), n = num(E.cars_per_container.value) || 4;
     const y = PD().yards.find(x => yLabel(x) === val);
     if (!y) {
-      if (!val) { E.us_port.value = ''; E.yard.value = ''; E.yard_state.value = ''; $('#yardInfo').innerHTML = ''; }
+      if (!val) { E.us_port.value = ''; E.yard.value = ''; E.yard_state.value = ''; $('#yardInfo').innerHTML = `<div class="yhint">${L('اختار الساحة وتتعبّى أجرة السحب والشحن البحري تلقائياً.', 'Pick the yard to fill towing and ocean automatically.')}</div>`; }
       else if (recalc && E.us_port.value && pPort(E.us_port.value)) { E.fin_ocean_shipping.value = r2(pmOcean(E.us_port.value, n)); $('#yardInfo').innerHTML = yardInfoHtml(null, n, E.us_port.value); A.calc(); }
       return;
     }
@@ -1256,12 +1449,15 @@ const A = {
   vForm(id, cid) {
     if (!S.customers.length) return openModal(`<h2>${L('أضف زبوناً أولاً', 'Add a customer first')}</h2><p>${L('يجب ربط كل سيارة بزبون.', 'Every vehicle must belong to a customer.')}</p><div class="mfoot"><button class="btn pri" onclick="A.cForm()">+ ${L('زبون جديد', 'New customer')}</button></div>`, 'sm');
     openModal(vFormHtml(id ? S.vehicles.find(v => v.id === id) || {} : {}, cid));
+    A.calc();
     loadPorts().then(() => A.yardFill()).catch(() => { });
   },
   calc() {
-    const fd = new FormData($('#vf'));
-    $('#vtot').textContent = money(FIN.reduce((s, x) => s + num(fd.get('fin_' + x.k)), 0));
+    const fd = new FormData($('#vf')), g = k => num(fd.get(k));
+    $('#vtot').textContent = money(FIN.reduce((s, x) => s + g('fin_' + x.k), 0));
+    const pe = $('#vprof'); if (pe) { const act = g('fin_shipping_cost_actual'); pe.textContent = money(g('fin_office_commission') + g('fin_transfer_commission') + (act > 0 ? g('fin_inland_shipping') + g('fin_ocean_shipping') - act : 0)); }
   },
+  carsSet(n) { const f = $('#vf'); if (!f) return; f.elements.cars_per_container.value = n; document.querySelectorAll('#carsSeg button').forEach(b => b.classList.toggle('on', +b.textContent === n)); A.yardPick(true); },
   async vSave(e, id) {
     e.preventDefault();
     const fd = new FormData(e.target), g = k => (fd.get(k) || '').toString().trim();
@@ -1286,7 +1482,8 @@ const A = {
         logAct(old.status !== status ? 'veh_status' : 'veh_edit', `${vt(data)} · ${vin}${old.status !== status ? ' → ' + stName(status) : ''}`, 'v:' + id);
         if (old.vin !== vin) {
           const t = await DB.get('tracking', old.vin).catch(() => null);
-          await syncTracking({ ...old, ...data }, { images: (t && t.images) || [] });
+          await syncTracking({ ...old, ...data }, { images: (t && t.images) || [], invoice: (t && t.invoice) || null });
+          await invMove(old.vin, vin, t && t.invoice);
           await DB.del('tracking', old.vin).catch(() => { });
           delete S.trk[old.vin]; delete S.trk[vin];
         } else await syncTracking({ ...old, ...data });
@@ -1311,7 +1508,7 @@ const A = {
     const v = S.vehicles.find(x => x.id === id); if (!v) return;
     const ps = S.payments.filter(p => p.vehicle_id === id);
     if (!confirm(L(`حذف السيارة ${vt(v)} نهائياً مع صورها${ps.length ? ` و${ps.length} دفعة مرتبطة بها` : ''}؟`, `Delete ${vt(v)} permanently with its photos${ps.length ? ` and ${ps.length} linked payment(s)` : ''}?`))) return;
-    try { for (const p of ps) await DB.del('payments', p.id); await DB.del('tracking', v.vin).catch(() => { }); await DB.del('vinternal', id).catch(() => { }); await DB.del('vehicles', id); logAct('veh_del', `${vt(v)} · ${v.vin} · ${custName(v.customer_id)}`); toast(L('تم الحذف', 'Deleted')); location.hash = '#/vehicles'; }
+    try { for (const p of ps) await DB.del('payments', p.id); await DB.del('tracking', v.vin).catch(() => { }); if (v.auction_invoice) await invDelParts(v.vin, 0, v.auction_invoice.parts || 1); await DB.del('vinternal', id).catch(() => { }); await DB.del('vehicles', id); logAct('veh_del', `${vt(v)} · ${v.vin} · ${custName(v.customer_id)}`); toast(L('تم الحذف', 'Deleted')); location.hash = '#/vehicles'; }
     catch (x) { toast(x.message, 'err'); }
   },
   /* رقم الهيكل */
@@ -1601,19 +1798,8 @@ const A = {
   /* الطباعة */
   printInv(id) {
     const v = S.vehicles.find(x => x.id === id); if (!v) return;
-    const c = S.customers.find(x => x.id === v.customer_id) || {}, f = v.fin || {}, tot = totalCost(v), paid = vPaid(v.id);
-    const imgs = (S.trk[v.vin] || {}).images || [], img = (imgs.find(x => x.stage === 'auction') || imgs[0] || {}).src;
-    const pays = S.payments.filter(p => p.vehicle_id === v.id).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
-    const kv = [[L('الزبون', 'Customer'), esc(c.full_name || '')], [L('الهاتف', 'Phone'), `<span class="mono">${esc(c.phone || '')}</span>`], [L('السيارة', 'Vehicle'), esc(vt(v)) + (vSpec(v) ? '<br><small>' + esc(vSpec(v)) + '</small>' : '')], [L('رقم الهيكل', 'VIN'), `<span class="mono">${esc(v.vin)}</span>`], [L('الحالة', 'Status'), esc(stName(v.status))]];
-    printDoc('INV-' + v.vin.slice(-6), {
-      head: `<div class="doc"><b>${L('فاتورة سيارة', 'Vehicle Invoice')}</b><span class="mono">INV-${esc(v.vin.slice(-6))}</span><br><span>${L('التاريخ', 'Date')}: ${fdate(now())}</span></div>`,
-      main: `<div class="row">${img ? `<div class="ph"><img src="${esc(img)}"></div>` : ''}<table class="kv" style="flex:1;margin:0"><tbody>${kv.map(x => `<tr><td>${x[0]}</td><td>${x[1]}</td></tr>`).join('')}</tbody></table></div>
-      <h3>${L('تفصيل الحساب', 'Charges')}</h3><table><thead><tr><th>${L('البند', 'Item')}</th><th class="num">${L('المبلغ (USD)', 'Amount (USD)')}</th></tr></thead><tbody>
-      ${custFin(v).map(x => `<tr><td>${x[0]}</td><td class="num">${money(x[1])}</td></tr>`).join('')}
-      <tr class="t"><td>${L('الإجمالي', 'Total')}</td><td class="num">${money(tot)}</td></tr><tr><td>${L('المدفوع', 'Paid')}</td><td class="num">${money(paid)}</td></tr>
-      <tr class="due"><td>${L('المتبقي', 'Balance due')}</td><td class="num">${money(tot - paid)}</td></tr></tbody></table>
-      ${pays.length ? `<h3>${L('الدفعات', 'Payments')}</h3><table><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('المبلغ', 'Amount')}</th><th class="num">USD</th><th>${L('ملاحظات', 'Notes')}</th></tr></thead><tbody>${pays.map(p => `<tr><td>${fdate(p.date)}</td><td>${p.currency === 'LYD' ? lyd(p.amount) + ' @' + esc(p.rate) : money(p.amount)}</td><td class="num">${money(p.amount_usd)}</td><td>${esc(p.receipt_notes || '')}</td></tr>`).join('')}</tbody></table>` : ''}`
-    });
+    const c = S.customers.find(x => x.id === v.customer_id) || {}, imgs = (S.trk[v.vin] || {}).images || [];
+    invoicePrint({ ...invSnap(v), phone: c.phone || '', img: (imgs.find(x => x.stage === 'auction') || imgs[0] || {}).src || '' }, true);
   },
   printVeh(id) {
     const v = S.vehicles.find(x => x.id === id); if (!v) return;
@@ -1678,16 +1864,21 @@ const A = {
   },
 
   /* التتبع العام */
+  pubInv() { const d = S.pubTrk; if (!d || !d.office_invoice) return; const imgs = d.images || []; invoicePrint({ ...d.office_invoice, img: (imgs.find(x => x.stage === 'auction') || imgs[0] || {}).src || '' }, false); },
   async pubSearch() {
     const vin = $('#pv').value.trim().toUpperCase(), out = $('#pres'); if (!vin) return;
     out.innerHTML = `<div class="card empty">${L('جاري البحث...', 'Searching...')}</div>`;
     let d = null; try { d = await DB.get('tracking', vin); } catch (e) { }
     if (!d) { out.innerHTML = `<div class="card empty">❌ ${L('لم يتم العثور على سيارة بهذا الرقم. تأكد من رقم الهيكل (17 خانة) أو تواصل مع المكتب.', 'No vehicle found with this VIN. Check the 17-character VIN or contact the office.')}</div>`; return; }
-    const imgs = (d.images || []).map((x, i) => ({ ...x, i })); S.lbList = imgs.map(x => x.src);
+    const imgs = (d.images || []).map((x, i) => ({ ...x, i })); S.lbList = imgs.map(x => x.src); S.pubTrk = d;
+    const oi = d.office_invoice, oinv = oi ? `<div class="card"><div class="row-b"><h3 style="margin:0">💼 ${L('فاتورة المكتب', 'Office invoice')} <span class="sub mono">${esc(oi.no)}</span></h3><button class="btn pri" onclick="A.pubInv()">🖨️ ${L('عرض / طباعة الفاتورة', 'View / print invoice')}</button></div>
+      <div class="ytiles" style="margin-top:12px"><div class="ytile"><span>${L('الإجمالي', 'Total')}</span><b>${money(oi.tot)}</b></div><div class="ytile"><span>${L('المدفوع', 'Paid')}</span><b>${money(oi.paid)}</b></div><div class="ytile ${num(oi.bal) > 0.009 ? 'tot' : ''}" ${num(oi.bal) > 0.009 ? '' : 'style="background:#ecfdf5;border-color:#a7f3d0"'}><span>${num(oi.bal) > 0.009 ? L('المتبقي', 'Balance due') : L('الحالة', 'Status')}</span><b ${num(oi.bal) > 0.009 ? '' : 'style="color:#047857;direction:inherit"'}>${num(oi.bal) > 0.009 ? money(oi.bal) : L('خالص ✓', 'Paid in full ✓')}</b></div></div>
+      <div class="hint">${L('آخر تحديث', 'Last updated')}: ${fdate(oi.updated_at)}</div></div>` : '';
+    const inv = d.invoice ? `<div class="card"><h3>🧾 ${L('فاتورة المزاد', 'Auction invoice')}</h3><div class="invf"><div class="ic">${/pdf/.test(d.invoice.type) ? '📄' : '🖼️'}</div><div class="nm"><b>${esc(d.invoice.name)}</b><small><span dir="ltr">${fsize(d.invoice.size)}</span> · ${fdate(d.invoice.at)}</small></div><div class="acts"><button class="btn pri" onclick="A.invOpen('${esc(d.vin)}')">👁️ ${L('عرض الفاتورة', 'View invoice')}</button><button class="btn" onclick="A.invDl('${esc(d.vin)}')">⬇️ ${L('تنزيل', 'Download')}</button></div></div></div>` : '';
     out.innerHTML = `<div class="card"><div class="row-b"><div><h2 style="margin:0">🚗 ${esc(vt(d))}</h2><div class="sub mono">VIN: ${esc(d.vin)}</div></div>${badge(d.status)}</div>
       ${pipeline(d.status, d.status_history)}
       <div class="info" style="margin-top:14px">${d.trim ? `<div><span>${L('الفئة', 'Trim')}</span><b>${esc(d.trim)}</b></div>` : ''}${d.engine ? `<div><span>${L('المحرك', 'Engine')}</span><b>${esc(d.engine)}</b></div>` : ''}${d.color ? `<div><span>${L('اللون', 'Color')}</span><b>${esc(d.color)}</b></div>` : ''}${d.container_number ? `<div><span>${L('رقم الحاوية', 'Container #')}</span><b class="mono">${esc(d.container_number)}</b></div>` : ''}<div><span>${L('آخر تحديث', 'Last update')}</span><b>${fdate(d.updated_at)}</b></div></div></div>
-      <div class="card"><h3>📷 ${L('صور السيارة', 'Photos')}</h3>${galGrid(imgs, false)}</div>`;
+      ${oinv}${inv}<div class="card"><h3>📷 ${L('صور السيارة', 'Photos')}</h3>${galGrid(imgs, false)}</div>`;
     try { history.replaceState(null, '', location.pathname + '?vin=' + encodeURIComponent(vin)); } catch (e) { }
   },
 
@@ -1747,7 +1938,7 @@ let unsubs = [];
 function startWatch() {
   if (unsubs.length) return;
   DB.get('settings', 'main').then(d => { if (d) { S.settings = { ...S.settings, ...d }; render(); } }).catch(() => { });
-  ['customers', 'vehicles', 'payments'].concat(can('expenses') ? ['expenses'] : []).forEach(c => unsubs.push(DB.watch(c, arr => { S[c] = arr; S.loaded[c] = true; recompute(); render(); migrateInternal(); })));
+  ['customers', 'vehicles', 'payments'].concat(can('expenses') ? ['expenses'] : []).forEach(c => unsubs.push(DB.watch(c, arr => { S[c] = arr; S.loaded[c] = true; recompute(); render(); queueInvSync(); migrateInternal(); })));
   if (can('profit')) unsubs.push(DB.watch('vinternal', arr => { S.internal = Object.fromEntries(arr.map(x => [x.id, x])); S.loaded.vinternal = true; recompute(); render(); migrateInternal(); }));
   if (can('logs')) unsubs.push(DB.watch('logs', arr => { S.logs = arr; if (S.route === 'logs') render(); }, { order: 'at', limit: 300 }));
   if (isAdmin()) unsubs.push(DB.watch('users', arr => { S.users = arr; if (S.route === 'users') render(); }));
@@ -1767,24 +1958,18 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') A.close(); }
 
 function setupPWA() {
   try {
-    const c = document.createElement('canvas'); c.width = c.height = 512; const x = c.getContext('2d');
-    const g = x.createLinearGradient(0, 0, 512, 512); g.addColorStop(0, '#f97316'); g.addColorStop(1, '#fb923c');
-    x.fillStyle = '#0f172a'; x.fillRect(0, 0, 512, 512); x.fillStyle = g;
-    x.beginPath(); x.roundRect ? x.roundRect(76, 76, 360, 360, 90) : x.rect(76, 76, 360, 360); x.fill();
-    x.font = '230px serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('🚢', 256, 270);
-    const icon = c.toDataURL('image/png');
+    const icon = new URL('icon-512.png', location.href).href;
     const add = (rel, href, extra = {}) => { const l = document.createElement('link'); l.rel = rel; l.href = href; Object.assign(l, extra); document.head.appendChild(l); };
-    add('icon', icon); add('apple-touch-icon', icon);
     const base = location.origin + location.pathname;
-    const man = { name: S.settings.office || 'AWS لاستيراد السيارات', short_name: 'AWS', start_url: base, scope: base, display: 'standalone', background_color: '#0f172a', theme_color: '#0f172a', dir: 'rtl', lang: 'ar', icons: [{ src: icon, sizes: '512x512', type: 'image/png', purpose: 'any maskable' }] };
+    const man = { name: S.settings.office || 'AWS لاستيراد السيارات', short_name: 'AWS', start_url: base, scope: base, display: 'standalone', background_color: '#1f262d', theme_color: '#1f262d', dir: 'rtl', lang: 'ar', icons: [{ src: icon, sizes: '512x512', type: 'image/png', purpose: 'any' }] };
     if (location.protocol.startsWith('http')) add('manifest', 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(man)));
   } catch (e) { }
 }
 
 (async function boot() {
-  setupPWA();
+  setupPWA(); loadLogoData();
   applyDir(); parseRoute();
-  $('#app').innerHTML = `<div class="login"><div class="logo">🚢</div></div>`;
+  $('#app').innerHTML = `<div class="login"><img class="boot-logo" src="logo-light.png" alt="AXS"></div>`;
   try { await DB.init(); }
   catch (e) { $('#app').innerHTML = `<div class="login"><div class="card lcard"><h2>⚠️</h2><p>${L('تعذّر الاتصال بـ Firebase. تحقق من الإنترنت ومن إعدادات المشروع.', 'Could not connect to Firebase. Check your connection and config.')}</p><div class="err">${esc(e.message)}</div></div></div>`; return; }
   if (isPublic()) { renderPublic(); }
