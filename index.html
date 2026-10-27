@@ -279,6 +279,47 @@ tr.sel{background:#eff6ff}
 @keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
 @media(max-width:860px) and (display-mode:standalone){.mtop{padding-top:calc(12px + env(safe-area-inset-top))}}
 
+/* خريطة الموانئ */
+.pmwrap{display:grid;grid-template-columns:minmax(0,1fr) 390px;gap:16px;align-items:start}
+@media(max-width:1100px){.pmwrap{grid-template-columns:1fr}}
+.pmapbox{padding:10px;min-width:0}
+.pmap{display:block;width:100%;height:auto;direction:ltr}
+.pmap .st{stroke:#fff;stroke-width:1;cursor:pointer;transition:opacity .15s}
+.pmap .st:hover{stroke:#0f172a;stroke-width:1.6}
+.pmap.focus .st{opacity:.28}.pmap.focus .st.lit{opacity:1}
+.pmap .lbl{font:800 16px system-ui,sans-serif;fill:#fff;pointer-events:none;text-anchor:middle;dominant-baseline:central}
+.pmap .lbl.dk{fill:#0f172a}.pmap.focus .lbl.dim{fill:#0f172a;opacity:.4}
+.pmap .co{font:800 14px system-ui,sans-serif;fill:#0f172a;pointer-events:none;dominant-baseline:central}
+.pmap .pin{cursor:pointer}.pmap .pin text{font:700 13px system-ui,sans-serif;fill:#0f172a;paint-order:stroke;stroke:#fff;stroke-width:3px;stroke-linejoin:round}
+.pmap .pin .ring{fill:#fff;stroke-width:3}.pmap .pin:hover .ring,.pmap .pin.on .ring{stroke-width:5}
+.pseg{display:inline-flex;background:var(--soft);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.pseg button{border:0;background:none;padding:6px 12px;border-radius:7px;font:inherit;font-weight:700;color:var(--mut);cursor:pointer}
+.pseg button.on{background:var(--ink);color:#fff}
+.pdot{display:inline-block;width:10px;height:10px;border-radius:50%;vertical-align:middle;margin-inline-end:6px;flex:none}
+.pmside{display:grid;gap:16px;min-width:0}
+.pmside h3{margin:0 0 6px}
+.otbl{table-layout:fixed}.otbl td,.otbl th{padding:6px 2px;font-size:12.5px;text-align:center}.otbl th:first-child{width:31%}.otbl td:first-child,.otbl th:first-child{text-align:start}
+.otbl small{display:block;color:var(--mut);font-size:10.5px;white-space:nowrap}.otbl .cur{background:var(--soft)}.otbl .best{color:var(--green);font-weight:800}
+.pmh{font-size:22px;font-weight:800;line-height:1.2}
+.pmbest{background:var(--soft);border-radius:10px;padding:10px 12px;margin-top:10px}
+.ylist{list-style:none;margin:10px 0 0;padding:0;max-height:430px;overflow:auto;border-top:1px solid var(--line)}
+.ylist li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 2px;border-bottom:1px solid var(--line)}
+.ylist .sub{font-size:12px;color:var(--mut)}.ylist .tt{text-align:end;font-weight:800;white-space:nowrap;direction:ltr}
+.aub{font-size:10px;font-weight:700;border:1px solid var(--line);border-radius:4px;padding:0 5px;margin-inline-end:4px}
+.wait{color:#c2410c;font-weight:700;font-size:12px}
+.ptbl{max-height:520px;overflow:auto}
+.ptbl th{position:sticky;top:0;background:var(--card);z-index:1}
+.ptbl td.n,.ptbl th.n{text-align:end;direction:ltr;white-space:nowrap}
+.pmtools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
+.pmtools input{flex:1 1 240px;min-width:0}
+.pchip{display:inline-flex;align-items:center;gap:6px;background:var(--soft);border:1px solid var(--line);border-radius:99px;padding:4px 10px;font-weight:700}
+.pchip button{border:0;background:none;cursor:pointer;font-weight:800;color:var(--mut)}
+.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.pcard{cursor:pointer;text-align:start;font:inherit;color:inherit}.pcard.on{outline:2px solid var(--ink)}
+.pcard .tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.pcard .tags span{font-size:11px;background:var(--soft);border-radius:5px;padding:1px 6px;font-weight:700}
+.yinfo{grid-column:1/-1;padding:10px 12px;border-radius:10px;background:#eff6ff;border:1px solid #bfdbfe;font-size:13px;line-height:1.7}
+.yinfo.warn{background:#fff7ed;border-color:#fed7aa;color:#9a3412}
+.yinfo:empty{display:none}
 </style>
 </head>
 <body>
@@ -516,6 +557,160 @@ function applyPerms(root) {
 let permQ = false;
 new MutationObserver(() => { if (permQ) return; permQ = true; queueMicrotask(() => { permQ = false; applyPerms(); }); }).observe(document.body, { childList: true, subtree: true });
 
+/* ---------------- خريطة الموانئ وأسعار الشحن (ports-data.js) ---------------- */
+const PORTS_V = '20261027';
+let PMP = null;
+function loadPorts() {
+  if (window.AWS_PORTS) return Promise.resolve(window.AWS_PORTS);
+  return PMP || (PMP = new Promise((res, rej) => {
+    const s = document.createElement('script'); s.src = 'ports-data.js?v=' + PORTS_V;
+    s.onload = () => window.AWS_PORTS ? res(window.AWS_PORTS) : rej(new Error('ports-data.js'));
+    s.onerror = () => { PMP = null; s.remove(); rej(new Error('ports-data.js')); };
+    document.head.appendChild(s);
+  }));
+}
+const PD = () => window.AWS_PORTS;
+const PCLR = { SAV: '#e2553f', HOU: '#7a5bd3', NYC: '#e0a526', CHI: '#2c7fd6', LAX: '#4f9e3a', SEA: '#169a93', HNL: '#d6458c', NONE: '#c9d0d6' };
+const PSHORT = { SAV: ['سافانا', 'Savannah'], HOU: ['هيوستن', 'Houston'], NYC: ['نيوآرك (نيويورك)', 'Newark'], CHI: ['شيكاغو', 'Chicago'], LAX: ['لوس أنجلوس', 'Los Angeles'], SEA: ['سياتل', 'Seattle'], HNL: ['هونولولو', 'Honolulu'] };
+const PM_OFF = { SAV: [12, 6, 'start'], HOU: [12, 6, 'start'], NYC: [8, 32, 'start'], CHI: [10, -12, 'start'], LAX: [-4, 24, 'start'], SEA: [-12, 4, 'end'], HNL: [10, -12, 'start'] };
+const pName = id => PSHORT[id] ? L(PSHORT[id][0], PSHORT[id][1]) : L('لا يوجد مسار', 'No route');
+const pPort = id => PD().ports.find(p => p.id === id);
+const pmState = a => (PD().states.find(s => s.a === a) || { n: a }).n;
+const usd0 = n => '$' + Math.round(num(n)).toLocaleString('en-US');
+const ltr = s => `<span dir="ltr">${s}</span>`;
+/* أسعار الزبون (مع هامش المكتب) */
+const pmTow = y => y.tow == null ? null : y.tow + PD().markup.tow;
+const pmOceanC = (pid, n) => pPort(pid).ocean[n] + PD().markup.ocean_per_car * n;
+const pmOcean = (pid, n) => pmOceanC(pid, n) / n;
+const pmTotal = (y, n) => y.tow == null ? null : pmTow(y) + pmOcean(y.p, n);
+/* تكلفتنا الفعلية (أسعار AEC بدون هامش) */
+const pmCost = (y, n) => y.tow == null ? null : y.tow + pPort(y.p).ocean[n] / n;
+const yLabel = y => `${y.n}, ${y.s} · ${y.a} → ${PSHORT[y.p] ? PSHORT[y.p][1] : y.p}`;
+const PM_ORDER = () => PD().ports.map(p => p.id);
+const pmSort = n => (a, b) => (pmTotal(a, n) ?? 1e9) - (pmTotal(b, n) ?? 1e9) || a.n.localeCompare(b.n);
+const pmByPort = n => (a, b) => PM_ORDER().indexOf(a.p) - PM_ORDER().indexOf(b.p) || pmState(a.s).localeCompare(pmState(b.s)) || pmSort(n)(a, b);
+
+function pmMapSvg(focus, selA, print) {
+  const D = PD(), o = [];
+  o.push(print ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 975 610" style="width:100%;height:auto;display:block">`
+    : `<svg class="pmap${focus ? ' focus' : ''}" viewBox="0 0 975 610" role="img" aria-label="${L('خريطة أمريكا ملوّنة حسب ميناء الشحن', 'US map coloured by shipping port')}">`);
+  const ff = 'font-family="Helvetica,Arial,sans-serif" font-weight="800"';
+  D.states.forEach(s => {
+    const on = !focus || s.p === focus;
+    if (print) o.push(`<path d="${s.d}" fill="${on ? PCLR[s.p] : '#e3e7eb'}" stroke="#fff" stroke-width="1"/>`);
+    else o.push(`<path d="${s.d}" fill="${PCLR[s.p]}" class="st${s.p === focus ? ' lit' : ''}" onclick="A.pmState('${s.a}')"><title>${esc(s.n)}: ${esc(pName(s.p))}</title></path>`);
+  });
+  const sel = selA && D.states.find(s => s.a === selA);
+  if (sel && !print) o.push(`<path d="${sel.d}" fill="none" stroke="#0f172a" stroke-width="2.2" pointer-events="none"/>`);
+  D.states.forEach(s => {
+    const on = !focus || s.p === focus;
+    if (s.co) {
+      const [x, y] = s.co;
+      o.push(`<path d="M${s.cx},${s.cy}L${x - 4},${y}" stroke="#8a95a0" stroke-width=".6" fill="none" pointer-events="none"/>`);
+      o.push(print ? `<text x="${x}" y="${y}" ${ff} font-size="14" dominant-baseline="central" fill="${on ? '#14202b' : '#a9b2bb'}">${s.a}</text>` : `<text x="${x}" y="${y}" class="co">${s.a}</text>`);
+    } else if (print) {
+      const dark = s.p === 'NONE' || !on;
+      o.push(`<text x="${s.cx}" y="${s.cy}" ${ff} font-size="16" text-anchor="middle" dominant-baseline="central" fill="${dark ? (on ? '#14202b' : '#a9b2bb') : '#fff'}">${s.a}</text>`);
+    } else o.push(`<text x="${s.cx}" y="${s.cy}" class="lbl${s.p === 'NONE' ? ' dk' : ''}${focus && s.p !== focus ? ' dim' : ''}">${s.a}</text>`);
+  });
+  D.ports.forEach(p => {
+    const on = !focus || p.id === focus, of = PM_OFF[p.id] || [10, 0, 'start'], nm = PSHORT[p.id] ? PSHORT[p.id][1] : p.id;
+    if (print) {
+      o.push(`<circle cx="${p.x}" cy="${p.y}" r="${on ? 8 : 5}" fill="#fff" stroke="${on ? PCLR[p.id] : '#b7c0c8'}" stroke-width="3"/><circle cx="${p.x}" cy="${p.y}" r="3" fill="${on ? '#14202b' : '#b7c0c8'}"/>`);
+      if (on) o.push(`<text x="${p.x + of[0]}" y="${p.y + of[1]}" text-anchor="${of[2]}" font-family="Helvetica,Arial,sans-serif" font-weight="700" font-size="14" fill="#14202b" stroke="#fff" stroke-width="3" paint-order="stroke">${nm}</text>`);
+    } else o.push(`<g class="pin${S.pm.port === p.id ? ' on' : ''}" onclick="A.pmPort('${p.id}')"><title>${esc(p.name)}</title><circle cx="${p.x}" cy="${p.y}" r="16" fill="transparent"/><circle class="ring" cx="${p.x}" cy="${p.y}" r="7" stroke="${PCLR[p.id]}"/><circle cx="${p.x}" cy="${p.y}" r="3" fill="#0f172a"/><text x="${p.x + of[0]}" y="${p.y + of[1]}" text-anchor="${of[2]}">${nm}</text></g>`);
+  });
+  o.push('</svg>');
+  return o.join('');
+}
+function pmYardList(ys, n, showState) {
+  return `<ul class="ylist">${ys.map(y => { const t = pmTotal(y, n);
+    return `<li><div><b>${esc(y.n)}${showState ? ', ' + y.s : ''}</b><div class="sub"><span class="aub">${y.a}</span><span class="pdot" style="background:${PCLR[y.p]}"></span>${esc(pName(y.p))} · ${L('السحب', 'tow')} ${y.tow == null ? '—' : ltr(usd0(pmTow(y)))}</div></div>
+      <div class="tt">${t == null ? `<span class="wait">${L('بانتظار السعر', 'Waiting for price')}</span>` : usd0(t) + `<div class="sub">${L('للسيارة', 'per car')}</div>`}</div></li>`; }).join('')}</ul>`;
+}
+function pmFiltered() {
+  const P = S.pm, words = P.q.toLowerCase().split(/\s+/).filter(Boolean);
+  return PD().yards.filter(y => (!P.a || y.a === P.a) && (!P.port || y.p === P.port) && words.every(w => `${y.n} ${y.s} ${pmState(y.s)} ${PSHORT[y.p] ? PSHORT[y.p].join(' ') : ''} ${y.a}`.toLowerCase().includes(w))).sort(pmByPort(P.cars));
+}
+function pmTableHtml() {
+  const n = S.pm.cars, ys = pmFiltered();
+  return { count: ys.length, html: ys.length ? `<table><thead><tr><th>${L('الساحة', 'Yard')}</th><th>${L('الولاية', 'State')}</th><th>${L('المزاد', 'Auction')}</th><th>${L('الميناء', 'Port')}</th><th class="n">${L('السحب', 'Towing')}</th><th class="n">${L('البحري للسيارة', 'Ocean / car')}</th><th class="n">${L('الإجمالي للسيارة', 'Total / car')}</th></tr></thead><tbody>${ys.map(y => { const t = pmTotal(y, n);
+    return `<tr><td><b>${esc(y.n)}</b></td><td>${esc(pmState(y.s))} <span class="sub">${y.s}</span></td><td>${y.a}</td><td><span class="pdot" style="background:${PCLR[y.p]}"></span>${esc(pName(y.p))}</td><td class="n">${y.tow == null ? '—' : usd0(pmTow(y))}</td><td class="n">${usd0(pmOcean(y.p, n))}</td><td class="n"><b>${t == null ? `<span class="wait">${L('بانتظار السعر', 'Waiting')}</span>` : usd0(t)}</b></td></tr>`; }).join('')}</tbody></table>` : `<div class="empty">${L('لا توجد نتائج', 'No yards found')}</div>` };
+}
+function vPorts() {
+  S.pm = S.pm || { cars: 4, st: null, port: null, q: '', a: '' };
+  if (!PD()) {
+    loadPorts().then(() => { if (S.route === 'ports') render(); }).catch(() => toast(L('تعذّر تحميل بيانات الموانئ', 'Could not load port data'), 'err'));
+    return `<div class="card empty">${L('جاري التحميل...', 'Loading...')}</div>`;
+  }
+  const P = S.pm, n = P.cars, D = PD();
+  const st = P.st ? D.states.find(s => s.a === P.st) : null;
+  const focus = st ? st.p : P.port;
+  const seg = `<div class="pseg">${[2, 3, 4].map(k => `<button class="${n === k ? 'on' : ''}" onclick="A.pmCars(${k})">${k} ${L('سيارات', 'cars')}</button>`).join('')}</div>`;
+  const best = {}; [2, 3, 4].forEach(k => best[k] = Math.min(...D.ports.map(p => pmOcean(p.id, k))));
+  const ocean = `<table class="otbl"><thead><tr><th>${L('الميناء', 'Port')}</th>${[2, 3, 4].map(k => `<th class="${k === n ? 'cur' : ''}">${k} ${L('سيارات', 'cars')}</th>`).join('')}</tr></thead><tbody>${D.ports.map(p => `<tr><td><span class="pdot" style="background:${PCLR[p.id]}"></span>${esc(pName(p.id))}</td>${[2, 3, 4].map(k => `<td class="${k === n ? 'cur ' : ''}${pmOcean(p.id, k) === best[k] ? 'best' : ''}">${ltr(usd0(pmOceanC(p.id, k)))}<small>${ltr(usd0(pmOcean(p.id, k)))}/${L('سيارة', 'car')}</small></td>`).join('')}</tr>`).join('')}</tbody></table>
+    <div class="hint">${L('سعر الحاوية 40 قدم إلى ميناء الخمس، شامل هامش المكتب ($25 للسيارة). السطر الصغير: نصيب كل سيارة.', 'Per 40ft container to Khoms, incl. office margin ($25 per car). Small line: share per car.')}</div>`;
+  let det;
+  if (st) {
+    const ys = D.yards.filter(y => y.s === st.a).sort(pmSort(n)), priced = ys.filter(y => y.tow != null), others = [...new Set(ys.map(y => y.p))].filter(p => p !== st.p);
+    det = `<div class="pmh">${esc(st.n)}</div><div><span class="pdot" style="background:${PCLR[st.p]}"></span><b>${st.p === 'NONE' ? L('لا يوجد مسار شحن', 'No shipping route') : L('يُشحن من', 'Ships from') + ' ' + esc(pName(st.p))}</b></div>
+      ${others.length ? `<div class="hint">${L('بعض الساحات هنا تذهب إلى', 'Some yards here go to')} ${others.map(pName).join(L(' و', ' and '))}</div>` : ''}
+      ${!ys.length ? `<div class="hint">${L('لا يوجد سعر سحب لهذه الولاية في قائمة Atlantic Express. اسألهم قبل الشراء من هنا.', 'No towing route in the Atlantic Express list. Ask them before bidding here.')}</div>` :
+      `<div class="pmbest">${priced.length ? `${L('أرخص ساحة', 'Cheapest yard')}: ${esc(priced[0].n)} (${priced[0].a})<br><b style="font-size:18px" dir="ltr">${usd0(pmTotal(priced[0], n))}</b> ${L('للسيارة إلى الخمس', 'per car to Khoms')}` : L('أسعار السحب لهذه الولاية لم تصل بعد.', 'Towing prices for this state are still pending.')}</div>
+      <button class="btn sm" style="margin-top:10px" onclick="A.pmPrint('state')">🖨️ ${L('طباعة / PDF', 'Print / PDF')}</button>${pmYardList(ys, n, false)}`}`;
+  } else if (P.port) {
+    const p = pPort(P.port), ys = D.yards.filter(y => y.p === p.id).sort(pmSort(n));
+    det = `<div class="pmh"><span class="pdot" style="background:${PCLR[p.id]}"></span>${L('مستودع', '')} ${esc(pName(p.id))} ${L('', 'warehouse')}</div>
+      <div class="hint">${ys.length} ${L('ساحة تُشحن من هنا', 'yards ship from here')} (${ys.filter(y => y.tow != null).length} ${L('بسعر سحب', 'with a towing price')}). ${L('البحري', 'Ocean')}: <b dir="ltr">${usd0(pmOceanC(p.id, n))}</b> ${L('للحاوية', 'per container')}، <b dir="ltr">${usd0(pmOcean(p.id, n))}</b> ${L('للسيارة', 'per car')} (${n} ${L('سيارات', 'cars')}).</div>
+      <button class="btn sm" style="margin-top:10px" onclick="A.pmPrint('port')">🖨️ ${L('طباعة / PDF', 'Print / PDF')}</button>${pmYardList(ys, n, true)}`;
+  } else det = `<div class="pmh">${L('اختر ولاية', 'Pick a state')}</div><div class="hint">${L('اضغط على أي ولاية لتشوف كل ساحات Copart و IAAI فيها، والميناء اللي تروح له، وسعر السحب والتكلفة الكاملة للسيارة إلى الخمس. أو اضغط على أي ميناء.', 'Tap a state to see every Copart and IAAI yard in it, its port, the towing price and the full cost per car to Khoms. Or tap a port.')}</div>`;
+  const tb = pmTableHtml();
+  const cards = D.ports.map(p => { const sts = D.states.filter(s => s.p === p.id).map(s => s.a);
+    return `<button class="card pcard${P.port === p.id ? ' on' : ''}" onclick="A.pmPort('${p.id}')"><b><span class="pdot" style="background:${PCLR[p.id]}"></span>${esc(pName(p.id))}</b><div class="sub">${ltr(usd0(pmOcean(p.id, n)))}/${L('سيارة', 'car')} · ${ltr(usd0(pmOceanC(p.id, n)))}/${L('حاوية', 'container')}</div><div class="sub">${D.yards.filter(y => y.p === p.id).length} ${L('ساحة', 'yards')}</div><div class="tags">${sts.map(a => `<span>${a}</span>`).join('')}</div></button>`; }).join('');
+  return `<div class="top"><div><h1>🗺️ ${L('خريطة موانئ الشحن إلى الخمس', 'Khoms Port Routing Map')}</h1><div class="hint" style="margin-top:0">${L('من أي ميناء تُشحن كل ساحة Copart و IAAI، مع سعر السحب والتكلفة الكاملة للسيارة.', 'Which port each Copart and IAAI yard ships from, with the towing price and the full cost per car.')}</div></div>
+    <div><div class="hint" style="margin:0 0 4px">${L('عدد السيارات في الحاوية 40 قدم', 'Cars per 40ft container')}</div>${seg}</div></div>
+  <div class="pmwrap"><div class="card pmapbox">${pmMapSvg(focus, P.st, false)}</div>
+    <div class="pmside"><div class="card"><h3>🚢 ${L('الشحن البحري إلى الخمس', 'Ocean freight to Khoms')}</h3>${ocean}</div><div class="card">${det}</div></div></div>
+  <div class="card"><div class="row-b"><h3>${L('البحث عن ساحة', 'Yard finder')}</h3><button class="btn sm" onclick="A.pmPrint('list')">🖨️ ${L('طباعة القائمة / PDF', 'Print list / PDF')}</button></div>
+    <div class="pmtools"><input id="pmQ" type="search" value="${esc(P.q)}" placeholder="${L('ابحث عن ساحة أو ولاية، مثلاً Dallas أو TX', 'Search a yard or state, e.g. Dallas, TX')}" oninput="A.pmQ(this.value)" dir="ltr">
+      <select onchange="A.pmA(this.value)"><option value="">${L('كل المزادات', 'All auctions')}</option>${['Copart', 'IAAI'].map(a => `<option ${P.a === a ? 'selected' : ''}>${a}</option>`).join('')}</select>
+      ${P.port ? `<span class="pchip"><span class="pdot" style="background:${PCLR[P.port]}"></span>${esc(pName(P.port))} ${L('فقط', 'only')}<button onclick="A.pmPort('${P.port}')" aria-label="${L('إزالة', 'Clear')}">×</button></span>` : ''}
+      <span class="sub" id="pmCount">${tb.count} ${L('ساحة', 'yards')}</span></div>
+    <div class="ptbl tw" id="pmTbl">${tb.html}</div>
+    <div class="hint">${L('الإجمالي للسيارة = السحب من الساحة إلى الميناء + نصيب السيارة من الحاوية. الأسعار شاملة هامش المكتب: $25 على السحب و $25 للسيارة على الشحن البحري. لا تشمل رسوم المزاد والجمارك ومصاريف ليبيا. "بانتظار السعر" = لا يوجد سعر سحب بعد من Atlantic Express.', 'Total per car = towing from the yard to the port + the car’s share of the container. Prices include the office margin: $25 on towing and $25 per car on ocean. Auction fees, customs and Libya-side costs are not included. “Waiting” = no towing price from Atlantic Express yet.')}</div></div>
+  <h3>${L('الموانئ وولاياتها', 'Ports and their states')}</h3><div class="pcards">${cards}</div>`;
+}
+function pmPrintHtml(rows, title) {
+  const ports = PM_ORDER().filter(p => rows.some(y => y.p === p)), D = PD();
+  const table = pr => {
+    const codes = [...new Set(pr.map(y => y.s))].sort((a, b) => pmState(a).localeCompare(pmState(b)));
+    return `<table><thead><tr><th>${L('الساحة', 'Yard')}</th><th>${L('المزاد', 'Auction')}</th><th class="num">${L('السحب', 'Towing')}</th><th class="num">${L('الإجمالي للسيارة (3 سيارات)', 'Total / car (3 cars)')}</th><th class="num">${L('الإجمالي للسيارة (4 سيارات)', 'Total / car (4 cars)')}</th></tr></thead><tbody>${codes.map(c => { const g = pr.filter(y => y.s === c).sort(pmSort(4));
+      return `<tr class="stt"><td colspan="5">${esc(pmState(c))} (${c}) — ${g.length} ${L('ساحة', 'yards')}</td></tr>` + g.map(y => `<tr><td>${esc(y.n)}</td><td>${y.a}</td><td class="num">${y.tow == null ? '—' : usd0(pmTow(y))}</td><td class="num">${y.tow == null ? L('بانتظار السعر', 'Waiting') : usd0(pmTotal(y, 3))}</td><td class="num">${y.tow == null ? L('بانتظار السعر', 'Waiting') : usd0(pmTotal(y, 4))}</td></tr>`).join(''); }).join('')}</tbody></table>`;
+  };
+  const oc = id => `<div class="oc">${L('الشحن البحري للحاوية 40 قدم', 'Ocean per 40ft container')}: 3 ${L('سيارات', 'cars')} <b dir="ltr">${usd0(pmOceanC(id, 3))}</b> (<span dir="ltr">${usd0(pmOcean(id, 3))}</span>/${L('سيارة', 'car')}) · 4 ${L('سيارات', 'cars')} <b dir="ltr">${usd0(pmOceanC(id, 4))}</b> (<span dir="ltr">${usd0(pmOcean(id, 4))}</span>/${L('سيارة', 'car')})</div>`;
+  const note = `<div class="pnote">${L('الإجمالي للسيارة = السحب من الساحة إلى الميناء + نصيب السيارة من الحاوية (سعر الحاوية ÷ 3 أو ÷ 4). الأسعار لا تشمل رسوم المزاد والجمارك ومصاريف ليبيا. "بانتظار السعر" = لا يوجد سعر سحب بعد.', 'Total per car = towing from the yard to the port + share of the container (container price ÷ 3 or ÷ 4). Auction fees, customs and Libya-side costs are not included. Waiting = no towing price yet.')}</div>`;
+  const css = `<style>.stt td{background:#eef2f6;font-weight:800}.pmimg{margin:0 0 10px}.pg{page-break-before:always;break-before:page}.oc{margin:6px 0 10px;color:#475569}.pnote{font-size:11px;color:#64748b;margin-bottom:10px}.pr{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid #e2e8f0}.pr i{width:12px;height:12px;border-radius:50%;display:inline-block}h2.pt{margin:0 0 6px;font-size:18px}tr{page-break-inside:avoid}</style>`;
+  let main = css;
+  if (ports.length === 1) {
+    main += `<div class="pmimg" dir="ltr">${pmMapSvg(ports[0], null, true)}</div>${oc(ports[0])}${table(rows)}${note}`;
+  } else {
+    main += `<div class="pmimg" dir="ltr">${pmMapSvg(null, null, true)}</div>` + ports.map(id => `<div class="pr"><i style="background:${PCLR[id]}"></i><b>${esc(pName(id))}</b><span>${rows.filter(y => y.p === id).length} ${L('ساحة', 'yards')}</span><span style="margin-inline-start:auto">${L('للسيارة', 'per car')}: 3 ${L('سيارات', 'cars')} ${ltr(usd0(pmOcean(id, 3)))} · 4 ${L('سيارات', 'cars')} ${ltr(usd0(pmOcean(id, 4)))}</span></div>`).join('');
+    main += ports.map(id => `<div class="pg"><h2 class="pt"><span style="color:${PCLR[id]}">●</span> ${L('مستودع', '')} ${esc(pName(id))} ${L('', 'warehouse')}</h2><div class="pmimg" dir="ltr" style="width:60%">${pmMapSvg(id, null, true)}</div>${oc(id)}${table(rows.filter(y => y.p === id))}${note}</div>`).join('');
+  }
+  printDoc(title, { head: repHead(title, L('خريطة موانئ الشحن إلى الخمس', 'Khoms Port Routing Map')), main, internal: true });
+}
+/* حقل الساحة في نموذج السيارة */
+function yardInfoHtml(y, n, port) {
+  if (!PD()) return '';
+  if (!y && !port) return '';
+  const pid = y ? y.p : port;
+  if (!pPort(pid)) return '';
+  const oc = pmOcean(pid, n);
+  if (y && y.tow == null) return `<div class="yinfo warn">⚠️ ${L('هذه الساحة لا يوجد لها سعر سحب بعد إلى', 'This yard has no towing price yet to')} ${esc(pName(pid))}. ${L('تمت تعبئة الشحن البحري فقط', 'Only ocean was filled')} (<b dir="ltr">${usd0(oc)}</b>/${L('سيارة', 'car')}). ${L('اكتب سعر السحب بيدك.', 'Enter the towing price by hand.')}</div>`;
+  return `<div class="yinfo">🗺️ ${L('الميناء', 'Port')}: <b><span class="pdot" style="background:${PCLR[pid]}"></span>${esc(pName(pid))}</b>${y ? ` · ${L('السحب', 'Towing')} <b dir="ltr">${usd0(pmTow(y))}</b>` : ''} · ${L('البحري', 'Ocean')} <b dir="ltr">${money(r2(oc))}</b>/${L('سيارة', 'car')} (${n} ${L('سيارات في الحاوية', 'cars per container')})${y ? ` · ${L('الإجمالي', 'Total')} <b dir="ltr">${money(r2(pmTotal(y, n)))}</b>` : ''}
+    ${y ? `<span class="pf"> · 🔒 ${L('تكلفتنا', 'Our cost')} <b dir="ltr">${money(r2(pmCost(y, n)))}</b></span>` : ''}<br><span class="sub">${L('تمت تعبئة الشحن الداخلي والبحري تلقائياً في الحساب المالي، ويمكنك تعديلها.', 'Inland and ocean shipping were filled in below automatically. You can still edit them.')}</span></div>`;
+}
+
 /* ---------------- الهيكل والتنقل ---------------- */
 function parseRoute() {
   const h = location.hash.replace(/^#\/?/, '');
@@ -525,12 +720,12 @@ function parseRoute() {
 function shell(body) {
   const act = { vehicle: 'vehicles', customer: 'customers' }[S.route] || S.route;
   const late = lateList().length;
-  let nav = [['dashboard', '📊', L('لوحة التحكم', 'Dashboard'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['payments', '💵', L('الدفعات', 'Payments')], ['collect', '📞', L('التحصيل', 'Collections'), collectList().filter(x => x.age >= 30).length], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')]];
+  let nav = [['dashboard', '📊', L('لوحة التحكم', 'Dashboard'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['payments', '💵', L('الدفعات', 'Payments')], ['collect', '📞', L('التحصيل', 'Collections'), collectList().filter(x => x.age >= 30).length], ['ports', '🗺️', L('خريطة الموانئ', 'Port map')], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')]];
   const okR = r => !ROUTE_PERM[r] || can(ROUTE_PERM[r]);
   if (isAdmin()) nav.push(['users', '🔐', L('المستخدمين', 'Users')]);
   for (let k = nav.length - 1; k >= 0; k--) if (!okR(nav[k][0])) nav.splice(k, 1);
   const bn = [['dashboard', '🏠', L('الرئيسية', 'Home'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['collect', '📞', L('التحصيل', 'Collect'), nav[4][3]]];
-  const inMore = ['payments', 'expenses', 'logs', 'settings', 'users'].includes(act);
+  const inMore = ['ports', 'payments', 'expenses', 'logs', 'settings', 'users'].includes(act);
   return `<header class="mtop"><div class="lg">🚢</div><b>${esc(S.settings.office)}</b><button onclick="A.lang()">${L('EN', 'ع')}</button></header>
   <nav class="bnav">${bn.map(n => `<a href="#/${n[0]}" class="${act === n[0] ? 'on' : ''}"><i>${n[1]}</i>${n[2]}${n[3] ? `<span class="dotc">${n[3]}</span>` : ''}</a>`).join('')}
     <a href="javascript:A.more()" class="${inMore ? 'on' : ''}"><i>☰</i>${L('المزيد', 'More')}</a></nav>
@@ -553,7 +748,7 @@ function render() {
   if (!S.user) return;
   const ae = document.activeElement, fid = ae && ae.id;
   let sel = null; try { if (fid && ae.selectionStart != null) sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) { }
-  let V = { vehicles: vVehicles, vehicle: vVehicle, customers: vCustomers, customer: vCustomer, payments: vPayments, collect: vCollect, expenses: vExpenses, logs: vLogs, settings: vSettings, users: vUsers }[S.route] || vDashboard;
+  let V = { vehicles: vVehicles, vehicle: vVehicle, customers: vCustomers, customer: vCustomer, payments: vPayments, collect: vCollect, expenses: vExpenses, logs: vLogs, settings: vSettings, users: vUsers, ports: vPorts }[S.route] || vDashboard;
   if (ROUTE_PERM[S.route] && !can(ROUTE_PERM[S.route])) V = () => `<div class="card empty">🔒 ${L('ما عندكش صلاحية لهذي الصفحة', 'You don’t have access to this page')}</div>`;
   $('#app').innerHTML = shell(V());
   applyPerms();
@@ -652,6 +847,7 @@ function vVehicle() {
   const inf = [
     [L('الزبون', 'Customer'), c.id ? `<a href="#/customer/${c.id}">${esc(c.full_name)}</a>` : '—'], [L('الهاتف', 'Phone'), `<span class="mono">${esc(c.phone || '—')}</span>`],
     [L('المزاد', 'Auction'), esc(v.auction_name || '—')], [L('الساحة / الولاية', 'Location'), esc(v.auction_location || '—')],
+    [L('ميناء الشحن في أمريكا', 'US port'), v.us_port ? `<span class="pdot" style="background:${PCLR[v.us_port] || '#94a3b8'}"></span>${esc(pName(v.us_port))}` : '—'], [L('سيارات في الحاوية', 'Cars per container'), v.cars_per_container ? esc(v.cars_per_container) : '—'],
     [L('الفئة', 'Trim'), esc(v.trim || '—')], [L('المحرك', 'Engine'), esc(v.engine || '—')],
     [L('اللون', 'Color'), esc(v.color || '—')], [L('رقم اللوت', 'Lot #'), `<span class="mono">${esc(v.lot_number || '—')}</span>`],
     [L('رقم الحاوية', 'Container #'), `<span class="mono">${esc(v.container_number || '—')}</span>`], [L('رقم الحجز', 'Booking #'), `<span class="mono">${esc(v.booking_number || '—')}</span>`],
@@ -920,8 +1116,12 @@ function vFormHtml(v, cid) {
     ${inp('engine', L('المحرك', 'Engine'), v.engine, 'placeholder="V6 3.5L" dir="ltr"')}
   </div><datalist id="mk">${['Toyota', 'Hyundai', 'Kia', 'Nissan', 'Honda', 'Ford', 'Chevrolet', 'Jeep', 'Dodge', 'Mercedes-Benz', 'BMW', 'Lexus', 'Audi', 'Volkswagen', 'Mazda', 'GMC', 'Tesla'].map(x => `<option>${x}</option>`).join('')}</datalist>
   <div class="sec">${L('المزاد والشحن', 'Auction & shipping')}</div><div class="grid">
-    <label class="f"><span>${L('المزاد', 'Auction')}</span><select name="auction_name">${AUCTIONS.map(a => `<option ${v.auction_name === a ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
+    <label class="f"><span>${L('المزاد', 'Auction')}</span><select name="auction_name" onchange="A.yardFill()">${AUCTIONS.map(a => `<option ${v.auction_name === a ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
+    <label class="f"><span>🗺️ ${L('الساحة من قائمة الأسعار (تعبّي السحب والبحري)', 'Yard from price list (fills towing & ocean)')}</span><input id="yardIn" list="yardDl" value="${esc(v.yard ? `${v.yard}, ${v.yard_state} · ${v.auction_name} → ${PSHORT[v.us_port] ? PSHORT[v.us_port][1] : v.us_port}` : '')}" placeholder="${L('اكتب المدينة أو الولاية… مثلاً Dallas', 'Type the city or state… e.g. Dallas')}" oninput="A.yardPick()" autocomplete="off" dir="ltr"><datalist id="yardDl"></datalist>
+      <input type="hidden" name="us_port" value="${esc(v.us_port || '')}"><input type="hidden" name="yard" value="${esc(v.yard || '')}"><input type="hidden" name="yard_state" value="${esc(v.yard_state || '')}"></label>
+    <label class="f"><span>${L('عدد السيارات في الحاوية', 'Cars per container')}</span><select name="cars_per_container" onchange="A.yardPick(true)">${[2, 3, 4].map(k => `<option value="${k}" ${num(v.cars_per_container || 4) === k ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
     ${inp('auction_location', L('الولاية / الساحة', 'State / yard'), v.auction_location)}
+    <div id="yardInfo" style="grid-column:1/-1"></div>
     ${inp('purchase_date', L('تاريخ الشراء', 'Purchase date'), v.purchase_date || today(), 'type="date"')}
     <label class="f"><span>${L('دفع ثمن المزاد', 'Auction paid by')}</span><select name="auction_paid_by"><option value="">${L('لم يُدفع بعد', 'Not paid yet')}</option><option value="customer" ${v.auction_paid_by === 'customer' ? 'selected' : ''}>${L('الزبون', 'Customer')}</option><option value="office" ${v.auction_paid_by === 'office' ? 'selected' : ''}>${L('المكتب (سلفة)', 'Office (advance)')}</option></select></label>
     ${inp('auction_paid_date', L('تاريخ الدفع للمزاد', 'Auction paid on'), v.auction_paid_date || '', 'type="date"')}
@@ -1004,6 +1204,44 @@ async function renderPublic() {
 
 /* ---------------- الإجراءات ---------------- */
 const A = {
+  /* خريطة الموانئ */
+  pmCars(n) { S.pm.cars = n; render(); },
+  pmState(a) { S.pm.st = S.pm.st === a ? null : a; S.pm.port = null; render(); },
+  pmPort(id) { S.pm.st = null; S.pm.port = S.pm.port === id ? null : id; render(); },
+  pmQ(v) { S.pm.q = v; const t = pmTableHtml(); $('#pmTbl').innerHTML = t.html; $('#pmCount').textContent = t.count + ' ' + L('ساحة', 'yards'); },
+  pmA(v) { S.pm.a = v; render(); },
+  pmPrint(kind) {
+    const D = PD(), P = S.pm;
+    if (kind === 'state') { const st = D.states.find(s => s.a === P.st); return pmPrintHtml(D.yards.filter(y => y.s === P.st), `${st.n} — ${L('الساحات', 'yards')}`); }
+    if (kind === 'port') return pmPrintHtml(D.yards.filter(y => y.p === P.port), `${L('مستودع', '')} ${pName(P.port)} ${L('', 'warehouse')}`.trim());
+    const rows = pmFiltered(); if (!rows.length) return toast(L('لا توجد ساحات للطباعة', 'No yards to print'), 'err');
+    pmPrintHtml(rows, L('قائمة الساحات وأسعار الشحن', 'Yard list and shipping prices'));
+  },
+  yardFill() {
+    const dl = $('#yardDl'), f = $('#vf'); if (!dl || !f || !PD()) return;
+    const au = f.elements.auction_name.value;
+    dl.innerHTML = PD().yards.filter(y => !['Copart', 'IAAI'].includes(au) || y.a === au).sort(pmByPort(4)).map(y => `<option value="${esc(yLabel(y))}">${y.tow == null ? esc(L('بانتظار السعر', 'Waiting for price')) : ''}</option>`).join('');
+    const port = f.elements.us_port.value;
+    if (port && !$('#yardInfo').innerHTML) $('#yardInfo').innerHTML = yardInfoHtml(PD().yards.find(y => yLabel(y) === $('#yardIn').value) || null, num(f.elements.cars_per_container.value) || 4, port);
+  },
+  yardPick(recalc) {
+    const f = $('#vf'); if (!f || !PD()) return;
+    const E = f.elements, val = $('#yardIn').value.trim(), n = num(E.cars_per_container.value) || 4;
+    const y = PD().yards.find(x => yLabel(x) === val);
+    if (!y) {
+      if (!val) { E.us_port.value = ''; E.yard.value = ''; E.yard_state.value = ''; $('#yardInfo').innerHTML = ''; }
+      else if (recalc && E.us_port.value && pPort(E.us_port.value)) { E.fin_ocean_shipping.value = r2(pmOcean(E.us_port.value, n)); $('#yardInfo').innerHTML = yardInfoHtml(null, n, E.us_port.value); A.calc(); }
+      return;
+    }
+    E.us_port.value = y.p; E.yard.value = y.n; E.yard_state.value = y.s;
+    E.auction_location.value = `${y.n}, ${y.s}`;
+    if ([...E.auction_name.options].some(o => o.value === y.a)) E.auction_name.value = y.a;
+    E.fin_ocean_shipping.value = r2(pmOcean(y.p, n));
+    E.fin_inland_shipping.value = y.tow == null ? '' : pmTow(y);
+    if (E.fin_shipping_cost_actual) E.fin_shipping_cost_actual.value = y.tow == null ? '' : r2(pmCost(y, n));
+    $('#yardInfo').innerHTML = yardInfoHtml(y, n);
+    A.calc();
+  },
   close() { $('#modal').innerHTML = ''; },
   lang() { S.lang = S.lang === 'ar' ? 'en' : 'ar'; localStorage.setItem('cop_lang', S.lang); rerender(); },
   async login(e) { e.preventDefault(); try { await DB.login($('#le').value.trim(), $('#lp').value); } catch (x) { renderLogin(L('البريد أو كلمة المرور غير صحيحة', 'Invalid email or password')); } },
@@ -1018,6 +1256,7 @@ const A = {
   vForm(id, cid) {
     if (!S.customers.length) return openModal(`<h2>${L('أضف زبوناً أولاً', 'Add a customer first')}</h2><p>${L('يجب ربط كل سيارة بزبون.', 'Every vehicle must belong to a customer.')}</p><div class="mfoot"><button class="btn pri" onclick="A.cForm()">+ ${L('زبون جديد', 'New customer')}</button></div>`, 'sm');
     openModal(vFormHtml(id ? S.vehicles.find(v => v.id === id) || {} : {}, cid));
+    loadPorts().then(() => A.yardFill()).catch(() => { });
   },
   calc() {
     const fd = new FormData($('#vf'));
@@ -1035,7 +1274,7 @@ const A = {
     const status = g('status');
     const data = {
       customer_id: g('customer_id'), vin, lot_number: g('lot_number'), make: g('make'), model: g('model'), year: g('year'), color: g('color'), trim: g('trim'), engine: g('engine'),
-      auction_name: g('auction_name'), auction_location: g('auction_location'),
+      auction_name: g('auction_name'), auction_location: g('auction_location'), us_port: g('us_port'), yard: g('yard'), yard_state: g('yard_state'), cars_per_container: g('us_port') ? num(g('cars_per_container')) || 4 : '',
       container_number: g('container_number'), booking_number: g('booking_number'), status, purchase_date: g('purchase_date'), auction_paid_by: g('auction_paid_by'), auction_paid_date: g('auction_paid_by') ? (g('auction_paid_date') || today()) : '', notes: g('notes'), fin, total_cost: r2(FIN.reduce((s, x) => s + fin[x.k], 0))
     };
     try {
@@ -1231,7 +1470,7 @@ const A = {
     try { await DB.del('users', id); logAct('user_del', `${u?.name || ''} · ${id}`); toast(L('تم حذف المستخدم. لو تبي تمسح حسابه نهائياً: Firebase > Authentication > Users', 'User removed. To delete the login itself: Firebase > Authentication > Users')); } catch (x) { toast(x.message, 'err'); }
   },
   more() {
-    const it = [['payments', '💵', L('الدفعات', 'Payments')], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')], ['users', '🔐', L('المستخدمين والصلاحيات', 'Users & permissions')]].filter(x => !ROUTE_PERM[x[0]] || can(ROUTE_PERM[x[0]]));
+    const it = [['ports', '🗺️', L('خريطة الموانئ وأسعار الشحن', 'Port map & shipping prices')], ['payments', '💵', L('الدفعات', 'Payments')], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')], ['users', '🔐', L('المستخدمين والصلاحيات', 'Users & permissions')]].filter(x => !ROUTE_PERM[x[0]] || can(ROUTE_PERM[x[0]]));
     openModal(`<div class="sheet-list">${it.map(x => `<a href="#/${x[0]}" onclick="A.close()"><span class="ic">${x[1]}</span>${x[2]}</a>`).join('')}
       <a href="#/track" target="_blank" onclick="A.close()"><span class="ic">🔎</span>${L('صفحة التتبع للزبائن', 'Customer tracking page')}</a>
       <button onclick="A.close();A.lang()"><span class="ic">🌐</span>${L('English', 'العربية')}</button>
