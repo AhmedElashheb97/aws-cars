@@ -224,6 +224,7 @@ tr.sel{background:#fff7ed}
 .mc.late{border-color:#fecaca;background:#fef2f2}.mc.sel{border-color:#fdba74;background:#fff7ed}
 .mc-h{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .mc-h b{font-size:15px}
+.ccode{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-weight:800;font-size:.82em;color:#c2410c;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:0 6px;margin-inline-end:6px;direction:ltr;unicode-bidi:isolate;vertical-align:middle}
 .mc-s{font-size:12px;color:var(--mut);margin-top:2px}
 .mc-r{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:8px;font-size:13px}
 .mc-r b{font-size:15px;direction:ltr}
@@ -518,6 +519,9 @@ const custFin = v => { const f = v.fin || {}, tr = num(f.transfer_commission); c
   return rows; };
 const vt = v => `${v.year || ''} ${v.make || ''} ${v.model || ''}`.trim() || '—';
 const custName = id => (S.customers.find(c => c.id === id) || {}).full_name || '—';
+const custCode = id => (S.customers.find(c => c.id === id) || {}).code || '';
+const codeTag = code => code ? `<span class="ccode">#${esc(code)}</span>` : '';
+const nextCode = () => { const used = S.customers.map(c => parseInt(c.code, 10)).filter(n => n >= 1000 && n <= 9999); let n = used.length ? Math.max(...used) + 1 : 1001; if (n > 9999) { n = 1001; while (used.includes(n)) n++; } return String(n); };
 const statusSince = v => { const h = v.status_history || []; return h.length ? h[h.length - 1].at : (v.purchase_date || v.created_at); };
 const totalCost = v => FIN.reduce((s, f) => s + num((v.fin || {})[f.k]), 0);
 const actCost = v => { const iv = S.internal[v.id]; return num(iv ? iv.shipping_cost_actual : (v.fin || {}).shipping_cost_actual); };
@@ -866,7 +870,7 @@ function vTable(list, sel) {
 function filteredVehicles() {
   const q = S.f.q.trim().toLowerCase();
   return S.vehicles.filter(v => (!S.f.status || v.status === S.f.status) && (!S.f.auction || v.auction_name === S.f.auction) && (!S.f.cust || v.customer_id === S.f.cust) &&
-    (!q || [v.vin, v.lot_number, v.make, v.model, v.year, v.container_number, v.booking_number, custName(v.customer_id)].join(' ').toLowerCase().includes(q)))
+    (!q || [v.vin, v.lot_number, v.make, v.model, v.year, v.container_number, v.booking_number, custName(v.customer_id), custCode(v.customer_id), '#' + custCode(v.customer_id)].join(' ').toLowerCase().includes(q)))
     .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 }
 const bulkBar = () => !can('edit') ? '' : !S.sel.size ? `<div class="hint" style="margin:0 0 8px">☑️ ${L('حدد أكثر من سيارة (مثلاً ابحث برقم الحاوية ثم حدد الكل) لتحديث مرحلتها أو رقم حاويتها مرة وحدة.', 'Select several vehicles (e.g. search a container number, then select all) to update their stage or container at once.')}</div>` :
@@ -875,7 +879,7 @@ const bulkBar = () => !can('edit') ? '' : !S.sel.size ? `<div class="hint" style
    <input id="bkCt" placeholder="${L('رقم الحاوية (اختياري)', 'Container # (optional)')}" dir="ltr"><input id="bkBk" placeholder="${L('رقم الحجز (اختياري)', 'Booking # (optional)')}" dir="ltr">
    <button class="btn pri" onclick="A.bulkApply()">✔ ${L('تطبيق', 'Apply')}</button><button class="btn" onclick="A.selClear()">${L('إلغاء التحديد', 'Clear')}</button></div>`;
 const vListInner = () => { const l = filteredVehicles(); return bulkBar() + `<div class="sub" style="margin-bottom:8px">${l.length} ${L('سيارة', 'vehicles')} · ${L('الإجمالي', 'Total')}: ${money(l.reduce((s, v) => s + totalCost(v), 0))} · ${L('المتبقي', 'Balance')}: ${money(l.reduce((s, v) => s + vBal(v), 0))}</div>` + vTable(l, true); };
-const custOpts = (sel, all) => (all ? `<option value="">${L('كل الزبائن', 'All customers')}</option>` : `<option value="">— ${L('اختر الزبون', 'Select customer')} —</option>`) + [...S.customers].sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '')).map(c => `<option value="${c.id}" ${c.id === sel ? 'selected' : ''}>${esc(c.full_name)}${c.phone ? ' - ' + esc(c.phone) : ''}</option>`).join('');
+const custOpts = (sel, all) => (all ? `<option value="">${L('كل الزبائن', 'All customers')}</option>` : `<option value="">— ${L('اختر الزبون', 'Select customer')} —</option>`) + [...S.customers].sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '')).map(c => `<option value="${c.id}" ${c.id === sel ? 'selected' : ''}>${c.code ? '#' + esc(c.code) + ' · ' : ''}${esc(c.full_name)}${c.phone ? ' - ' + esc(c.phone) : ''}</option>`).join('');
 function vVehicles() {
   return `<div class="top"><h1>${L('السيارات والتتبع', 'Vehicles & Tracking')}</h1><button class="btn pri" onclick="A.vForm()">+ ${L('سيارة جديدة', 'New vehicle')}</button></div>
   <div class="card"><div class="filters">
@@ -957,7 +961,7 @@ function invSnap(v) {
   FIN.filter(x => !['bid_price', 'transfer_commission'].includes(x.k) && num(f[x.k])).forEach(x => items.push({ k: x.k, a: r2(num(f[x.k])) }));
   const tot = r2(totalCost(v)), paid = r2(vPaid(v.id));
   const pays = S.payments.filter(p => p.vehicle_id === v.id).sort((a, b) => (a.date || '').localeCompare(b.date || '')).map(p => ({ date: p.date || '', cur: p.currency || 'USD', amt: num(p.amount), rate: p.rate || '', usd: r2(num(p.amount_usd)) }));
-  return { no: 'INV-' + v.vin.slice(-6), customer: c.full_name || '', city: c.city || '', status: v.status || '', title: vt(v), spec: vSpec(v), vin: v.vin, lot: v.lot_number || '', auction: v.auction_name || '', loc: v.auction_location || '', port: v.us_port || '', container: v.container_number || '', items, tot, paid, bal: r2(tot - paid), pays, auction_inv: !!v.auction_invoice };
+  return { no: 'INV-' + v.vin.slice(-6), code: c.code || '', customer: c.full_name || '', city: c.city || '', status: v.status || '', title: vt(v), spec: vSpec(v), vin: v.vin, lot: v.lot_number || '', auction: v.auction_name || '', loc: v.auction_location || '', port: v.us_port || '', container: v.container_number || '', items, tot, paid, bal: r2(tot - paid), pays, auction_inv: !!v.auction_invoice };
 }
 const invItemLabel = k => k === 'bid_tr' ? L('سعر الشراء والتحويل', 'Purchase & transfer') : (x => x ? L(x.ar, x.en) : k)(FIN.find(x => x.k === k));
 function invoicePrint(d, auto) {
@@ -966,7 +970,7 @@ function invoicePrint(d, auto) {
     internal: true, noAuto: !auto,
     head: `<div class="ivh"><span class="t">${L('فاتورة', 'INVOICE')}</span><span class="n">${esc(d.no)}</span><span class="d">${L('التاريخ', 'Date')}: ${fdate(now())}</span></div>`,
     main: INV_CSS + `<div class="ivc">
-      <div class="bx"><div class="l">${L('فاتورة إلى', 'Bill to')}</div><b class="big">${esc(d.customer || '—')}</b><div class="r">${d.phone ? `📞 <span class="mono">${esc(d.phone)}</span><br>` : ''}${d.city ? '📍 ' + esc(d.city) + '<br>' : ''}<span class="pill" style="--c:${stColor(d.status)}">${esc(stName(d.status))}</span></div></div>
+      <div class="bx"><div class="l">${L('فاتورة إلى', 'Bill to')}</div><b class="big">${esc(d.customer || '—')}</b><div class="r">${d.code ? `${L('رقم الزبون', 'Customer ID')}: <b class="mono">#${esc(d.code)}</b><br>` : ''}${d.phone ? `📞 <span class="mono">${esc(d.phone)}</span><br>` : ''}${d.city ? '📍 ' + esc(d.city) + '<br>' : ''}<span class="pill" style="--c:${stColor(d.status)}">${esc(stName(d.status))}</span></div></div>
       <div class="bx"><div class="l">${L('السيارة', 'Vehicle')}</div><div class="vb">${d.img ? `<div class="ph"><img src="${esc(d.img)}"></div>` : ''}<div><b class="big">${esc(d.title)}</b><div class="r">${d.spec ? esc(d.spec) + '<br>' : ''}VIN: <span class="mono">${esc(d.vin)}</span><br>${d.lot ? `LOT: <span class="mono">${esc(d.lot)}</span> · ` : ''}${esc(d.auction)}${d.loc ? ' — ' + esc(d.loc) : ''}${d.port ? `<br>${L('ميناء الشحن', 'Port')}: ${esc(pName(d.port))} → ${L('الخمس', 'Khoms')}` : ''}${d.container ? `<br>${L('الحاوية', 'Container')}: <span class="mono">${esc(d.container)}</span>` : ''}</div></div></div></div>
     </div>
     <table class="it"><thead><tr><th>#</th><th>${L('البيان', 'Description')}</th><th class="num">${L('المبلغ (USD)', 'Amount (USD)')}</th></tr></thead><tbody>
@@ -983,10 +987,17 @@ function invoicePrint(d, auto) {
 const hstr = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
 let invSyncT = null, invSyncBusy = false;
 function queueInvSync() { clearTimeout(invSyncT); invSyncT = setTimeout(runInvSync, 1500); }
+let codesDone = false;
+async function assignCodes() {
+  if (!can('edit') || !S.loaded.customers) return;
+  const missing = S.customers.filter(c => !/^\d{4}$/.test(c.code || '')).sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
+  for (const c of missing) { const code = nextCode(); c.code = code; try { await DB.update('customers', c.id, { code }); } catch (e) { } }
+}
 async function runInvSync() {
   if (invSyncBusy || !can('edit') || !S.loaded.vehicles || !S.loaded.customers || !S.loaded.payments) return;
   invSyncBusy = true;
   try {
+    await assignCodes();
     for (const v of S.vehicles) {
       if (!v.vin) continue;
       const snap = invSnap(v), h = hstr(JSON.stringify(snap));
@@ -1075,16 +1086,16 @@ async function syncTracking(v, extra = {}) {
 /* ---------------- الزبائن ---------------- */
 const cListInner = () => {
   const q = S.cq.trim().toLowerCase();
-  const l = S.customers.filter(c => !q || [c.full_name, c.phone, c.alternate_phone, c.city].join(' ').toLowerCase().includes(q)).sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
+  const l = S.customers.filter(c => !q || [c.code, '#' + (c.code || ''), c.full_name, c.phone, c.alternate_phone, c.city].join(' ').toLowerCase().includes(q)).sort((a, b) => (a.full_name || '').localeCompare(b.full_name || ''));
   if (!l.length) return `<div class="empty">${L('لا يوجد زبائن', 'No customers')}</div>`;
-  return `<div class="tw dt"><table><thead><tr><th>${L('الاسم', 'Name')}</th><th>${L('الهاتف', 'Phone')}</th><th>${L('المدينة', 'City')}</th><th>${L('السيارات', 'Vehicles')}</th><th>${L('الإجمالي', 'Total')}</th><th>${L('المدفوع', 'Paid')}</th><th>${L('الرصيد المتبقي', 'Balance')}</th></tr></thead><tbody>
-  ${l.map(c => { const a = cAgg(c.id); return `<tr class="click" onclick="location.hash='#/customer/${c.id}'"><td><b>${esc(c.full_name)}</b></td><td class="mono">${esc(c.phone || '—')}</td><td>${esc(c.city || '—')}</td><td>${a.count} <span class="sub">(${a.active} ${L('نشطة', 'active')})</span></td><td>${money(a.cost)}</td><td>${money(a.paid)}</td><td class="${a.bal > 0.009 ? 'neg' : 'pos'}">${money(a.bal)}</td></tr>`; }).join('')}</tbody></table></div>
-  <div class="mcards">${l.map(c => { const a = cAgg(c.id); return `<div class="mc" onclick="location.hash='#/customer/${c.id}'"><div class="mc-h"><b>${esc(c.full_name)}</b><b class="${a.bal > 0.009 ? 'neg' : 'pos'}" dir="ltr">${money(a.bal)}</b></div>
+  return `<div class="tw dt"><table><thead><tr><th>${L('رقم الزبون', 'ID')}</th><th>${L('الاسم', 'Name')}</th><th>${L('الهاتف', 'Phone')}</th><th>${L('المدينة', 'City')}</th><th>${L('السيارات', 'Vehicles')}</th><th>${L('الإجمالي', 'Total')}</th><th>${L('المدفوع', 'Paid')}</th><th>${L('الرصيد المتبقي', 'Balance')}</th></tr></thead><tbody>
+  ${l.map(c => { const a = cAgg(c.id); return `<tr class="click" onclick="location.hash='#/customer/${c.id}'"><td>${codeTag(c.code) || '—'}</td><td><b>${esc(c.full_name)}</b></td><td class="mono">${esc(c.phone || '—')}</td><td>${esc(c.city || '—')}</td><td>${a.count} <span class="sub">(${a.active} ${L('نشطة', 'active')})</span></td><td>${money(a.cost)}</td><td>${money(a.paid)}</td><td class="${a.bal > 0.009 ? 'neg' : 'pos'}">${money(a.bal)}</td></tr>`; }).join('')}</tbody></table></div>
+  <div class="mcards">${l.map(c => { const a = cAgg(c.id); return `<div class="mc" onclick="location.hash='#/customer/${c.id}'"><div class="mc-h"><b>${codeTag(c.code)}${esc(c.full_name)}</b><b class="${a.bal > 0.009 ? 'neg' : 'pos'}" dir="ltr">${money(a.bal)}</b></div>
     <div class="mc-f"><span class="mono">📱 ${esc(c.phone || '—')}</span>${c.city ? `<span>📍 ${esc(c.city)}</span>` : ''}<span>🚗 ${a.count} (${a.active} ${L('نشطة', 'active')})</span></div></div>`; }).join('')}</div>`;
 };
 function vCustomers() {
   return `<div class="top"><h1>${L('الزبائن', 'Customers')}</h1><button class="btn pri" onclick="A.cForm()">+ ${L('زبون جديد', 'New customer')}</button></div>
-  <div class="card"><input id="cq" placeholder="🔍 ${L('بحث بالاسم أو الهاتف أو المدينة', 'Search by name, phone or city')}" value="${esc(S.cq)}" oninput="A.cqf(this.value)"></div>
+  <div class="card"><input id="cq" placeholder="🔍 ${L('بحث برقم الزبون أو الاسم أو الهاتف أو المدينة', 'Search by ID, name, phone or city')}" value="${esc(S.cq)}" oninput="A.cqf(this.value)"></div>
   <div class="card" id="clist">${cListInner()}</div>`;
 }
 function vCustomer() {
@@ -1093,7 +1104,7 @@ function vCustomer() {
   const a = cAgg(c.id);
   const vs = S.vehicles.filter(v => v.customer_id === c.id).sort((x, y) => (y.created_at || '').localeCompare(x.created_at || ''));
   const ps = S.payments.filter(p => p.customer_id === c.id).sort((x, y) => (y.date || '').localeCompare(x.date || ''));
-  return `<div class="top"><div><a href="#/customers" class="back">${L('→ الزبائن', '← Customers')}</a><h1>👤 ${esc(c.full_name)}</h1>
+  return `<div class="top"><div><a href="#/customers" class="back">${L('→ الزبائن', '← Customers')}</a><h1>👤 ${codeTag(c.code)}${esc(c.full_name)}</h1>
     <div class="sub"><span class="mono">${esc(c.phone || '')}</span>${c.alternate_phone ? ' · <span class="mono">' + esc(c.alternate_phone) + '</span>' : ''}${c.city ? ' · ' + esc(c.city) : ''} · ${L('منذ', 'since')} ${fdate(c.created_at)}</div></div>
     <div class="acts"><button class="btn wa" onclick="A.wa('c','${c.id}')">💬 ${L('واتساب', 'WhatsApp')}</button><button class="btn pri" onclick="A.pForm({customer_id:'${c.id}'})">+ ${L('دفعة', 'Payment')}</button><button class="btn" onclick="A.vForm(null,'${c.id}')">+ ${L('سيارة', 'Vehicle')}</button><button class="btn" onclick="A.printDue('${c.id}')">🧾 ${L('تقرير المستحقات', 'Amounts due')}</button><button class="btn" onclick="A.printFull('${c.id}')">📊 ${L('تقرير شامل', 'Full report')}</button><button class="btn" onclick="A.cForm('${c.id}')">✏️</button><button class="btn red" onclick="A.cDel('${c.id}')">🗑️</button></div></div>
   <div class="stats">
@@ -1312,7 +1323,7 @@ tr.tot td{background:#f1f5f9;font-weight:800}
 const sumBox = items => `<div class="sum">${items.map(x => `<div style="--c:${x[2] || '#94a3b8'}"><span>${x[0]}</span><b class="${x[3] || ''}" dir="ltr">${x[1]}</b></div>`).join('')}</div>`;
 const shipMargin = v => { const f = v.fin || {}, act = actCost(v); return act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0; };
 const repHead = (t, sub) => `<div class="doc"><b>${t}</b>${sub ? `<span>${sub}</span><br>` : ''}<span>${L('تاريخ التقرير', 'Report date')}: ${fdate(now())}</span></div>`;
-const custKv = c => `<table class="kv"><tbody><tr><td>${L('الزبون', 'Customer')}</td><td>${esc(c.full_name)}</td></tr><tr><td>${L('الهاتف', 'Phone')}</td><td class="mono">${esc(c.phone || '')}${c.alternate_phone ? ' / ' + esc(c.alternate_phone) : ''}</td></tr><tr><td>${L('المدينة', 'City')}</td><td>${esc(c.city || '—')}</td></tr></tbody></table>`;
+const custKv = c => `<table class="kv"><tbody>${c.code ? `<tr><td>${L('رقم الزبون', 'Customer ID')}</td><td class="mono">#${esc(c.code)}</td></tr>` : ''}<tr><td>${L('الزبون', 'Customer')}</td><td>${esc(c.full_name)}</td></tr><tr><td>${L('الهاتف', 'Phone')}</td><td class="mono">${esc(c.phone || '')}${c.alternate_phone ? ' / ' + esc(c.alternate_phone) : ''}</td></tr><tr><td>${L('المدينة', 'City')}</td><td>${esc(c.city || '—')}</td></tr></tbody></table>`;
 const payRows = ps => ps.map(p => { const v = S.vehicles.find(x => x.id === p.vehicle_id); return `<tr><td>${fdate(p.date)}</td><td>${v ? esc(vt(v)) + ' <span class="mono">' + esc(v.vin.slice(-6)) + '</span>' : L('على الحساب', 'On account')}</td><td>${p.currency === 'LYD' ? lyd(p.amount) + ' @' + esc(p.rate) : money(p.amount)}</td><td class="num">${money(p.amount_usd)}</td><td>${esc(p.receipt_notes || '')}</td></tr>`; }).join('') || `<tr><td colspan="5">—</td></tr>`;
 const payHead = () => `<thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('السيارة', 'Vehicle')}</th><th>${L('المبلغ', 'Amount')}</th><th class="num">USD</th><th>${L('ملاحظات', 'Notes')}</th></tr></thead>`;
 let LOGO_DATA = null;
@@ -1732,6 +1743,7 @@ const A = {
   cForm(id) {
     const c = id ? S.customers.find(x => x.id === id) || {} : {};
     openModal(`<h2>${id ? L('تعديل زبون', 'Edit customer') : L('زبون جديد', 'New customer')}</h2><form onsubmit="A.cSave(event,'${id || ''}')"><div class="grid">
+      <label class="f"><span>${L('رقم الزبون (4 أرقام)', 'Customer ID (4 digits)')} *</span><input name="code" required inputmode="numeric" pattern="[0-9]{4}" maxlength="4" dir="ltr" class="mono" value="${esc(c.code || nextCode())}" title="${L('4 أرقام', '4 digits')}"></label>
       <label class="f"><span>${L('الاسم الكامل', 'Full name')} *</span><input name="full_name" required value="${esc(c.full_name || '')}"></label>
       <label class="f"><span>${L('الهاتف', 'Phone')} *</span><input name="phone" required dir="ltr" value="${esc(c.phone || '')}"></label>
       <label class="f"><span>${L('هاتف بديل', 'Alternate phone')}</span><input name="alternate_phone" dir="ltr" value="${esc(c.alternate_phone || '')}"></label>
@@ -1741,10 +1753,13 @@ const A = {
   },
   async cSave(e, id) {
     e.preventDefault(); const fd = new FormData(e.target), d = {};
-    ['full_name', 'phone', 'alternate_phone', 'city', 'notes'].forEach(k => d[k] = (fd.get(k) || '').toString().trim());
+    ['code', 'full_name', 'phone', 'alternate_phone', 'city', 'notes'].forEach(k => d[k] = (fd.get(k) || '').toString().trim());
+    if (!/^\d{4}$/.test(d.code)) return toast(L('رقم الزبون لازم يكون 4 أرقام', 'Customer ID must be 4 digits'), 'err');
+    const dup = S.customers.find(x => x.code === d.code && x.id !== id);
+    if (dup) return toast(L(`الرقم #${d.code} مستخدم للزبون ${dup.full_name}`, `ID #${d.code} is already used by ${dup.full_name}`), 'err');
     try {
       if (id) { await DB.update('customers', id, d); logAct('cust_edit', d.full_name, 'c:' + id); }
-      else { d.created_at = now(); const nid = await DB.add('customers', d); logAct('cust_add', `${d.full_name} · ${d.phone}`, 'c:' + nid); A.close(); toast(L('تمت إضافة الزبون', 'Customer added')); location.hash = '#/customer/' + nid; return; }
+      else { d.created_at = now(); const nid = await DB.add('customers', d); logAct('cust_add', `#${d.code} · ${d.full_name} · ${d.phone}`, 'c:' + nid); A.close(); toast(L('تمت إضافة الزبون', 'Customer added')); location.hash = '#/customer/' + nid; return; }
       A.close(); toast(L('تم الحفظ', 'Saved'));
     } catch (x) { toast(x.message, 'err'); }
   },
@@ -1951,7 +1966,7 @@ async function migrateInternal() {
     try { if (!S.internal[v.id] && a) await DB.merge('vinternal', v.id, { shipping_cost_actual: a }); const fin = { ...v.fin }; delete fin.shipping_cost_actual; await DB.update('vehicles', v.id, { fin }); } catch (e) { }
   }
 }
-function stopWatch() { unsubs.forEach(u => u && u()); unsubs = []; migrated = false; S.loaded = {}; S.internal = {}; S.users = []; S.logs = []; S.expenses = []; }
+function stopWatch() { unsubs.forEach(u => u && u()); unsubs = []; migrated = false; codesDone = false; S.loaded = {}; S.internal = {}; S.users = []; S.logs = []; S.expenses = []; }
 
 window.addEventListener('hashchange', () => { parseRoute(); A.close(); if (isPublic()) renderPublic(); else if (S.user) { startWatch(); render(); window.scrollTo(0, 0); } else renderLogin(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') A.close(); });
