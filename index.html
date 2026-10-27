@@ -49,6 +49,7 @@
         match /logs/{id}      { allow read: if can('logs'); allow create: if active(); }
         match /settings/{id}  { allow get: if true; allow list: if active(); allow write: if can('settings'); }
         match /tracking/{vin} { allow get: if true; allow list: if active(); allow write: if can('edit') || can('delete'); }
+        match /portdata/{id}  { allow read: if active(); allow write: if can('settings'); }
       }
     }
 
@@ -181,6 +182,52 @@ tr.sel{background:#eff6ff}
 .age.mid{background:#fff7ed;color:#c2410c}.age.old{background:#fef2f2;color:#b91c1c}
 .ocars{font-size:12px;color:var(--mut);line-height:1.5;white-space:normal;min-width:180px}
 .sortb{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.pmgrid{display:grid;grid-template-columns:minmax(0,2fr) minmax(330px,1fr);gap:16px;align-items:start}
+.pmmap{padding:10px}
+.pmsvg{width:100%;height:auto;display:block}
+.pmsvg .pst{cursor:pointer;transition:fill-opacity .15s}
+.pmsvg .pst:hover{fill-opacity:.85}
+.pmsvg .pst:focus,.ppin:focus{outline:none}
+.pmsvg .pst:focus-visible{stroke:#14202b;stroke-width:2.5}
+.ppin:focus-visible circle:nth-child(2){stroke-width:5}
+.pmleg{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--mut);padding:6px 4px 0}
+.pmside{display:flex;flex-direction:column;gap:16px;min-width:0}
+.pdot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--pc);margin-inline-end:6px;vertical-align:middle;flex-shrink:0}
+.pdot.big{width:14px;height:14px}
+.octb{font-size:12.5px}.octb th,.octb td{padding:6px 4px;text-align:center;white-space:nowrap}.octb td:first-child,.octb th:first-child{text-align:start}
+.octb td b{display:block;font-family:ui-monospace,Consolas,monospace;font-size:12.5px}.octb small{color:var(--mut);font-size:11px;font-family:ui-monospace,Consolas,monospace}
+.octb .on{background:#eff6ff}.octb .cheap b{color:var(--green)}
+.pmdet{max-height:660px;display:flex;flex-direction:column}
+.ylist{overflow:auto;margin-top:10px;border-top:1px solid var(--line);flex:1;min-height:0}
+.yrow{display:flex;justify-content:space-between;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line)}
+.yr-n b{font-size:13px}.yr-m{font-size:11.5px;color:var(--mut);display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:2px}
+.yr-t{font-family:ui-monospace,Consolas,monospace;font-weight:800;white-space:nowrap;font-size:14px;direction:ltr}
+.wait{color:#b4541a!important;font-weight:700}
+.yr-t.wait{font-family:inherit;font-size:12px}
+.abadge{font-size:10.5px;font-weight:800;padding:0 7px;border-radius:6px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe}.abadge.ia{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+.pmbest{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:10px 12px;margin-top:10px}
+.pmbest span{display:block;font-size:11.5px;color:var(--mut);font-weight:700}.pmbest b{font-size:18px;direction:ltr;unicode-bidi:isolate}
+.pmd-h{display:flex;align-items:center;gap:4px}.pmd-h h2{margin:0}
+.pmd-p{margin:4px 0;display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.pmd-a{display:flex;align-items:center;gap:8px;margin-top:10px}.pdfst{font-size:12px;color:var(--mut);font-weight:700}
+.pmd-empty{text-align:center;padding:24px 8px}.pmd-empty h3{margin:6px 0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:#fff;flex-shrink:0}.seg button{border:0;background:none;padding:7px 12px;font:inherit;font-weight:700;cursor:pointer;color:var(--mut)}.seg button.on{background:var(--ink);color:#fff}
+.seg.big button{padding:8px 16px}
+.pmf{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:10px 0}.pmf input{flex:1;min-width:200px}
+.chipx{border:1px solid var(--line);background:#fff;border-radius:99px;padding:5px 12px;font:inherit;font-weight:700;cursor:pointer;display:inline-flex;align-items:center}
+.ftw{max-height:520px;overflow:auto;border:1px solid var(--line);border-radius:12px}
+.ftb thead th{position:sticky;top:0;z-index:1}
+.ftb td.num{font-family:ui-monospace,Consolas,monospace;text-align:end;direction:ltr}
+.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.pcard{background:#fff;border:1px solid var(--line);border-top:4px solid var(--pc);border-radius:14px;padding:12px 14px;cursor:pointer}
+.pcard.on{box-shadow:0 0 0 2px var(--pc)}
+.pc-h{display:flex;align-items:center;margin-bottom:6px}.pc-r{display:flex;justify-content:space-between;font-size:13px;color:var(--mut)}.pc-r b{color:var(--ink);font-family:ui-monospace,Consolas,monospace}
+.pc-s{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}.pc-s span{font-size:11px;font-weight:700;background:var(--soft);border:1px solid var(--line);border-radius:6px;padding:0 6px}
+.stgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.yardpick{grid-column:1/-1}
+@media(max-width:960px){.pmgrid{grid-template-columns:1fr}.pmdet{max-height:none}.ylist{max-height:420px}}
+@media(prefers-reduced-motion:reduce){.pmsvg .pst{transition:none}}
+
 .noprofit .pf{display:none!important}
 .perm{display:inline-block;font-size:11px;font-weight:700;padding:1px 8px;border-radius:99px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;margin:2px}
 .perm.off{background:#f8fafc;color:#94a3b8;border-color:var(--line);text-decoration:line-through}
@@ -396,7 +443,7 @@ const S = {
   settings: { office: 'AWS لاستيراد السيارات', phone: '', address: '', lateDays: 2, advDays: 7, rate: 7, note: 'شكراً لثقتكم في AWS لاستيراد السيارات' },
   lang: localStorage.getItem('cop_lang') || 'ar', route: 'dashboard', param: null,
   f: { q: '', status: '', auction: '', cust: '' }, cq: '', pf: { cust: '', cur: '' },
-  trk: {}, galTab: 'all', expenses: [], logs: [], sel: new Set(), em: new Date().toISOString().slice(0, 7), lf: { user: '', act: '' }, csort: 'age', users: [], internal: {}, me: null, agg: { v: {}, c: {} }, after: null
+  trk: {}, galTab: 'all', expenses: [], logs: [], sel: new Set(), em: new Date().toISOString().slice(0, 7), lf: { user: '', act: '' }, csort: 'age', users: [], internal: {}, me: null, pd: {}, geo: null, pm: { n: 4, sel: null, port: null, q: '', auc: '', tab: 'map', mq: '' }, agg: { v: {}, c: {} }, after: null
 };
 
 /* ---------------- أدوات ---------------- */
@@ -467,7 +514,7 @@ const ACTS = {
   veh_status: ['تغيير مرحلة', 'Stage changed', '#0891b2'], bulk: ['تحديث جماعي', 'Bulk update', '#7c3aed'], img: ['صور', 'Photos', '#64748b'],
   pay_add: ['تسجيل دفعة', 'Payment added', '#059669'], pay_del: ['حذف دفعة', 'Payment deleted', '#dc2626'],
   cust_add: ['إضافة زبون', 'Customer added', '#2563eb'], cust_edit: ['تعديل زبون', 'Customer edited', '#475569'], cust_del: ['حذف زبون', 'Customer deleted', '#dc2626'],
-  exp_add: ['مصروف', 'Expense added', '#ea580c'], exp_del: ['حذف مصروف', 'Expense deleted', '#dc2626'], settings: ['الإعدادات', 'Settings', '#64748b'], user_add: ['إضافة مستخدم', 'User added', '#2563eb'], user_edit: ['تعديل مستخدم', 'User edited', '#475569'], user_del: ['حذف مستخدم', 'User removed', '#dc2626'], user_reset: ['تغيير كلمة سر', 'Password reset', '#7c3aed'], wa: ['رسالة واتساب', 'WhatsApp sent', '#16a34a']
+  exp_add: ['مصروف', 'Expense added', '#ea580c'], exp_del: ['حذف مصروف', 'Expense deleted', '#dc2626'], settings: ['الإعدادات', 'Settings', '#64748b'], user_add: ['إضافة مستخدم', 'User added', '#2563eb'], user_edit: ['تعديل مستخدم', 'User edited', '#475569'], user_del: ['حذف مستخدم', 'User removed', '#dc2626'], user_reset: ['تغيير كلمة سر', 'Password reset', '#7c3aed'], ports: ['بيانات الموانئ', 'Port data', '#0891b2'], wa: ['رسالة واتساب', 'WhatsApp sent', '#16a34a']
 };
 function logAct(act, details, ref) { DB.add('logs', { at: now(), user: S.user?.email || '', act, details: details || '', ref: ref || '' }).catch(() => { }); }
 const EXP_CATS = [['rent', 'إيجار', 'Rent'], ['salaries', 'رواتب', 'Salaries'], ['utilities', 'كهرباء ومياه', 'Utilities'], ['telecom', 'إنترنت واتصالات', 'Internet & phone'], ['transport', 'مواصلات ووقود', 'Transport & fuel'], ['hospitality', 'ضيافة', 'Hospitality'], ['ads', 'إعلانات', 'Advertising'], ['other', 'أخرى', 'Other']];
@@ -500,7 +547,8 @@ const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', u
 const NEED = {
   vForm: 'edit', vSave: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
   pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses',
-  printFull: 'profit', sSave: 'settings', seed: 'admin', unseed: 'admin', backup: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
+  printFull: 'profit', sSave: 'settings', seed: 'admin', unseed: 'admin', backup: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin',
+  pdSavePorts: 'settings', pdSaveStates: 'settings', pdSaveYards: 'settings', pdYardForm: 'settings', pdYardSave: 'settings', pdYardDel: 'settings', pdImport: 'settings', pdImportGo: 'settings', pdExport: 'settings'
 };
 function applyPerms(root) {
   document.body.classList.toggle('noprofit', !can('profit'));
@@ -525,12 +573,12 @@ function parseRoute() {
 function shell(body) {
   const act = { vehicle: 'vehicles', customer: 'customers' }[S.route] || S.route;
   const late = lateList().length;
-  let nav = [['dashboard', '📊', L('لوحة التحكم', 'Dashboard'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['payments', '💵', L('الدفعات', 'Payments')], ['collect', '📞', L('التحصيل', 'Collections'), collectList().filter(x => x.age >= 30).length], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')]];
+  let nav = [['dashboard', '📊', L('لوحة التحكم', 'Dashboard'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['payments', '💵', L('الدفعات', 'Payments')], ['collect', '📞', L('التحصيل', 'Collections'), collectList().filter(x => x.age >= 30).length], ['ports', '🗺️', L('خريطة الموانئ', 'Port map')], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')]];
   const okR = r => !ROUTE_PERM[r] || can(ROUTE_PERM[r]);
   if (isAdmin()) nav.push(['users', '🔐', L('المستخدمين', 'Users')]);
   for (let k = nav.length - 1; k >= 0; k--) if (!okR(nav[k][0])) nav.splice(k, 1);
   const bn = [['dashboard', '🏠', L('الرئيسية', 'Home'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['collect', '📞', L('التحصيل', 'Collect'), nav[4][3]]];
-  const inMore = ['payments', 'expenses', 'logs', 'settings', 'users'].includes(act);
+  const inMore = ['payments', 'ports', 'expenses', 'logs', 'settings', 'users'].includes(act);
   return `<header class="mtop"><div class="lg">🚢</div><b>${esc(S.settings.office)}</b><button onclick="A.lang()">${L('EN', 'ع')}</button></header>
   <nav class="bnav">${bn.map(n => `<a href="#/${n[0]}" class="${act === n[0] ? 'on' : ''}"><i>${n[1]}</i>${n[2]}${n[3] ? `<span class="dotc">${n[3]}</span>` : ''}</a>`).join('')}
     <a href="javascript:A.more()" class="${inMore ? 'on' : ''}"><i>☰</i>${L('المزيد', 'More')}</a></nav>
@@ -553,7 +601,7 @@ function render() {
   if (!S.user) return;
   const ae = document.activeElement, fid = ae && ae.id;
   let sel = null; try { if (fid && ae.selectionStart != null) sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) { }
-  let V = { vehicles: vVehicles, vehicle: vVehicle, customers: vCustomers, customer: vCustomer, payments: vPayments, collect: vCollect, expenses: vExpenses, logs: vLogs, settings: vSettings, users: vUsers }[S.route] || vDashboard;
+  let V = { vehicles: vVehicles, vehicle: vVehicle, customers: vCustomers, customer: vCustomer, payments: vPayments, collect: vCollect, expenses: vExpenses, logs: vLogs, settings: vSettings, users: vUsers, ports: vPorts }[S.route] || vDashboard;
   if (ROUTE_PERM[S.route] && !can(ROUTE_PERM[S.route])) V = () => `<div class="card empty">🔒 ${L('ما عندكش صلاحية لهذي الصفحة', 'You don’t have access to this page')}</div>`;
   $('#app').innerHTML = shell(V());
   applyPerms();
@@ -651,7 +699,7 @@ function vVehicle() {
   S.after = () => loadTrk(v.vin);
   const inf = [
     [L('الزبون', 'Customer'), c.id ? `<a href="#/customer/${c.id}">${esc(c.full_name)}</a>` : '—'], [L('الهاتف', 'Phone'), `<span class="mono">${esc(c.phone || '—')}</span>`],
-    [L('المزاد', 'Auction'), esc(v.auction_name || '—')], [L('الساحة / الولاية', 'Location'), esc(v.auction_location || '—')],
+    [L('المزاد', 'Auction'), esc(v.auction_name || '—')], [L('الساحة / الولاية', 'Location'), esc(v.auction_location || '—')], [L('ميناء الشحن', 'Shipping port'), v.port_code ? `<span class="pdot" style="--pc:${portColor(v.port_code)}"></span>${esc(portName(v.port_code))}` : '—'],
     [L('الفئة', 'Trim'), esc(v.trim || '—')], [L('المحرك', 'Engine'), esc(v.engine || '—')],
     [L('اللون', 'Color'), esc(v.color || '—')], [L('رقم اللوت', 'Lot #'), `<span class="mono">${esc(v.lot_number || '—')}</span>`],
     [L('رقم الحاوية', 'Container #'), `<span class="mono">${esc(v.container_number || '—')}</span>`], [L('رقم الحجز', 'Booking #'), `<span class="mono">${esc(v.booking_number || '—')}</span>`],
@@ -844,6 +892,372 @@ function vUsers() {
   <div class="hint">${L('المستخدم الموقوف أو المحذوف ما يقدرش يدخل ولا يشوف أي بيانات، والصلاحيات محمية من قاعدة البيانات نفسها مش من الشاشة بس.', 'Disabled or deleted users cannot sign in or read data; permissions are enforced by the database rules, not just the UI.')}</div>`;
 }
 
+/* ================= خريطة الموانئ (Khoms Port Routing Map) ================= */
+const PORT_ORDER = ['SAV', 'HOU', 'NYC', 'CHI', 'LAX', 'SEA', 'HNL'];
+const PD_DEFAULT_PORTS = [
+  { code: 'SAV', name: 'Savannah, GA', lat: 32.08, lon: -81.09, o2: 3900, o3: 4050, o4: 4200, color: '#e2553f', lx: 12, ly: 4 },
+  { code: 'HOU', name: 'Houston, TX', lat: 29.73, lon: -95.27, o2: 4200, o3: 4350, o4: 4500, color: '#7a5bd3', lx: 12, ly: 14 },
+  { code: 'NYC', name: 'Newark, NJ', lat: 40.69, lon: -74.15, o2: 4200, o3: 4350, o4: 4500, color: '#e0a526', lx: -12, ly: -12, anchor: 'end' },
+  { code: 'CHI', name: 'Chicago, IL', lat: 41.88, lon: -87.63, o2: 4800, o3: 4950, o4: 5100, color: '#2c7fd6', lx: 12, ly: -8 },
+  { code: 'LAX', name: 'Los Angeles, CA', lat: 33.74, lon: -118.26, o2: 6000, o3: 6150, o4: 6300, color: '#4f9e3a', lx: -12, ly: 16, anchor: 'end' },
+  { code: 'SEA', name: 'Seattle, WA', lat: 47.6, lon: -122.34, o2: 6100, o3: 6250, o4: 6400, color: '#169a93', lx: 12, ly: -6 },
+  { code: 'HNL', name: 'Honolulu, HI', lat: 21.31, lon: -157.87, o2: 9700, o3: 9850, o4: 10000, color: '#d6458c', lx: 12, ly: 4 }
+];
+const PD_DEFAULT_YARDS = [];      // تتعبّى من yards_towing.csv
+const PD_DEFAULT_STATES = {};     // تتعبّى من state_routing.csv
+const PD_LOGO = '';               // data:image/png;base64,... من logo_AWS.png
+const FIPS = { '01': 'AL', '02': 'AK', '04': 'AZ', '05': 'AR', '06': 'CA', '08': 'CO', '09': 'CT', '10': 'DE', '11': 'DC', '12': 'FL', '13': 'GA', '15': 'HI', '16': 'ID', '17': 'IL', '18': 'IN', '19': 'IA', '20': 'KS', '21': 'KY', '22': 'LA', '23': 'ME', '24': 'MD', '25': 'MA', '26': 'MI', '27': 'MN', '28': 'MS', '29': 'MO', '30': 'MT', '31': 'NE', '32': 'NV', '33': 'NH', '34': 'NJ', '35': 'NM', '36': 'NY', '37': 'NC', '38': 'ND', '39': 'OH', '40': 'OK', '41': 'OR', '42': 'PA', '44': 'RI', '45': 'SC', '46': 'SD', '47': 'TN', '48': 'TX', '49': 'UT', '50': 'VT', '51': 'VA', '53': 'WA', '54': 'WV', '55': 'WI', '56': 'WY' };
+const ST_NAMES = { AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut', DE: 'Delaware', DC: 'District of Columbia', FL: 'Florida', GA: 'Georgia', HI: 'Hawaii', ID: 'Idaho', IL: 'Illinois', IN: 'Indiana', IA: 'Iowa', KS: 'Kansas', KY: 'Kentucky', LA: 'Louisiana', ME: 'Maine', MD: 'Maryland', MA: 'Massachusetts', MI: 'Michigan', MN: 'Minnesota', MS: 'Mississippi', MO: 'Missouri', MT: 'Montana', NE: 'Nebraska', NV: 'Nevada', NH: 'New Hampshire', NJ: 'New Jersey', NM: 'New Mexico', NY: 'New York', NC: 'North Carolina', ND: 'North Dakota', OH: 'Ohio', OK: 'Oklahoma', OR: 'Oregon', PA: 'Pennsylvania', RI: 'Rhode Island', SC: 'South Carolina', SD: 'South Dakota', TN: 'Tennessee', TX: 'Texas', UT: 'Utah', VT: 'Vermont', VA: 'Virginia', WA: 'Washington', WV: 'West Virginia', WI: 'Wisconsin', WY: 'Wyoming' };
+const SMALL_NE = ['VT', 'NH', 'MA', 'RI', 'CT', 'NJ', 'DE', 'MD', 'DC'];
+const LBL_ADJ = { FL: [14, 8], LA: [-10, 0], MI: [12, 22], KY: [6, 2], ID: [0, 18], CA: [-8, 0], NY: [6, 0], VA: [8, 2], WV: [-4, 4], NC: [6, 0], MN: [-6, 8], OK: [10, 0], TX: [8, 0], AK: [0, 0], HI: [6, 6] };
+const NO_ROUTE = '#c9d0d6';
+const LIB = {
+  d3a: 'https://cdn.jsdelivr.net/npm/d3-array@3.2.4/dist/d3-array.min.js',
+  d3g: 'https://cdn.jsdelivr.net/npm/d3-geo@3.1.1/dist/d3-geo.min.js',
+  topo: 'https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js',
+  atlas: 'https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json',
+  jspdf: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
+  autotable: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'
+};
+const libCache = {};
+function loadScript(src) {
+  if (!libCache[src]) libCache[src] = new Promise((res, rej) => { const s = document.createElement('script'); s.src = src; s.onload = res; s.onerror = () => { delete libCache[src]; rej(new Error('Could not load ' + src)); }; document.head.appendChild(s); });
+  return libCache[src];
+}
+async function loadGeo() {
+  if (S.geo) return S.geo;
+  await loadScript(LIB.d3a); await loadScript(LIB.d3g); await loadScript(LIB.topo);
+  const topo = await (await fetch(LIB.atlas)).json();
+  const proj = window.d3.geoAlbersUsa().scale(1300).translate([487.5, 305]), path = window.d3.geoPath(proj);
+  const states = window.topojson.feature(topo, topo.objects.states).features.map(f => {
+    const ab = FIPS[String(f.id).padStart(2, '0')]; if (!ab) return null;
+    const d = path(f); if (!d) return null;
+    let [cx, cy] = path.centroid(f); const a = LBL_ADJ[ab]; if (a) { cx += a[0]; cy += a[1]; }
+    return { ab, d, cx, cy };
+  }).filter(Boolean);
+  const sm = states.filter(s => SMALL_NE.includes(s.ab)).sort((a, b) => a.cy - b.cy);
+  sm.forEach((s, i) => { s.side = [935, 118 + i * 25]; });
+  S.geo = { states, proj };
+  return S.geo;
+}
+
+/* ---- data access ---- */
+const pdDoc = k => (S.pd && S.pd[k]) || null;
+const pdPorts = () => { const d = pdDoc('ports'); const l = d && d.list && d.list.length ? d.list : PD_DEFAULT_PORTS; return [...l].sort((a, b) => (PORT_ORDER.indexOf(a.code) + 1 || 99) - (PORT_ORDER.indexOf(b.code) + 1 || 99)); };
+const pdYards = () => { const d = pdDoc('yards'); return d && Array.isArray(d.list) ? d.list : PD_DEFAULT_YARDS; };
+const pdStates = () => { const d = pdDoc('states'); return d && d.map && Object.keys(d.map).length ? d.map : PD_DEFAULT_STATES; };
+const towMk = () => { const d = pdDoc('ports'); return d && d.tow_markup != null ? num(d.tow_markup) : 25; };
+const ocMk = () => { const d = pdDoc('ports'); return d && d.ocean_markup_per_car != null ? num(d.ocean_markup_per_car) : 25; };
+const portBy = c => pdPorts().find(p => p.code === c);
+const portName = c => (portBy(c) || {}).name || c || '—';
+const portShort = c => portName(c).split(',')[0];
+const portColor = c => (portBy(c) || {}).color || NO_ROUTE;
+const oceanBox = (c, n) => { const p = portBy(c); return p ? num(p['o' + n]) + ocMk() * n : 0; };
+const oceanCar = (c, n) => oceanBox(c, n) / n;
+const oceanRawCar = (c, n) => { const p = portBy(c); return p ? num(p['o' + n]) / n : 0; };
+const yPriced = y => y.status === 'priced' && num(y.tow) > 0;
+const yTow = y => yPriced(y) ? num(y.tow) + towMk() : null;
+const yTotal = (y, n) => yPriced(y) ? yTow(y) + oceanCar(y.port, n) : null;
+const usd0 = n => '$' + Math.round(num(n)).toLocaleString('en-US');
+const usName = s => ST_NAMES[s] || s;
+const yardId = y => [y.auc, y.name, y.st, y.port].join('|').toLowerCase().replace(/[^a-z0-9|]+/g, '-');
+const yardLabel = y => `${y.name} — ${y.st} · ${y.auc} → ${portShort(y.port)}`;
+function stPort(st) {
+  const m = pdStates(); if (st in m) return m[st] || '';
+  const c = {}; pdYards().filter(y => y.st === st).forEach(y => c[y.port] = (c[y.port] || 0) + 1);
+  return Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0] || '';
+}
+const portStates = c => Object.keys(ST_NAMES).filter(s => stPort(s) === c);
+function sortYards(list, n) {
+  const po = c => { const i = PORT_ORDER.indexOf(c); return i < 0 ? 99 : i; };
+  return [...list].sort((a, b) => po(a.port) - po(b.port) || usName(a.st).localeCompare(usName(b.st)) || (yPriced(b) - yPriced(a)) || ((yTotal(a, n) || 0) - (yTotal(b, n) || 0)) || a.name.localeCompare(b.name));
+}
+const cheapFirst = (list, n) => [...list].sort((a, b) => (yPriced(b) - yPriced(a)) || ((yTotal(a, n) || 0) - (yTotal(b, n) || 0)) || a.name.localeCompare(b.name));
+
+/* ---- map svg ---- */
+function mapSvg(o = {}) {
+  const g = S.geo; if (!g) return '';
+  const pdf = !!o.pdf, onlyPort = o.onlyPort || '', selSt = o.sel || '', selPort = o.port || '';
+  const focusPort = selPort || (selSt ? stPort(selSt) : '');
+  const font = pdf ? 'Arial, Helvetica, sans-serif' : 'inherit';
+  let out = `<svg viewBox="0 0 975 610" xmlns="http://www.w3.org/2000/svg" ${pdf ? 'width="1950" height="1220"' : 'class="pmsvg" role="img" aria-label="US map"'}>`;
+  if (pdf) out += `<rect width="975" height="610" fill="#ffffff"/>`;
+  g.states.forEach(s => {
+    const pc = stPort(s.ab); let fill = pc ? portColor(pc) : NO_ROUTE, op = 1;
+    if (onlyPort && pc !== onlyPort) fill = '#e3e7eb';
+    if (!pdf && focusPort && pc !== focusPort) op = .3;
+    const isSel = s.ab === selSt;
+    const ev = pdf ? '' : ` tabindex="0" role="button" aria-label="${esc(usName(s.ab))}" onclick="A.pmState('${s.ab}')" onmouseenter="A.pmHover('${s.ab}')" onmouseleave="A.pmHover('')" onfocus="A.pmHover('${s.ab}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();A.pmState('${s.ab}')}"`;
+    out += `<path d="${s.d}" fill="${fill}" fill-opacity="${op}" stroke="${isSel ? '#14202b' : '#ffffff'}" stroke-width="${isSel ? 2.5 : 1}" class="pst"${ev}/>`;
+  });
+  if (selSt) { const s = g.states.find(x => x.ab === selSt); if (s) out += `<path d="${s.d}" fill="none" stroke="#14202b" stroke-width="2.5" pointer-events="none"/>`; }
+  g.states.forEach(s => {
+    const pc = stPort(s.ab), grey = onlyPort && pc !== onlyPort, faded = !pdf && focusPort && pc !== focusPort;
+    const col = grey ? '#9aa5b1' : '#ffffff';
+    if (s.side) {
+      const [x, y] = s.side, lc = grey ? '#b8c1ca' : '#5d6b78';
+      out += `<line x1="${s.cx.toFixed(1)}" y1="${s.cy.toFixed(1)}" x2="${x - 4}" y2="${y - 5}" stroke="${lc}" stroke-width=".8" pointer-events="none" opacity="${faded ? .35 : 1}"/><text x="${x}" y="${y}" font-family="${font}" font-size="13" font-weight="700" fill="${grey ? '#9aa5b1' : (pc ? portColor(pc) : '#5d6b78')}" pointer-events="none" opacity="${faded ? .35 : 1}">${s.ab}</text>`;
+    } else out += `<text x="${s.cx.toFixed(1)}" y="${(s.cy + 5.5).toFixed(1)}" text-anchor="middle" font-family="${font}" font-size="16" font-weight="700" fill="${col}" pointer-events="none" opacity="${faded ? .45 : 1}">${s.ab}</text>`;
+  });
+  pdPorts().forEach(p => {
+    if (onlyPort && p.code !== onlyPort) return;
+    const xy = g.proj([num(p.lon), num(p.lat)]); if (!xy) return;
+    const [x, y] = xy, fade = !pdf && focusPort && p.code !== focusPort;
+    const ev = pdf ? '' : ` tabindex="0" role="button" aria-label="${esc(p.name)}" onclick="A.pmPort('${p.code}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();A.pmPort('${p.code}')}" style="cursor:pointer"`;
+    out += `<g class="ppin" opacity="${fade ? .45 : 1}"${ev}><circle cx="${x}" cy="${y}" r="16" fill="transparent"/><circle cx="${x}" cy="${y}" r="7.5" fill="#fff" stroke="${p.color}" stroke-width="3.5"/><circle cx="${x}" cy="${y}" r="2.6" fill="#14202b"/>
+      <text x="${x + num(p.lx ?? 12)}" y="${y + num(p.ly ?? 4)}" text-anchor="${p.anchor || 'start'}" font-family="${font}" font-size="13" font-weight="800" fill="#14202b" stroke="#fff" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round">${esc(p.name.split(',')[0])}</text></g>`;
+  });
+  return out + '</svg>';
+}
+
+/* ---- page ---- */
+function pmFiltered() {
+  const n = S.pm.n, q = S.pm.q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  return sortYards(pdYards().filter(y => {
+    if (S.pm.auc && y.auc !== S.pm.auc) return false;
+    if (S.pm.port && y.port !== S.pm.port) return false;
+    const hay = [y.name, y.st, usName(y.st), portName(y.port), y.auc].join(' ').toLowerCase();
+    return q.every(w => hay.includes(w));
+  }), n);
+}
+function yardRows(list, n, showState) {
+  return list.map(y => { const t = yTotal(y, n); return `<div class="yrow"><div class="yr-n"><b>${esc(y.name)}</b>${showState ? ` <span class="sub">${esc(y.st)}</span>` : ''}<div class="yr-m"><span class="abadge ${y.auc === 'IAAI' ? 'ia' : ''}">${esc(y.auc)}</span><span class="pdot" style="--pc:${portColor(y.port)}"></span>${esc(portShort(y.port))} · ${L('سحب', 'Tow')} ${yPriced(y) ? usd0(yTow(y)) : '—'}</div></div><div class="yr-t ${t == null ? 'wait' : ''}">${t == null ? L('بانتظار السعر', 'Waiting for price') : usd0(t)}</div></div>`; }).join('');
+}
+function pmDetail(st) {
+  const n = S.pm.n;
+  if (S.pm.port && !st) {
+    const c = S.pm.port, ys = cheapFirst(pdYards().filter(y => y.port === c), n), pr = ys.filter(yPriced).length;
+    return `<div class="pmd-h"><span class="pdot big" style="--pc:${portColor(c)}"></span><h2>${esc(portShort(c))} ${L('— المستودع', 'warehouse')}</h2></div>
+      <div class="sub">${ys.length} ${L('ساحة', 'yards')} · ${pr} ${L('عليها سعر', 'priced')}</div>
+      <div class="pmbest"><div><span>${L('الحاوية', 'Container')} (${n} ${L('سيارات', 'cars')})</span><b>${usd0(oceanBox(c, n))}</b></div><div><span>${L('بحري للسيارة', 'Ocean per car')}</span><b>${usd0(oceanCar(c, n))}</b></div></div>
+      <div class="pmd-a"><button class="btn sm" onclick="A.pmPdf('port','${c}',this)">📄 ${L('حفظ PDF', 'Save as PDF')}</button><span class="pdfst"></span></div>
+      <div class="ylist">${yardRows(ys, n, true) || `<div class="empty">${L('ما فيش ساحات', 'No yards')}</div>`}</div>`;
+  }
+  if (!st) return `<div class="pmd-empty"><div style="font-size:30px">🗺️</div><h3>${L('اختار ولاية', 'Pick a state')}</h3><div class="sub">${L('اضغط على أي ولاية أو ميناء في الخريطة تشوف الساحات وتكلفة كل سيارة للخمس.', 'Tap a state or a port pin to see its yards and the cost per car to Khoms.')}</div></div>`;
+  const pc = stPort(st), ys = cheapFirst(pdYards().filter(y => y.st === st), n), others = [...new Set(ys.map(y => y.port).filter(p => p && p !== pc))];
+  const best = ys.find(yPriced);
+  return `<h2 style="margin:0 0 4px">${esc(usName(st))} <span class="sub">(${st})</span></h2>
+    <div class="pmd-p">${pc ? `<span class="pdot" style="--pc:${portColor(pc)}"></span>${L('الميناء', 'Port')}: <b>${esc(portName(pc))}</b>` : `<span class="pdot" style="--pc:${NO_ROUTE}"></span>${L('ما فيش طريق شحن', 'No route')}`}</div>
+    ${others.length ? `<div class="sub">⚠️ ${L('بعض الساحات هنا تمشي لـ', 'Some yards here go to')} ${others.map(p => esc(portShort(p))).join(L(' و', ' and '))} ${L('بدله', 'instead')}.</div>` : ''}
+    ${best ? `<div class="pmbest"><div><span>${L('أرخص ساحة', 'Cheapest yard')}</span><b style="font-size:14px">${esc(best.name)}</b></div><div><span>${L('الإجمالي للسيارة', 'Total per car')}</span><b>${usd0(yTotal(best, n))}</b></div></div>` : ''}
+    ${ys.length ? `<div class="pmd-a"><button class="btn sm" onclick="A.pmPdf('state','${st}',this)">📄 ${L('حفظ PDF', 'Save as PDF')}</button><span class="pdfst"></span></div>` : ''}
+    <div class="ylist">${yardRows(ys, n, false) || `<div class="empty">${L('ما فيش ساحات مسجلة في هذي الولاية', 'No yards in this state')}</div>`}</div>`;
+}
+function pmOcean() {
+  const n = S.pm.n, P = pdPorts(), mins = {};
+  [2, 3, 4].forEach(k => mins[k] = Math.min(...P.map(p => oceanBox(p.code, k))));
+  return `<h3>🚢 ${L('الشحن البحري للخمس', 'Ocean freight to Khoms')}</h3><div class="tw"><table class="octb"><thead><tr><th>${L('الميناء', 'Port')}</th>${[2, 3, 4].map(k => `<th class="${k === n ? 'on' : ''}">${k} ${L('سيارات', 'cars')}</th>`).join('')}</tr></thead><tbody>
+    ${P.map(p => `<tr><td><span class="pdot" style="--pc:${p.color}"></span>${esc(p.name.split(',')[0])}</td>${[2, 3, 4].map(k => { const b = oceanBox(p.code, k); return `<td class="${k === n ? 'on' : ''} ${b === mins[k] ? 'cheap' : ''}"><b>${usd0(b)}</b><small>${usd0(b / k)}/${L('سيارة', 'car')}</small></td>`; }).join('')}</tr>`).join('')}</tbody></table></div>
+    <div class="hint">${L(`للحاوية 40 قدم، وفيها $${ocMk()} لكل سيارة زيادة المكتب.`, `Per 40ft container, with your $${ocMk()} per car included.`)}</div>`;
+}
+function pmFinder() {
+  const n = S.pm.n, list = pmFiltered();
+  return `<div class="row-b"><h3 style="margin:0">🔎 ${L('البحث عن ساحة', 'Yard finder')}</h3><div class="acts"><span class="sub">${list.length} ${L('ساحة', 'yards')}</span><button class="btn sm" onclick="A.pmPdf('list','',this)">📄 ${L('حفظ القائمة PDF', 'Save list as PDF')}</button><span class="pdfst"></span></div></div>
+    <div class="pmf"><input id="pmq" placeholder="${L('ابحث: اسم الساحة، الولاية، الميناء… مثلاً dallas tx', 'Search yard, state or port… e.g. dallas tx')}" value="${esc(S.pm.q)}" oninput="A.pmQ(this.value)" dir="ltr">
+      <div class="seg">${[['', L('الكل', 'All')], ['Copart', 'Copart'], ['IAAI', 'IAAI']].map(a => `<button class="${S.pm.auc === a[0] ? 'on' : ''}" onclick="A.pmAuc('${a[0]}')">${a[1]}</button>`).join('')}</div>
+      ${S.pm.port ? `<button class="chipx" onclick="A.pmPort('')"><span class="pdot" style="--pc:${portColor(S.pm.port)}"></span>${esc(portShort(S.pm.port))} ${L('فقط', 'only')} ✕</button>` : ''}</div>
+    <div class="tw ftw"><table class="ftb"><thead><tr><th>${L('الساحة', 'Yard')}</th><th>${L('الولاية', 'State')}</th><th>${L('المزاد', 'Auction')}</th><th>${L('الميناء', 'Port')}</th><th>${L('السحب', 'Towing')}</th><th>${L('بحري/سيارة', 'Ocean / car')}</th><th>${L('الإجمالي/سيارة', 'Total / car')}</th></tr></thead><tbody>
+      ${list.map(y => { const t = yTotal(y, n); return `<tr><td><b>${esc(y.name)}</b></td><td>${esc(y.st)}</td><td><span class="abadge ${y.auc === 'IAAI' ? 'ia' : ''}">${esc(y.auc)}</span></td><td><span class="pdot" style="--pc:${portColor(y.port)}"></span>${esc(portShort(y.port))}</td><td class="num">${yPriced(y) ? usd0(yTow(y)) : '—'}</td><td class="num">${usd0(oceanCar(y.port, n))}</td><td class="num ${t == null ? 'wait' : ''}"><b>${t == null ? L('بانتظار السعر', 'Waiting for price') : usd0(t)}</b></td></tr>`; }).join('') || `<tr><td colspan="7" class="empty">${pdYards().length ? L('ما فيش نتائج', 'No matches') : L('ما فيش ساحات بعد. المدير يقدر يستوردها من تبويب "إدارة البيانات".', 'No yards yet. An admin can import them in the "Manage data" tab.')}</td></tr>`}</tbody></table></div>
+    <div class="hint">${L(`الإجمالي للسيارة = السحب من الساحة للميناء + نصيب السيارة من الحاوية (سعر الحاوية ÷ ${n}). الأسعار فيها $${towMk()} زيادة على السحب و$${ocMk()} لكل سيارة على البحري. ما يشملش رسوم المزاد ولا الجمارك ومصاريف ليبيا.`, `Total per car = towing to the port + share of the container (container ÷ ${n}). Prices include $${towMk()} on towing and $${ocMk()} per car on ocean. Auction fees, customs and Libya-side costs are not included.`)}</div>`;
+}
+function pmCards() {
+  const n = S.pm.n;
+  return `<div class="pcards">${pdPorts().map(p => { const ys = pdYards().filter(y => y.port === p.code).length, sts = portStates(p.code); return `<div class="pcard ${S.pm.port === p.code ? 'on' : ''}" tabindex="0" role="button" onclick="A.pmPort('${p.code}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();A.pmPort('${p.code}')}" style="--pc:${p.color}">
+    <div class="pc-h"><span class="pdot" style="--pc:${p.color}"></span><b>${esc(p.name)}</b></div>
+    <div class="pc-r"><span>${L('بحري/سيارة', 'Ocean/car')}</span><b>${usd0(oceanCar(p.code, n))}</b></div><div class="pc-r"><span>${L('الحاوية', 'Container')}</span><b>${usd0(oceanBox(p.code, n))}</b></div><div class="pc-r"><span>${L('الساحات', 'Yards')}</span><b>${ys}</b></div>
+    <div class="pc-s">${sts.map(s => `<span>${s}</span>`).join('')}</div></div>`; }).join('')}</div>`;
+}
+function vPorts() {
+  const tab = S.pm.tab === 'manage' && can('settings') ? 'manage' : 'map';
+  if (tab === 'map') S.after = () => pmMount();
+  return `<div class="top"><div><h1>🗺️ ${L('خريطة موانئ الشحن', 'Khoms Port Routing Map')}</h1><div class="sub">${L('من أنهي ميناء تنشحن كل ساحة Copart و IAAI للخمس، مع سعر السحب والتكلفة الكاملة للسيارة.', 'Which port each Copart and IAAI yard ships from to Al Khums, with towing and full cost per car.')}</div></div>
+    <div class="acts">${tab === 'map' ? `<div class="seg big">${[2, 3, 4].map(k => `<button class="${S.pm.n === k ? 'on' : ''}" onclick="A.pmN(${k})">${k} ${L('سيارات', 'cars')}</button>`).join('')}</div>` : ''}
+</div></div>
+  ${can('settings') ? `<div class="tabs" style="margin:-4px 0 0"><button class="tab ${tab === 'map' ? 'on' : ''}" onclick="A.pmTab('map')">🗺️ ${L('الخريطة', 'Map')}</button><button class="tab ${tab === 'manage' ? 'on' : ''}" onclick="A.pmTab('manage')">⚙️ ${L('إدارة البيانات والأسعار', 'Manage data & prices')}</button></div>` : ''}
+  ${tab === 'manage' ? vPortsManage() : `
+  <div class="pmgrid"><div class="card pmmap" id="pmMap"><div class="empty">${L('جاري تحميل الخريطة…', 'Loading map…')}</div></div>
+    <div class="pmside"><div class="card" id="pmOcean">${pmOcean()}</div><div class="card pmdet" id="pmDet">${pmDetail(S.pm.sel)}</div></div></div>
+  <div class="card" id="pmFind">${pmFinder()}</div>
+  <div id="pmCards">${pmCards()}</div>`}`;
+}
+async function pmMount() {
+  const el = $('#pmMap'); if (!el) return;
+  try { await loadGeo(); const e2 = $('#pmMap'); if (e2) e2.innerHTML = mapSvg({ sel: S.pm.sel, port: S.pm.port }) + pmLegend(); }
+  catch (e) { el.innerHTML = `<div class="empty">⚠️ ${L('تعذّر تحميل الخريطة، تأكد من الإنترنت.', 'Could not load the map; check your connection.')}<br><small>${esc(e.message)}</small></div>`; }
+}
+const pmLegend = () => `<div class="pmleg">${pdPorts().map(p => `<span><span class="pdot" style="--pc:${p.color}"></span>${esc(p.name.split(',')[0])}</span>`).join('')}<span><span class="pdot" style="--pc:${NO_ROUTE}"></span>${L('بدون طريق', 'No route')}</span></div>`;
+function pmRefresh(parts = 'all') {
+  if (S.route !== 'ports' || S.pm.tab === 'manage') return;
+  if (parts === 'all' || parts.includes('map')) { const m = $('#pmMap'); if (m && S.geo) m.innerHTML = mapSvg({ sel: S.pm.sel, port: S.pm.port }) + pmLegend(); }
+  if (parts === 'all' || parts.includes('det')) { const d = $('#pmDet'); if (d) d.innerHTML = pmDetail(S.pm.sel); }
+  if (parts === 'all' || parts.includes('oc')) { const d = $('#pmOcean'); if (d) d.innerHTML = pmOcean(); }
+  if (parts === 'all' || parts.includes('find')) { const d = $('#pmFind'); if (d) { const f = document.activeElement && document.activeElement.id === 'pmq', pos = f ? document.activeElement.selectionStart : 0; d.innerHTML = pmFinder(); if (f) { const q = $('#pmq'); q.focus(); try { q.setSelectionRange(pos, pos); } catch (e) { } } } }
+  if (parts === 'all' || parts.includes('cards')) { const d = $('#pmCards'); if (d) d.innerHTML = pmCards(); }
+}
+
+/* ---- manage tab ---- */
+function vPortsManage() {
+  const P = pdPorts(), ys = pdYards(), q = (S.pm.mq || '').toLowerCase().split(/\s+/).filter(Boolean);
+  const fl = sortYards(ys.filter(y => q.every(w => [y.name, y.st, usName(y.st), y.port, y.auc, y.status].join(' ').toLowerCase().includes(w))), 4);
+  const src = d => pdDoc(d) ? `<span class="ustate on">${L('محفوظ في قاعدة البيانات', 'Saved in database')}</span>` : `<span class="ustate off">${L('افتراضي — ما تحفظش بعد', 'Default — not saved yet')}</span>`;
+  const sm = pdStates();
+  return `<div class="card"><div class="row-b"><h3 style="margin:0">🚢 ${L('أسعار الشحن البحري (بدون زيادة) والزيادة', 'Ocean rates (raw) & markup')}</h3>${src('ports')}</div>
+    <form onsubmit="A.pdSavePorts(event)"><div class="grid" style="margin-bottom:10px">
+      <label class="f"><span>${L('زيادة على السحب لكل سيارة ($)', 'Towing markup per car ($)')}</span><input name="tow_markup" type="number" step="1" min="0" value="${towMk()}" dir="ltr"></label>
+      <label class="f"><span>${L('زيادة على البحري لكل سيارة ($)', 'Ocean markup per car ($)')}</span><input name="ocean_markup_per_car" type="number" step="1" min="0" value="${ocMk()}" dir="ltr"></label></div>
+    <div class="tw"><table><thead><tr><th>${L('الكود', 'Code')}</th><th>${L('الميناء', 'Port')}</th><th>${L('حاوية 2 سيارات', '2 cars')}</th><th>${L('3 سيارات', '3 cars')}</th><th>${L('4 سيارات', '4 cars')}</th><th>${L('اللون', 'Color')}</th></tr></thead><tbody>
+      ${P.map((p, i) => `<tr><td><b>${esc(p.code)}</b></td><td><input name="name_${i}" value="${esc(p.name)}" style="min-width:150px"></td>${[2, 3, 4].map(k => `<td><input name="o${k}_${i}" type="number" step="1" min="0" value="${esc(p['o' + k])}" dir="ltr" style="width:100px"></td>`).join('')}<td><input name="color_${i}" type="color" value="${esc(p.color)}" style="width:52px;padding:2px"></td></tr>`).join('')}</tbody></table></div>
+    <div class="mfoot" style="position:static;margin:12px 0 0;padding:0;border:0"><button class="btn pri">💾 ${L('حفظ الأسعار', 'Save rates')}</button></div></form></div>
+
+  <div class="card"><div class="row-b"><h3 style="margin:0">🏁 ${L('الساحات وأسعار السحب', 'Yards & towing')} (${ys.length})</h3><div class="acts">${src('yards')}<button class="btn sm pri" onclick="A.pdYardForm()">+ ${L('ساحة', 'Yard')}</button><button class="btn sm" onclick="A.pdExport()">⬇️ CSV</button></div></div>
+    <input placeholder="🔍 ${L('بحث…', 'Search…')}" value="${esc(S.pm.mq || '')}" oninput="A.pdMq(this.value)" id="pdmq" dir="ltr" style="margin-bottom:10px">
+    <div class="tw ftw"><table class="ftb"><thead><tr><th>${L('الساحة', 'Yard')}</th><th>${L('الولاية', 'State')}</th><th>${L('المزاد', 'Auction')}</th><th>${L('الميناء', 'Port')}</th><th>${L('سعر السحب الخام', 'Raw tow')}</th><th>${L('الحالة', 'Status')}</th><th></th></tr></thead><tbody>
+      ${fl.map(y => `<tr><td><b>${esc(y.name)}</b></td><td>${esc(y.st)}</td><td>${esc(y.auc)}</td><td><span class="pdot" style="--pc:${portColor(y.port)}"></span>${esc(y.port)}</td><td class="num">${yPriced(y) ? usd0(y.tow) : '—'}</td><td>${yPriced(y) ? `<span class="ustate on">${L('مسعّرة', 'Priced')}</span>` : `<span class="ustate off">${L('بانتظار السعر', 'Waiting')}</span>`}</td><td><div class="acts" style="flex-wrap:nowrap"><button class="btn sm" onclick="A.pdYardForm('${esc(y.id)}')">✏️</button><button class="btn sm red" onclick="A.pdYardDel('${esc(y.id)}')">🗑️</button></div></td></tr>`).join('') || `<tr><td colspan="7" class="empty">${L('ما فيش ساحات. استوردها من CSV تحت.', 'No yards. Import them from CSV below.')}</td></tr>`}</tbody></table></div></div>
+
+  <div class="card"><div class="row-b"><h3 style="margin:0">🗺️ ${L('لون كل ولاية (الميناء الرئيسي)', 'State → main port (map color)')}</h3>${src('states')}</div>
+    <form onsubmit="A.pdSaveStates(event)"><div class="stgrid">${Object.keys(ST_NAMES).sort((a, b) => usName(a).localeCompare(usName(b))).map(s => `<label class="f"><span>${esc(usName(s))} (${s})</span><select name="st_${s}"><option value="">${L('بدون طريق', 'No route')}</option>${P.map(p => `<option value="${p.code}" ${stPort(s) === p.code ? 'selected' : ''}>${esc(p.name.split(',')[0])}</option>`).join('')}</select></label>`).join('')}</div>
+    <div class="hint">${L('لو ما حددتش، الولاية تاخذ لون الميناء اللي تمشيله أغلب ساحاتها.', 'If unset, a state takes the port most of its yards go to.')}</div>
+    <div class="mfoot" style="position:static;margin:12px 0 0;padding:0;border:0"><button class="btn pri">💾 ${L('حفظ الولايات', 'Save states')}</button></div></form></div>
+
+  <div class="card"><h3>📥 ${L('استيراد من ملفات CSV', 'Import from CSV')}</h3>
+    <div class="hint" style="margin-top:-6px">${L('لما توصلك أسعار جديدة من AEC، استورد الملف هنا. يطلعلك ملخص قبل ما يتحفظ، والاستيراد يستبدل القائمة الحالية كاملة.', 'When AEC sends new prices, import the file here. You get a preview before saving; importing replaces the whole current list.')}</div>
+    <div class="grid" style="margin-top:10px">${[['yards', 'yards_towing.csv'], ['states', 'state_routing.csv'], ['ports', 'ports_ocean_rates.csv']].map(k => `<label class="btn fileb" style="justify-content:center">📄 ${k[1]}<input type="file" accept=".csv,text/csv" onchange="A.pdImport('${k[0]}',this)"></label>`).join('')}</div></div>`;
+}
+
+/* ---- CSV ---- */
+function parseCSV(t) {
+  t = t.replace(/^﻿/, ''); const rows = []; let row = [], f = '', q = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (q) { if (c === '"') { if (t[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true; else if (c === ',') { row.push(f); f = ''; }
+    else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(f); rows.push(row); row = []; f = ''; }
+    else f += c;
+  }
+  if (f !== '' || row.length) { row.push(f); rows.push(row); }
+  const clean = rows.filter(r => r.some(x => String(x).trim() !== ''));
+  if (!clean.length) return [];
+  const h = clean[0].map(x => String(x).trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''));
+  return clean.slice(1).map(r => Object.fromEntries(h.map((k, i) => [k, String(r[i] ?? '').trim()])));
+}
+const pick = (r, keys) => { for (const k of keys) if (r[k] != null && r[k] !== '') return r[k]; return ''; };
+const pickRe = (r, re) => { const k = Object.keys(r).find(x => re.test(x)); return k ? r[k] : ''; };
+const NAME2AB = Object.fromEntries(Object.entries(ST_NAMES).map(([a, n]) => [n.toLowerCase(), a]));
+const toAb = s => { s = String(s || '').trim(); if (s.length === 2) return s.toUpperCase(); return NAME2AB[s.toLowerCase()] || s.toUpperCase(); };
+const toPortCode = s => { s = String(s || '').trim(); if (!s) return ''; const u = s.toUpperCase(); if (pdPorts().some(p => p.code === u)) return u; const p = pdPorts().find(p => p.name.toLowerCase().startsWith(s.toLowerCase().split(',')[0])); return p ? p.code : u; };
+function csvToYards(rows) {
+  return rows.map(r => {
+    const tow = num(String(pick(r, ['tow_price_usd', 'tow_price', 'towing_usd', 'towing', 'tow'])).replace(/[$,]/g, ''));
+    const stRaw = pick(r, ['status']).toLowerCase();
+    const y = { name: pick(r, ['yard', 'yard_name', 'name', 'location', 'yard_location']), st: toAb(pick(r, ['state_code', 'state', 'st'])), auc: /iaa/i.test(pick(r, ['auction', 'auction_name'])) ? 'IAAI' : 'Copart', port: toPortCode(pick(r, ['port_code', 'port', 'warehouse', 'warehouse_code'])), tow: tow > 0 ? tow : null, status: tow > 0 && !/wait/.test(stRaw) ? 'priced' : 'waiting_for_price' };
+    y.id = yardId(y); return y;
+  }).filter(y => y.name && y.st);
+}
+function csvToStates(rows) {
+  const m = {}; rows.forEach(r => { const s = toAb(pick(r, ['state_code', 'state', 'st', 'code'])); if (s && ST_NAMES[s]) m[s] = toPortCode(pick(r, ['map_color_port', 'port_code', 'port', 'warehouse'])); }); return m;
+}
+function csvToPorts(rows) {
+  return rows.map(r => {
+    const code = pick(r, ['port_code', 'code']).toUpperCase(), d = PD_DEFAULT_PORTS.find(p => p.code === code) || {};
+    const o = k => num(String(pickRe(r, new RegExp('(^|_)' + k + '(_|$)|' + k + '_?car')) || d['o' + k] || 0).replace(/[$,]/g, ''));
+    return { ...d, code, name: pick(r, ['name', 'port_name', 'port']) || d.name || code, lat: num(pick(r, ['lat', 'latitude'])) || d.lat, lon: num(pick(r, ['lon', 'lng', 'longitude'])) || d.lon, o2: o(2), o3: o(3), o4: o(4), color: pick(r, ['color', 'map_color']) || d.color || '#64748b' };
+  }).filter(p => p.code);
+}
+
+/* ---- PDF ---- */
+async function rasterMap(opts) {
+  await loadGeo();
+  const svg = mapSvg({ ...opts, pdf: true });
+  const img = new Image(); const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml;charset=utf-8' }));
+  await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('map image')); img.src = url; });
+  const c = document.createElement('canvas'); c.width = 1950; c.height = 1220; const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, 1950, 1220); x.drawImage(img, 0, 0, 1950, 1220); URL.revokeObjectURL(url);
+  return c.toDataURL('image/jpeg', 0.8);
+}
+let logoCache = null;
+async function logoImg() {
+  if (logoCache) return logoCache;
+  const c = document.createElement('canvas'); c.width = 720; c.height = 234; const x = c.getContext('2d');
+  x.fillStyle = '#fff'; x.fillRect(0, 0, 720, 234);
+  if (PD_LOGO) { const im = new Image(); await new Promise(r => { im.onload = r; im.onerror = r; im.src = PD_LOGO; }); if (im.width) { const k = Math.min(720 / im.width, 234 / im.height); x.drawImage(im, (720 - im.width * k) / 2, (234 - im.height * k) / 2, im.width * k, im.height * k); } }
+  else { x.fillStyle = '#f97316'; x.font = 'bold 150px Arial'; x.textBaseline = 'middle'; x.fillText('AWS', 20, 110); x.fillStyle = '#14202b'; x.font = 'bold 34px Arial'; x.fillText('Alashhab Washurakauh Co.', 24, 205); }
+  return (logoCache = c.toDataURL('image/jpeg', 0.9));
+}
+const PDF_NOTE = () => `Total per car = towing from the yard to the port + share of the container (container price / 3 or / 4). Prices include $${towMk()} added to towing and $${ocMk()} per car added to ocean freight. Auction fees, customs and Libya-side costs are not included. Waiting = no towing price yet.`;
+async function buildPdf(kind, key) {
+  await loadScript(LIB.jspdf); await loadScript(LIB.autotable);
+  const { jsPDF } = window.jspdf; const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+  const W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight(), M = 40, CW = W - 2 * M, logo = await logoImg(), LR = 234 / 720;
+  let yards, title, file;
+  if (kind === 'port') { yards = pdYards().filter(y => y.port === key); title = `${portShort(key)} warehouse`; file = `Khoms_${portShort(key).replace(/\W+/g, '_')}_yards.pdf`; }
+  else if (kind === 'state') { yards = pdYards().filter(y => y.st === key); title = `${usName(key)} yards`; file = `Khoms_${key}_yards.pdf`; }
+  else { yards = pmFiltered(); title = 'Khoms Port Routing Map'; file = 'Khoms_yard_list.pdf'; }
+  const sub = 'Copart and IAAI yards to Al Khums, Libya: towing + ocean freight per car';
+  const date = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+  const ports = PORT_ORDER.concat(pdPorts().map(p => p.code).filter(c => !PORT_ORDER.includes(c))).filter(c => yards.some(y => y.port === c));
+  const head = (t, withLogo) => {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.setTextColor(20, 32, 43); doc.text(t, M, M + 14);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor(93, 107, 120); doc.text(sub, M, M + 30); doc.text(`${date}  -  Alashhab Washurakauh Co.`, M, M + 43);
+    if (withLogo) doc.addImage(logo, 'JPEG', W - M - 140, M - 4, 140, 140 * LR, 'awslogo');
+    return M + 62;
+  };
+  const oceanLine = (c, y) => { doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(20, 32, 43); doc.text(`Ocean per 40ft container: 3 cars ${usd0(oceanBox(c, 3))} (${usd0(oceanCar(c, 3))}/car) - 4 cars ${usd0(oceanBox(c, 4))} (${usd0(oceanCar(c, 4))}/car)`, M, y); return y + 12; };
+  const table = (ys, y, showPort) => {
+    const body = [], cols = showPort ? 6 : 5, sts = [...new Set(ys.map(x => x.st))].sort((a, b) => usName(a).localeCompare(usName(b)));
+    sts.forEach(s => {
+      const g = cheapFirst(ys.filter(x => x.st === s), 4);
+      body.push([{ content: `${usName(s)} (${s}) - ${g.length} yard${g.length === 1 ? '' : 's'}`, colSpan: cols, styles: { fillColor: [236, 240, 243], fontStyle: 'bold', textColor: [20, 32, 43] } }]);
+      g.forEach(x => { const t3 = yTotal(x, 3), t4 = yTotal(x, 4); const r = [{ content: x.name, styles: { cellPadding: { left: 16, top: 4, bottom: 4, right: 4 } } }, x.auc]; if (showPort) r.push(portShort(x.port)); r.push(yPriced(x) ? usd0(yTow(x)) : '—', t3 == null ? 'Waiting' : usd0(t3), t4 == null ? 'Waiting' : usd0(t4)); body.push(r); });
+    });
+    const hd = ['Yard', 'Auction'].concat(showPort ? ['Port'] : [], ['Towing', 'Total / car (3 cars)', 'Total / car (4 cars)']), off = showPort ? 1 : 0;
+    doc.autoTable({
+      startY: y, head: [hd], body, margin: { left: M, right: M, top: M }, theme: 'grid', showHead: 'everyPage',
+      styles: { font: 'helvetica', fontSize: 8.5, cellPadding: 4, lineColor: [221, 227, 233], lineWidth: .5, textColor: [20, 32, 43] },
+      headStyles: { fillColor: [20, 32, 43], textColor: 255, fontStyle: 'bold' },
+      columnStyles: { [2 + off]: { halign: 'right' }, [3 + off]: { halign: 'right', fontStyle: 'bold' }, [4 + off]: { halign: 'right', fontStyle: 'bold' } },
+      didParseCell: d => { if (d.section === 'body' && (d.cell.raw === 'Waiting')) d.cell.styles.textColor = [180, 84, 26]; }
+    });
+    let fy = doc.lastAutoTable.finalY + 14; const lines = doc.splitTextToSize(PDF_NOTE(), CW);
+    if (fy + lines.length * 10 > H - M) { doc.addPage(); fy = M; }
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(93, 107, 120); doc.text(lines, M, fy);
+  };
+  if (ports.length <= 1) {
+    const c = ports[0] || key; let y = head(title, true);
+    const img = await rasterMap(ports.length ? { onlyPort: c } : {}); const mh = CW * 610 / 975;
+    doc.addImage(img, 'JPEG', M, y, CW, mh); y += mh + 16;
+    if (ports.length) y = oceanLine(c, y) + 4;
+    table(yards, y, false);
+  } else {
+    let y = head(title, true); const img = await rasterMap({}); const mh = CW * 610 / 975;
+    doc.addImage(img, 'JPEG', M, y, CW, mh); y += mh + 20;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(20, 32, 43); doc.text('Warehouses', M, y); y += 14;
+    ports.forEach(c => {
+      const rgb = hexRgb(portColor(c)); doc.setFillColor(...rgb); doc.circle(M + 5, y - 3, 4.5, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(20, 32, 43); doc.text(`${portShort(c)} warehouse`, M + 16, y);
+      doc.setFont('helvetica', 'normal'); doc.setTextColor(93, 107, 120); doc.text(`${yards.filter(x => x.port === c).length} yards   -   ocean per car: 3 cars ${usd0(oceanCar(c, 3))}  |  4 cars ${usd0(oceanCar(c, 4))}`, M + 170, y);
+      y += 18;
+    });
+    for (const c of ports) {
+      doc.addPage(); let y2 = head(`${portShort(c)} warehouse`, false);
+      const im = await rasterMap({ onlyPort: c }), mw = 300, mh2 = mw * 610 / 975;
+      doc.addImage(im, 'JPEG', M, y2, mw, mh2);
+      const lw = 180, lh = lw * LR; doc.addImage(logo, 'JPEG', M + mw + (CW - mw - lw) / 2, y2 + (mh2 - lh) / 2, lw, lh, 'awslogo');
+      y2 += mh2 + 16; y2 = oceanLine(c, y2) + 4;
+      table(yards.filter(x => x.port === c), y2, false);
+    }
+  }
+  return { doc, file };
+}
+const hexRgb = h => { h = String(h || '#94a3b8').replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) || 0); };
+
+/* ---- vehicle form helpers ---- */
+function yardFind(label) { return pdYards().find(y => yardLabel(y) === label) || null; }
+function vfYardInfo(y, n) {
+  if (!y) return '';
+  const t = yTotal(y, n);
+  return `<span class="pdot" style="--pc:${portColor(y.port)}"></span>${L('الميناء', 'Port')}: <b>${esc(portName(y.port))}</b> · ${L('سحب', 'Tow')} <b>${yPriced(y) ? usd0(yTow(y)) : L('بانتظار السعر', 'waiting')}</b> · ${L('بحري/سيارة', 'Ocean/car')} <b>${usd0(oceanCar(y.port, n))}</b>${t != null ? ` · ${L('المجموع', 'Total')} <b>${usd0(t)}</b>` : ''}`;
+}
+
 /* ---------------- المصاريف ---------------- */
 function vExpenses() {
   const m = S.em, list = S.expenses.filter(e => (e.date || '').startsWith(m)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
@@ -905,6 +1319,7 @@ function vSettings() {
 /* ---------------- النماذج ---------------- */
 function vFormHtml(v, cid) {
   const f = v.fin || {}, isNew = !v.id;
+  const yv = v.yard_id ? pdYards().find(y => y.id === v.yard_id) : null, ncar = num(v.cars_per_container) || 4;
   const inp = (n, lab, val, attr = '') => `<label class="f"><span>${lab}</span><input name="${n}" value="${esc(val ?? '')}" ${attr}></label>`;
   return `<h2>${isNew ? L('إضافة سيارة', 'Add vehicle') : L('تعديل السيارة', 'Edit vehicle')}</h2>
   <form id="vf" data-id="${v.id || ''}" onsubmit="A.vSave(event,'${v.id || ''}')">
@@ -920,6 +1335,9 @@ function vFormHtml(v, cid) {
     ${inp('engine', L('المحرك', 'Engine'), v.engine, 'placeholder="V6 3.5L" dir="ltr"')}
   </div><datalist id="mk">${['Toyota', 'Hyundai', 'Kia', 'Nissan', 'Honda', 'Ford', 'Chevrolet', 'Jeep', 'Dodge', 'Mercedes-Benz', 'BMW', 'Lexus', 'Audi', 'Volkswagen', 'Mazda', 'GMC', 'Tesla'].map(x => `<option>${x}</option>`).join('')}</datalist>
   <div class="sec">${L('المزاد والشحن', 'Auction & shipping')}</div><div class="grid">
+    ${pdYards().length ? `<div class="yardpick"><label class="f"><span>📍 ${L('الساحة — يحسب السحب والشحن البحري تلقائياً', 'Yard — auto-fills towing & ocean freight')}</span><input id="vfYard" list="yardList" value="${esc(yv ? yardLabel(yv) : '')}" oninput="A.vfYard(this)" placeholder="${L('اكتب اسم الساحة أو الولاية… مثلاً Dallas', 'Type a yard or state… e.g. Dallas')}" dir="ltr" autocomplete="off"></label><datalist id="yardList">${pdYards().map(y => `<option value="${esc(yardLabel(y))}"></option>`).join('')}</datalist><div class="vmsg" id="vfYInfo">${yv ? vfYardInfo(yv, ncar) : ''}</div></div>` : ''}
+    <input type="hidden" name="yard_id" value="${esc(v.yard_id || '')}">
+    <label class="f"><span>${L('عدد السيارات في الحاوية', 'Cars per container')}</span><select name="cars_per_container" onchange="A.vfApply(false)">${[2, 3, 4].map(k => `<option value="${k}" ${ncar === k ? 'selected' : ''}>${k}</option>`).join('')}</select></label>
     <label class="f"><span>${L('المزاد', 'Auction')}</span><select name="auction_name">${AUCTIONS.map(a => `<option ${v.auction_name === a ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
     ${inp('auction_location', L('الولاية / الساحة', 'State / yard'), v.auction_location)}
     ${inp('purchase_date', L('تاريخ الشراء', 'Purchase date'), v.purchase_date || today(), 'type="date"')}
@@ -1036,7 +1454,7 @@ const A = {
     const data = {
       customer_id: g('customer_id'), vin, lot_number: g('lot_number'), make: g('make'), model: g('model'), year: g('year'), color: g('color'), trim: g('trim'), engine: g('engine'),
       auction_name: g('auction_name'), auction_location: g('auction_location'),
-      container_number: g('container_number'), booking_number: g('booking_number'), status, purchase_date: g('purchase_date'), auction_paid_by: g('auction_paid_by'), auction_paid_date: g('auction_paid_by') ? (g('auction_paid_date') || today()) : '', notes: g('notes'), fin, total_cost: r2(FIN.reduce((s, x) => s + fin[x.k], 0))
+      container_number: g('container_number'), booking_number: g('booking_number'), status, purchase_date: g('purchase_date'), yard_id: g('yard_id'), yard_name: (pdYards().find(y => y.id === g('yard_id')) || {}).name || (g('yard_id') && old ? old.yard_name || '' : ''), port_code: (pdYards().find(y => y.id === g('yard_id')) || {}).port || (g('yard_id') && old ? old.port_code || '' : ''), cars_per_container: num(g('cars_per_container')) || 4, auction_paid_by: g('auction_paid_by'), auction_paid_date: g('auction_paid_by') ? (g('auction_paid_date') || today()) : '', notes: g('notes'), fin, total_cost: r2(FIN.reduce((s, x) => s + fin[x.k], 0))
     };
     try {
       let vid = id;
@@ -1231,7 +1649,7 @@ const A = {
     try { await DB.del('users', id); logAct('user_del', `${u?.name || ''} · ${id}`); toast(L('تم حذف المستخدم. لو تبي تمسح حسابه نهائياً: Firebase > Authentication > Users', 'User removed. To delete the login itself: Firebase > Authentication > Users')); } catch (x) { toast(x.message, 'err'); }
   },
   more() {
-    const it = [['payments', '💵', L('الدفعات', 'Payments')], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')], ['users', '🔐', L('المستخدمين والصلاحيات', 'Users & permissions')]].filter(x => !ROUTE_PERM[x[0]] || can(ROUTE_PERM[x[0]]));
+    const it = [['payments', '💵', L('الدفعات', 'Payments')], ['ports', '🗺️', L('خريطة الموانئ والأسعار', 'Port map & rates')], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')], ['users', '🔐', L('المستخدمين والصلاحيات', 'Users & permissions')]].filter(x => !ROUTE_PERM[x[0]] || can(ROUTE_PERM[x[0]]));
     openModal(`<div class="sheet-list">${it.map(x => `<a href="#/${x[0]}" onclick="A.close()"><span class="ic">${x[1]}</span>${x[2]}</a>`).join('')}
       <a href="#/track" target="_blank" onclick="A.close()"><span class="ic">🔎</span>${L('صفحة التتبع للزبائن', 'Customer tracking page')}</a>
       <button onclick="A.close();A.lang()"><span class="ic">🌐</span>${L('English', 'العربية')}</button>
@@ -1500,6 +1918,110 @@ const A = {
     } catch (x) { toast(x.message, 'err'); }
   }
 };
+Object.assign(A, {
+  pmN(n) { S.pm.n = n; document.querySelectorAll('.seg.big button').forEach((b, i) => b.classList.toggle('on', i + 2 === n)); pmRefresh(['oc', 'det', 'find', 'cards']); },
+  pmTab(t) { S.pm.tab = t; render(); },
+  pmState(st) { S.pm.sel = S.pm.sel === st ? null : st; if (S.pm.sel) S.pm.port = null; pmRefresh(); },
+  pmHover(st) { if (window.matchMedia && !window.matchMedia('(hover:hover)').matches) return; const d = $('#pmDet'); if (d) d.innerHTML = pmDetail(st || S.pm.sel); },
+  pmPort(c) { S.pm.port = S.pm.port === c ? null : c; S.pm.sel = null; pmRefresh(); },
+  pmQ(v) { S.pm.q = v; pmRefresh(['find']); },
+  pmAuc(a) { S.pm.auc = a; pmRefresh(['find']); },
+  async pmPdf(kind, key, btn) {
+    const st = btn && btn.parentElement.querySelector('.pdfst'); const say = t => { if (st) st.textContent = t; };
+    if (kind === 'list' && !pmFiltered().length) return toast(L('القائمة فاضية', 'The list is empty'), 'err');
+    say(L('جاري التجهيز…', 'Preparing…')); if (btn) btn.disabled = true;
+    try { const { doc, file } = await buildPdf(kind, key); doc.save(file); say(L('تم الحفظ ✓', 'Saved ✓')); }
+    catch (e) { say(L('خطأ: ', 'Error: ') + e.message); }
+    finally { if (btn) btn.disabled = false; setTimeout(() => say(''), 5000); }
+  },
+  pdMq(v) { S.pm.mq = v; const el = $('#pdmq'), pos = el ? el.selectionStart : 0; render(); const e2 = $('#pdmq'); if (e2) { e2.focus(); try { e2.setSelectionRange(pos, pos); } catch (e) { } } },
+  async pdSavePorts(e) {
+    e.preventDefault(); const fd = new FormData(e.target), P = pdPorts();
+    const list = P.map((p, i) => ({ ...p, name: (fd.get('name_' + i) || p.name).toString().trim(), o2: num(fd.get('o2_' + i)), o3: num(fd.get('o3_' + i)), o4: num(fd.get('o4_' + i)), color: fd.get('color_' + i) || p.color }));
+    try { await DB.merge('portdata', 'ports', { list, tow_markup: num(fd.get('tow_markup')), ocean_markup_per_car: num(fd.get('ocean_markup_per_car')), updated_at: now(), updated_by: S.user?.email || '' }); logAct('ports', L('تعديل أسعار البحري والزيادة', 'Ocean rates & markup edited')); toast(L('تم حفظ الأسعار', 'Rates saved')); } catch (x) { toast(x.message, 'err'); }
+  },
+  async pdSaveStates(e) {
+    e.preventDefault(); const fd = new FormData(e.target), map = {};
+    Object.keys(ST_NAMES).forEach(s => map[s] = (fd.get('st_' + s) || '').toString());
+    try { await DB.merge('portdata', 'states', { map, updated_at: now() }); logAct('ports', L('تعديل ألوان الولايات', 'State routing edited')); toast(L('تم الحفظ', 'Saved')); } catch (x) { toast(x.message, 'err'); }
+  },
+  async pdSaveYards(list, msg) {
+    await DB.merge('portdata', 'yards', { list, updated_at: now(), updated_by: S.user?.email || '' });
+    logAct('ports', msg); toast(L('تم الحفظ', 'Saved'));
+  },
+  pdYardForm(id) {
+    const y = id ? pdYards().find(x => x.id === id) || {} : { auc: 'Copart', status: 'priced' };
+    openModal(`<h2>${id ? L('تعديل ساحة', 'Edit yard') : L('ساحة جديدة', 'New yard')}</h2><form onsubmit="A.pdYardSave(event,'${esc(id || '')}')"><div class="grid">
+      <label class="f"><span>${L('اسم الساحة', 'Yard name')} *</span><input name="name" required value="${esc(y.name || '')}" dir="ltr"></label>
+      <label class="f"><span>${L('الولاية', 'State')}</span><select name="st">${Object.keys(ST_NAMES).sort().map(s => `<option value="${s}" ${y.st === s ? 'selected' : ''}>${s} — ${esc(usName(s))}</option>`).join('')}</select></label>
+      <label class="f"><span>${L('المزاد', 'Auction')}</span><select name="auc"><option ${y.auc !== 'IAAI' ? 'selected' : ''}>Copart</option><option ${y.auc === 'IAAI' ? 'selected' : ''}>IAAI</option></select></label>
+      <label class="f"><span>${L('الميناء', 'Port')}</span><select name="port">${pdPorts().map(p => `<option value="${p.code}" ${y.port === p.code ? 'selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>
+      <label class="f"><span>${L('سعر السحب الخام من AEC ($) — بدون الزيادة', 'Raw AEC towing ($), without markup')}</span><input name="tow" type="number" step="1" min="0" value="${y.tow ?? ''}" dir="ltr" placeholder="${L('فاضي = بانتظار السعر', 'empty = waiting')}"></label></div>
+      <div class="hint">${L(`المنظومة تضيف $${towMk()} للسحب وقت الحساب. لو تركت السعر فاضي، الساحة تبان "بانتظار السعر".`, `The app adds $${towMk()} to towing when calculating. Leave the price empty to mark it "waiting".`)}</div>
+      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form>`, 'sm');
+  },
+  async pdYardSave(e, id) {
+    e.preventDefault(); const fd = new FormData(e.target), tow = num(fd.get('tow'));
+    const y = { name: fd.get('name').toString().trim(), st: fd.get('st'), auc: fd.get('auc'), port: fd.get('port'), tow: tow > 0 ? tow : null, status: tow > 0 ? 'priced' : 'waiting_for_price' };
+    y.id = yardId(y);
+    const list = pdYards().filter(x => x.id !== id);
+    if (list.some(x => x.id === y.id)) return toast(L('هذي الساحة موجودة بنفس الميناء', 'This yard already exists for that port'), 'err');
+    list.push(y);
+    try { await A.pdSaveYards(list, `${id ? L('تعديل ساحة', 'Yard edited') : L('ساحة جديدة', 'Yard added')}: ${y.name} ${y.st} → ${y.port} ${y.tow ? '$' + y.tow : ''}`); A.close(); } catch (x) { toast(x.message, 'err'); }
+  },
+  async pdYardDel(id) {
+    const y = pdYards().find(x => x.id === id); if (!y || !confirm(L(`حذف ساحة ${y.name}؟`, `Delete yard ${y.name}?`))) return;
+    try { await A.pdSaveYards(pdYards().filter(x => x.id !== id), `${L('حذف ساحة', 'Yard deleted')}: ${y.name} ${y.st}`); } catch (x) { toast(x.message, 'err'); }
+  },
+  pdExport() {
+    const rows = [['yard_name', 'state', 'auction', 'port_code', 'tow_price_usd', 'status']].concat(sortYards(pdYards(), 4).map(y => [y.name, y.st, y.auc, y.port, y.tow ?? '', y.status]));
+    const csv = rows.map(r => r.map(v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : v).join(',')).join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' })); a.download = `yards_towing_${today()}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  },
+  async pdImport(kind, input) {
+    const f = input.files[0]; input.value = ''; if (!f) return;
+    let rows; try { rows = parseCSV(await f.text()); } catch (e) { return toast(L('تعذّرت قراءة الملف', 'Could not read the file'), 'err'); }
+    if (!rows.length) return toast(L('الملف فاضي', 'Empty file'), 'err');
+    let data, sum;
+    if (kind === 'yards') { data = csvToYards(rows); const pr = data.filter(yPriced).length; sum = L(`${data.length} ساحة (${pr} مسعّرة، ${data.length - pr} بانتظار السعر). الموانئ: `, `${data.length} yards (${pr} priced, ${data.length - pr} waiting). Ports: `) + [...new Set(data.map(y => y.port))].join(', '); }
+    else if (kind === 'states') { data = csvToStates(rows); sum = L(`${Object.keys(data).length} ولاية`, `${Object.keys(data).length} states`); }
+    else { data = csvToPorts(rows); sum = data.map(p => `${p.code}: ${usd0(p.o2)} / ${usd0(p.o3)} / ${usd0(p.o4)}`).join('<br>'); }
+    if (kind === 'yards' && !data.length) return toast(L('ما لقيناش ساحات في الملف — تأكد من الأعمدة', 'No yards found — check the columns'), 'err');
+    S.pdPending = { kind, data };
+    openModal(`<h2>📥 ${L('تأكيد الاستيراد', 'Confirm import')}</h2><p><b>${esc(f.name)}</b></p><div class="card" style="background:var(--soft)">${sum}</div>
+      ${kind === 'yards' ? `<div class="hint">${L('أول 5:', 'First 5:')}<br>${data.slice(0, 5).map(y => esc(`${y.name} (${y.st}, ${y.auc}) → ${y.port} ${y.tow ? '$' + y.tow : '—'}`)).join('<br>')}</div>` : ''}
+      <div class="hint">⚠️ ${L('هذا يستبدل القائمة الحالية كاملة. السيارات المسجلة ما تتأثرش.', 'This replaces the whole current list. Saved vehicles are not affected.')}</div>
+      <div class="mfoot"><button class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri" onclick="A.pdImportGo()">✔ ${L('استيراد وحفظ', 'Import & save')}</button></div>`, 'sm');
+  },
+  async pdImportGo() {
+    const p = S.pdPending; if (!p) return;
+    try {
+      if (p.kind === 'yards') await A.pdSaveYards(p.data, L(`استيراد ${p.data.length} ساحة`, `Imported ${p.data.length} yards`));
+      else if (p.kind === 'states') { await DB.merge('portdata', 'states', { map: p.data, updated_at: now() }); logAct('ports', L('استيراد الولايات', 'States imported')); toast(L('تم الاستيراد', 'Imported')); }
+      else { const old = pdDoc('ports') || {}; await DB.merge('portdata', 'ports', { list: p.data, tow_markup: old.tow_markup ?? 25, ocean_markup_per_car: old.ocean_markup_per_car ?? 25, updated_at: now() }); logAct('ports', L('استيراد أسعار البحري', 'Ocean rates imported')); toast(L('تم الاستيراد', 'Imported')); }
+      S.pdPending = null; A.close();
+    } catch (x) { toast(x.message, 'err'); }
+  },
+  /* نموذج السيارة */
+  vfYard(el) {
+    const y = yardFind(el.value), f = $('#vf'); if (!f) return;
+    f.yard_id.value = y ? y.id : '';
+    if (!y) { $('#vfYInfo').innerHTML = el.value ? `<span class="wait">${L('اختار ساحة من القائمة', 'Pick a yard from the list')}</span>` : ''; return; }
+    f.auction_name.value = AUCTIONS.includes(y.auc) ? y.auc : 'Other';
+    f.auction_location.value = `${y.st} - ${y.name}`;
+    A.vfApply(true);
+  },
+  vfApply(fillTow) {
+    const f = $('#vf'); if (!f) return; const y = pdYards().find(x => x.id === f.yard_id.value); const n = num(f.cars_per_container.value) || 4;
+    if (!y) return;
+    if (fillTow) f.fin_inland_shipping.value = yPriced(y) ? Math.round(yTow(y)) : '';
+    f.fin_ocean_shipping.value = Math.round(oceanCar(y.port, n));
+    if (f.fin_shipping_cost_actual) f.fin_shipping_cost_actual.value = Math.round((yPriced(y) ? num(y.tow) : 0) + oceanRawCar(y.port, n)) || '';
+    $('#vfYInfo').innerHTML = vfYardInfo(y, n) + (yPriced(y) ? '' : ` <span class="wait">— ${L('الساحة بانتظار سعر السحب، اكتبه يدوياً', 'yard has no towing price yet, enter it manually')}</span>`);
+    A.calc();
+  }
+});
+
 Object.entries(NEED).forEach(([k, p]) => { const f = A[k]; if (typeof f !== 'function') return; A[k] = function (...a) { if (!can(p)) { toast(L('ما عندكش صلاحية لهذي العملية', 'You don’t have permission for this'), 'err'); return; } return f.apply(this, a); }; });
 window.A = A; window.$ = $;
 
@@ -1511,6 +2033,7 @@ function startWatch() {
   ['customers', 'vehicles', 'payments'].concat(can('expenses') ? ['expenses'] : []).forEach(c => unsubs.push(DB.watch(c, arr => { S[c] = arr; S.loaded[c] = true; recompute(); render(); migrateInternal(); })));
   if (can('profit')) unsubs.push(DB.watch('vinternal', arr => { S.internal = Object.fromEntries(arr.map(x => [x.id, x])); S.loaded.vinternal = true; recompute(); render(); migrateInternal(); }));
   if (can('logs')) unsubs.push(DB.watch('logs', arr => { S.logs = arr; if (S.route === 'logs') render(); }, { order: 'at', limit: 300 }));
+  unsubs.push(DB.watch('portdata', arr => { S.pd = Object.fromEntries(arr.map(d => [d.id, d])); if (S.route === 'ports') { if (S.pm.tab === 'manage') render(); else pmRefresh(); } }));
   if (isAdmin()) unsubs.push(DB.watch('users', arr => { S.users = arr; if (S.route === 'users') render(); }));
 }
 let migrated = false;
