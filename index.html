@@ -521,7 +521,8 @@ const vt = v => `${v.year || ''} ${v.make || ''} ${v.model || ''}`.trim() || '�
 const custName = id => (S.customers.find(c => c.id === id) || {}).full_name || '—';
 const custCode = id => (S.customers.find(c => c.id === id) || {}).code || '';
 const codeTag = code => code ? `<span class="ccode">#${esc(code)}</span>` : '';
-const nextCode = () => { const used = S.customers.map(c => parseInt(c.code, 10)).filter(n => n >= 1000 && n <= 9999); let n = used.length ? Math.max(...used) + 1 : 1001; if (n > 9999) { n = 1001; while (used.includes(n)) n++; } return String(n); };
+const CODE_START = 4478;
+const nextCode = () => { const used = S.customers.map(c => parseInt(c.code, 10)).filter(n => n >= 1000 && n <= 9999); let n = Math.max(CODE_START - 1, ...used) + 1; if (n > 9999) { n = CODE_START; while (used.includes(n)) n++; } return String(n); };
 const statusSince = v => { const h = v.status_history || []; return h.length ? h[h.length - 1].at : (v.purchase_date || v.created_at); };
 const totalCost = v => FIN.reduce((s, f) => s + num((v.fin || {})[f.k]), 0);
 const actCost = v => { const iv = S.internal[v.id]; return num(iv ? iv.shipping_cost_actual : (v.fin || {}).shipping_cost_actual); };
@@ -990,8 +991,11 @@ function queueInvSync() { clearTimeout(invSyncT); invSyncT = setTimeout(runInvSy
 let codesDone = false;
 async function assignCodes() {
   if (!can('edit') || !S.loaded.customers) return;
+  /* أرقام أُعطيت تلقائياً قبل تحديد بداية الترقيم تُعاد ترقيمها من 4478 */
+  const redo = S.customers.filter(c => c.code_auto && parseInt(c.code, 10) < CODE_START);
+  redo.forEach(c => { c.code = ''; });
   const missing = S.customers.filter(c => !/^\d{4}$/.test(c.code || '')).sort((a, b) => (a.created_at || '').localeCompare(b.created_at || ''));
-  for (const c of missing) { const code = nextCode(); c.code = code; try { await DB.update('customers', c.id, { code }); } catch (e) { } }
+  for (const c of missing) { const code = nextCode(); c.code = code; try { await DB.update('customers', c.id, { code, code_auto: true }); } catch (e) { } }
 }
 async function runInvSync() {
   if (invSyncBusy || !can('edit') || !S.loaded.vehicles || !S.loaded.customers || !S.loaded.payments) return;
