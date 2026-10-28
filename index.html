@@ -51,6 +51,7 @@
         match /logs/{id}      { allow read: if can('logs'); allow create: if active(); }
         match /settings/{id}  { allow get: if true; allow list: if active(); allow write: if can('settings'); }
         match /tracking/{vin} { allow get: if true; allow list: if active(); allow write: if can('edit') || can('delete'); }
+        match /receipts/{id}  { allow get: if can('edit') || can('profit'); allow create, update: if can('edit'); allow delete: if can('edit') || can('delete'); }
       }
     }
 
@@ -386,6 +387,15 @@ tr.sel{background:#fff7ed}
 .trt td.n,.trt th.n{text-align:end;direction:ltr;white-space:nowrap}
 .trt .sub{font-size:12px;color:var(--mut)}
 .srcb{display:inline-block;margin-top:3px;font-size:12.5px;font-weight:800;color:#9a3412;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:0 7px}
+
+.tri{display:grid;grid-template-columns:minmax(150px,1.2fr) minmax(0,1fr) 120px auto;gap:8px;margin-bottom:6px;align-items:center}
+@media(max-width:860px){.tri{grid-template-columns:1fr 110px auto}.tri input[name=it_note]{grid-column:1/-1;grid-row:2}}
+.trt tr.trm td{border-bottom:0}
+.trt tr.trd td{padding-top:0;background:#fcfcfd}
+.trd-b{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0}
+.trd-l{font-size:11.5px;font-weight:800;color:var(--mut);margin-inline-end:4px}
+.trd-c{font-size:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:2px 8px}
+.trd-c b{direction:ltr;unicode-bidi:isolate}
 </style>
 </head>
 <body>
@@ -511,6 +521,18 @@ const SRC_EX = { paypal: ['PayPal معيد', 'Moayed PayPal'], card: ['بطاق�
 /* كل الأسماء/الحسابات المستخدمة سابقاً مع طريقتها، الأحدث أولاً */
 const srcList = () => { const m = new Map(); S.vehicles.flatMap(v => v.transfers || []).sort((a, b) => (b.at || '').localeCompare(a.at || '')).forEach(t => { if (t.src && !m.has(t.src)) m.set(t.src, t.method); }); return [...m].map(([src, method]) => ({ src, method })); };
 const pmName = k => { const m = PAY_METHODS.find(x => x.k === k); return m ? m.ic + ' ' + L(m.ar, m.en) : (k || '—'); };
+const PAY_ITEMS = [
+  { k: 'car', ar: 'ثمن السيارة', en: 'Car price' }, { k: 'auction_fees', ar: 'رسوم المزاد (الكل)', en: 'Auction fees (all)' }, { k: 'buyer_fee', ar: 'رسوم المشتري', en: 'Buyer fee' },
+  { k: 'vbid_fee', ar: 'رسوم المزايدة الإلكترونية', en: 'Virtual bid fee' }, { k: 'gate_fee', ar: 'رسوم البوابة', en: 'Gate fee' }, { k: 'env_fee', ar: 'رسوم بيئية', en: 'Environmental fee' },
+  { k: 'title_fee', ar: 'رسوم المستندات / التايتل', en: 'Title / document fee' }, { k: 'storage', ar: 'تخزين', en: 'Storage' }, { k: 'late_fee', ar: 'غرامة تأخير', en: 'Late payment fee' },
+  { k: 'broker_fee', ar: 'رسوم الوسيط', en: 'Broker fee' }, { k: 'towing', ar: 'السحب', en: 'Towing' }, { k: 'ocean', ar: 'الشحن البحري', en: 'Ocean freight' }, { k: 'other', ar: 'أخرى', en: 'Other' }];
+const piName = k => { const m = PAY_ITEMS.find(x => x.k === k); return m ? L(m.ar, m.en) : (k || '—'); };
+const PAY_CUR = ['USD', 'LYD', 'EUR', 'AED', 'TRY', 'GBP'];
+const PAY_ST = [{ k: 'pending', ar: 'لم تُرسل بعد', en: 'Not sent yet', c: '#dc2626' }, { k: 'sent', ar: 'أُرسلت', en: 'Sent', c: '#ca8a04' }, { k: 'confirmed', ar: 'استلمها المزاد / الجهة', en: 'Received / confirmed', c: '#059669' }];
+const psBadge = k => { const m = PAY_ST.find(x => x.k === k) || PAY_ST[1]; return `<span class="badge" style="--c:${m.c}">${esc(L(m.ar, m.en))}</span>`; };
+const FEE_PARTS = [{ k: 'transfer', ar: 'رسوم التحويل', en: 'Transfer fee' }, { k: 'bank', ar: 'رسوم البنك / البطاقة', en: 'Bank / card charges' }, { k: 'fx', ar: 'فرق سعر الصرف', en: 'Exchange-rate difference' }, { k: 'other', ar: 'أخرى', en: 'Other' }];
+const tCostD = v => (S.internal[v.id] || {}).tcostd || {};
+const RC_CHUNK = 700000, rcId = (vid, tid, i) => `${vid}_${tid}_${i}`;
 const pfName = k => { const m = PAY_FOR.find(x => x.k === k); return m ? L(m.ar, m.en) : (k || '—'); };
 const STAGES = [{ k: 'auction', ar: 'المزاد', en: 'Auction' }, { k: 'warehouse', ar: 'المستودع', en: 'Warehouse' }, { k: 'arrival', ar: 'الوصول', en: 'Arrival' }];
 
@@ -628,7 +650,7 @@ const isAdmin = () => (LOCAL && S.user?.email === 'demo@local') || isAdminEmail(
 const can = p => p === 'admin' ? isAdmin() : (isAdmin() || !!(S.me && S.me.perms && S.me.perms[p]));
 const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', users: 'admin' };
 const NEED = {
-  vForm: 'edit', vSave: 'edit', trForm: 'edit', trSave: 'edit', trDel: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
+  vForm: 'edit', vSave: 'edit', trForm: 'edit', trSave: 'edit', trDel: 'edit', rcOpen: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
   pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses',
   printFull: 'profit', sSave: 'settings', unseed: 'admin', backup: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
 };
@@ -969,15 +991,27 @@ function vVehicle() {
 
 /* ---------------- دفع المزاد والحوالات (طريقة الدفع، التكلفة، المحمّل على الزبون) ---------------- */
 function trCard(v) {
-  const list = [...(v.transfers || [])].sort((a, b) => (a.date || '').localeCompare(b.date || '')), cm = tCostMap(v), pf = can('profit');
+  const list = [...(v.transfers || [])].sort((a, b) => (a.date || '').localeCompare(b.date || '')), cm = tCostMap(v), cd = tCostD(v), pf = can('profit');
   const sent = list.reduce((a, t) => a + num(t.amount), 0), ch = list.reduce((a, t) => a + num(t.charged), 0), co = list.reduce((a, t) => a + num(cm[t.id]), 0);
   const add = can('edit') ? `<button class="btn sm pri" onclick="A.trForm('${v.id}')">+ ${L('تسجيل دفعة / حوالة', 'Add payment / transfer')}</button>` : '';
+  const cols = pf ? 9 : 7;
+  const detail = t => {
+    const parts = [];
+    if ((t.items || []).length) parts.push(`<div class="trd-b"><span class="trd-l">${L('تفاصيل المبلغ', 'Breakdown')}</span>${t.items.map(i => `<span class="trd-c">${esc(piName(i.k))}${i.note ? ' (' + esc(i.note) + ')' : ''} <b>${money(i.a)}</b></span>`).join('')}</div>`);
+    if (t.cur && t.cur !== 'USD') parts.push(`<div class="trd-b"><span class="trd-l">${L('العملة', 'Currency')}</span><span class="trd-c"><b dir="ltr">${num(t.cur_amount).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${esc(t.cur)}</b> @ <b dir="ltr">${esc(t.rate)}</b> ${L('للدولار', 'per USD')} = <b>${money(t.amount)}</b></span></div>`);
+    if (pf && cd[t.id]) { const d = cd[t.id]; const fp = FEE_PARTS.filter(f => num(d[f.k])); if (fp.length) parts.push(`<div class="trd-b pf"><span class="trd-l">🔒 ${L('تفاصيل تكلفتنا', 'Our cost breakdown')}</span>${fp.map(f => `<span class="trd-c">${esc(L(f.ar, f.en))} <b>${money(d[f.k])}</b></span>`).join('')}</div>`); }
+    const meta = [psBadge(t.status), t.conf_date ? `${L('تأكيد الاستلام', 'Confirmed')}: ${fdate(t.conf_date)}` : '', t.receipt ? `<button class="btn sm" onclick="A.rcOpen('${v.id}','${t.id}')">🧾 ${L('الإيصال', 'Receipt')}</button>` : '', t.by ? `<span class="sub">✍️ ${esc(t.by)}</span>` : ''].filter(Boolean);
+    return `<tr class="trd"><td colspan="${cols}">${parts.join('')}<div class="trd-b">${meta.join(' ')}</div></td></tr>`;
+  };
   return `<div class="card"><div class="row-b"><h3 style="margin:0">💳 ${L('دفع المزاد والحوالات', 'Auction payment & transfers')}</h3>${add}</div>
-    ${list.length ? `<div class="tw" style="margin-top:12px"><table class="trt"><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('مقابل', 'For')}</th><th>${L('طريقة الدفع', 'Method')}</th><th>${L('المرجع', 'Reference')}</th><th class="n">${L('المبلغ المدفوع', 'Amount sent')}</th><th class="n">${L('المحمّل على الزبون', 'Charged to customer')}</th>${pf ? `<th class="n pf">🔒 ${L('تكلفتنا', 'Our cost')}</th><th class="n pf">🔒 ${L('الربح', 'Margin')}</th>` : ''}<th></th></tr></thead><tbody>
-      ${list.map(t => `<tr><td>${fdate(t.date)}</td><td>${esc(pfName(t.purpose))}</td><td><b>${pmName(t.method)}</b>${t.src ? `<div class="srcb">👤 ${esc(t.src)}</div>` : ''}${t.details ? `<div class="sub">${esc(t.details)}</div>` : ''}${t.notes ? `<div class="sub">📝 ${esc(t.notes)}</div>` : ''}</td><td class="mono">${esc(t.ref || '—')}</td><td class="n">${money(t.amount)}</td><td class="n">${money(t.charged)}</td>${pf ? `<td class="n pf">${cm[t.id] != null ? money(cm[t.id]) : '—'}</td><td class="n pf ${num(t.charged) - num(cm[t.id]) >= 0 ? 'pos' : 'neg'}">${money(num(t.charged) - num(cm[t.id]))}</td>` : ''}<td style="white-space:nowrap">${can('edit') ? `<button class="btn sm" onclick="A.trForm('${v.id}','${t.id}')">✏️</button> <button class="btn sm red" onclick="A.trDel('${v.id}','${t.id}')">🗑️</button>` : ''}</td></tr>`).join('')}
+    ${list.length ? `<div class="tw" style="margin-top:12px"><table class="trt"><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('مقابل', 'For')}</th><th>${L('طريقة الدفع والحساب', 'Method & account')}</th><th>${L('المرجع', 'Reference')}</th><th class="n">${L('المبلغ المدفوع', 'Amount sent')}</th><th class="n">${L('المحمّل على الزبون', 'Charged to customer')}</th>${pf ? `<th class="n pf">🔒 ${L('تكلفتنا', 'Our cost')}</th><th class="n pf">🔒 ${L('الربح', 'Margin')}</th>` : ''}<th></th></tr></thead><tbody>
+      ${list.map(t => `<tr class="trm"><td>${fdate(t.date)}</td><td>${esc(pfName(t.purpose))}</td><td><b>${pmName(t.method)}</b>${t.src ? `<div class="srcb">👤 ${esc(t.src)}</div>` : ''}${t.details ? `<div class="sub">${esc(t.details)}</div>` : ''}${t.notes ? `<div class="sub">📝 ${esc(t.notes)}</div>` : ''}</td><td class="mono">${esc(t.ref || '—')}</td><td class="n">${money(t.amount)}</td><td class="n">${money(t.charged)}</td>${pf ? `<td class="n pf">${cm[t.id] != null ? money(cm[t.id]) : '—'}</td><td class="n pf ${num(t.charged) - num(cm[t.id]) >= 0 ? 'pos' : 'neg'}">${money(num(t.charged) - num(cm[t.id]))}</td>` : ''}<td style="white-space:nowrap">${can('edit') ? `<button class="btn sm" onclick="A.trForm('${v.id}','${t.id}')">✏️</button> <button class="btn sm red" onclick="A.trDel('${v.id}','${t.id}')">🗑️</button>` : ''}</td></tr>${detail(t)}`).join('')}
       <tr class="t"><td colspan="4">${L('الإجمالي', 'Total')}</td><td class="n">${money(sent)}</td><td class="n">${money(ch)}</td>${pf ? `<td class="n pf">${money(co)}</td><td class="n pf">${money(ch - co)}</td>` : ''}<td></td></tr></tbody></table></div>
-      <div class="hint">${L('مجموع "المحمّل على الزبون" يُكتب تلقائياً في عمولة الحوالة على فاتورة الزبون. تكلفتنا لا تظهر للزبون وتُخصم من الربح.', 'The total "charged to customer" is written to the transfer commission on the customer invoice. Our cost is never shown to the customer and is deducted from profit.')}</div>`
+      <div class="hint">${L('مجموع "المحمّل على الزبون" يُكتب تلقائياً في عمولة الحوالة على فاتورة الزبون. تكلفتنا والإيصالات لا تظهر للزبون، وتكلفتنا تُخصم من الربح.', 'The total "charged to customer" is written to the transfer commission on the customer invoice. Our cost and receipts are never shown to the customer; our cost is deducted from profit.')}</div>`
     : `<div class="inv-empty" style="margin-top:12px">${L('ما فيش دفعات مسجلة. سجّل كيف دفعت للمزاد (PayPal، بطاقة، حوالة، MoneyGram...) وكم كلّفتك وكم حمّلت الزبون.', 'No payments recorded. Record how you paid the auction (PayPal, card, wire, MoneyGram…), what it cost you and what you charged the customer.')}</div>`}</div>`;
+}
+function trItemRow(i) {
+  return `<div class="tri"><select name="it_k">${PAY_ITEMS.map(x => `<option value="${x.k}" ${i.k === x.k ? 'selected' : ''}>${esc(L(x.ar, x.en))}</option>`).join('')}</select><input name="it_note" placeholder="${L('ملاحظة (اختياري)', 'Note (optional)')}" value="${esc(i.note || '')}"><input name="it_a" type="number" step="0.01" min="0" dir="ltr" placeholder="0" value="${esc(i.a ?? '')}" oninput="A.trCalc()"><button type="button" class="btn sm red" onclick="this.parentNode.remove();A.trCalc()" aria-label="${L('حذف', 'Remove')}">×</button></div>`;
 }
 
 /* ---------------- فاتورة المكتب (للطباعة ولصفحة التتبع) ---------------- */
@@ -1422,56 +1456,122 @@ const A = {
   /* دفع المزاد والحوالات */
   trForm(vid, tid) {
     const v = S.vehicles.find(x => x.id === vid); if (!v) return;
-    const t = (v.transfers || []).find(x => x.id === tid) || {}, f = v.fin || {}, cost = tid ? tCostMap(v)[tid] : '';
-    const sug = num(f.bid_price) + num(f.auction_fees);
-    const m0 = t.method || 'wire', ph = (PAY_METHODS.find(x => x.k === m0) || PAY_METHODS[0]).ph;
+    const t = (v.transfers || []).find(x => x.id === tid) || {}, f = v.fin || {}, cost = tid ? tCostMap(v)[tid] : '', cd = (tid && tCostD(v)[tid]) || {};
+    const m0 = t.method || 'wire', ph = (PAY_METHODS.find(x => x.k === m0) || PAY_METHODS[0]).ph, cur = t.cur || 'USD';
+    const items = t.items && t.items.length ? t.items : (tid ? [{ k: 'other', a: t.amount }] : [num(f.bid_price) ? { k: 'car', a: num(f.bid_price) } : null, num(f.auction_fees) ? { k: 'auction_fees', a: num(f.auction_fees) } : null].filter(Boolean));
+    if (!items.length) items.push({ k: 'car', a: '' });
     openModal(`<h2>💳 ${tid ? L('تعديل دفعة', 'Edit payment') : L('تسجيل دفعة / حوالة', 'Add payment / transfer')}</h2><div class="sub" style="margin:-8px 0 12px">${esc(vt(v))} · <span class="mono">${esc(v.vin)}</span></div>
       <form id="trf" onsubmit="A.trSave(event,'${vid}','${tid || ''}')">
-      <div class="sec" style="margin-top:0">${L('طريقة الدفع', 'Payment method')}</div>
+      <div class="sec" style="margin-top:0">1 · ${L('طريقة الدفع', 'Payment method')}</div>
       <div class="mchips">${PAY_METHODS.map(m => `<label class="mchip"><input type="radio" name="method" value="${m.k}" ${m.k === m0 ? 'checked' : ''} onchange="A.trM(this.value)"><span>${m.ic} ${esc(L(m.ar, m.en))}</span></label>`).join('')}</div>
       <div class="grid" style="margin-top:12px">
         <label class="f" style="grid-column:1/-1"><span>👤 ${L('الاسم / الحساب المستخدم', 'Name / account used')} *</span><input name="src" id="trSrc" list="srcDl" required autocomplete="off" value="${esc(t.src || '')}" placeholder="${esc(L(...(SRC_EX[m0] || SRC_EX.other)))}" oninput="A.trSrc(this.value)" style="font-weight:700"><datalist id="srcDl">${srcList().map(x => `<option value="${esc(x.src)}">${esc(pmName(x.method))}</option>`).join('')}</datalist></label>
-        <label class="f"><span>${L('مقابل', 'Paid for')}</span><select name="purpose">${PAY_FOR.map(x => `<option value="${x.k}" ${(t.purpose || 'auction') === x.k ? 'selected' : ''}>${esc(L(x.ar, x.en))}</option>`).join('')}</select></label>
-        <label class="f"><span>${L('التاريخ', 'Date')}</span><input name="date" type="date" value="${esc(t.date || today())}"></label>
-        <label class="f" style="grid-column:1/-1"><span>${L('تفاصيل طريقة الدفع', 'Method details')}</span><input name="details" id="trDet" value="${esc(t.details || '')}" placeholder="${esc(L(ph[0], ph[1]))}"></label>
+        <label class="f"><span>${L('مقابل', 'Paid for')}</span><select name="purpose" onchange="A.trPurpose(this.value,'${vid}')">${PAY_FOR.map(x => `<option value="${x.k}" ${(t.purpose || 'auction') === x.k ? 'selected' : ''}>${esc(L(x.ar, x.en))}</option>`).join('')}</select></label>
+        <label class="f"><span>${L('المدفوع إلى', 'Paid to')}</span><input name="payee" value="${esc(t.payee || (v.auction_name && (t.purpose || 'auction') === 'auction' ? v.auction_name : ''))}" placeholder="Copart / IAAI / AEC"></label>
+        <label class="f"><span>${L('تاريخ الدفع', 'Payment date')}</span><input name="date" type="date" value="${esc(t.date || today())}"></label>
         <label class="f"><span>${L('رقم المرجع / العملية', 'Reference / transaction no.')}</span><input name="ref" dir="ltr" class="mono" value="${esc(t.ref || '')}" placeholder="MTCN / SWIFT / PayPal ID"></label>
-        <label class="f"><span>${L('المبلغ المدفوع (USD)', 'Amount sent (USD)')} *</span><input name="amount" type="number" step="0.01" min="0" required dir="ltr" value="${esc(t.amount ?? (sug || ''))}" oninput="A.trCalc()"></label>
+        <label class="f" style="grid-column:1/-1"><span>${L('تفاصيل طريقة الدفع', 'Method details')}</span><input name="details" id="trDet" value="${esc(t.details || '')}" placeholder="${esc(L(ph[0], ph[1]))}"></label>
       </div>
-      <div class="sec">${L('الرسوم', 'Fees')}</div>
+      <div class="sec">2 · ${L('تفاصيل المبلغ (بالدولار)', 'What the money covered (USD)')}</div>
+      <div id="trItems">${items.map(trItemRow).join('')}</div>
+      <button type="button" class="btn sm" style="margin-top:8px" onclick="$('#trItems').insertAdjacentHTML('beforeend', trItemRow({k:'other',a:''}))">+ ${L('بند', 'Line')}</button>
+      <div class="totbox"><span>${L('المبلغ المدفوع (مجموع البنود)', 'Amount sent (sum of lines)')}</span><span id="trAmt" dir="ltr">$0</span></div>
+      <div class="sec">3 · ${L('العملة', 'Currency')}</div>
       <div class="grid">
-        ${can('profit') ? `<label class="f pf"><span>🔒 ${L('تكلفتنا (رسوم التحويل الفعلية)', 'Our cost (actual transfer fees)')}</span><input name="cost" type="number" step="0.01" min="0" dir="ltr" value="${esc(cost ?? '')}" oninput="A.trCalc()" placeholder="0"></label>` : ''}
+        <label class="f"><span>${L('عملة الدفع', 'Paid in')}</span><select name="cur" onchange="A.trCalc()">${PAY_CUR.map(c => `<option ${c === cur ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
+        <label class="f trcur"><span>${L('المبلغ بالعملة', 'Amount in that currency')}</span><input name="cur_amount" type="number" step="0.01" min="0" dir="ltr" value="${esc(t.cur_amount ?? '')}" oninput="A.trCalc()"></label>
+        <label class="f trcur"><span>${L('سعر الصرف (للدولار)', 'Rate (per 1 USD)')}</span><input name="rate" type="number" step="0.0001" min="0" dir="ltr" value="${esc(t.rate ?? (cur === 'LYD' ? S.settings.rate : ''))}" oninput="A.trCalc()"></label>
+        <div class="f trcur" style="align-self:end"><div class="hint" id="trCurEq" style="margin:0 0 10px"></div></div>
+      </div>
+      <div class="sec">4 · ${L('الرسوم', 'Fees')}</div>
+      <div class="grid">
+        ${can('profit') ? FEE_PARTS.map(fp => `<label class="f pf"><span>🔒 ${esc(L(fp.ar, fp.en))}</span><input name="fee_${fp.k}" type="number" step="0.01" min="0" dir="ltr" value="${esc(cd[fp.k] ?? (fp.k === 'transfer' && cost !== '' && !Object.keys(cd).length ? cost : ''))}" oninput="A.trCalc()" placeholder="0"></label>`).join('') : ''}
         <label class="f"><span>${L('المحمّل على الزبون (عمولة الحوالة)', 'Charged to customer (transfer fee)')}</span><input name="charged" type="number" step="0.01" min="0" dir="ltr" value="${esc(t.charged ?? '')}" oninput="A.trCalc()" placeholder="0"></label>
       </div>
-      ${can('profit') ? `<div class="vtots pf"><div class="totbox"><span>${L('ربحنا من الحوالة', 'Our margin on this transfer')}</span><span id="trMar" dir="ltr">$0</span></div><div class="profbox"><span>${L('نسبة الرسوم من المبلغ', 'Fee as % of amount')}</span><b id="trPct">—</b></div></div>` : ''}
+      ${can('profit') ? `<div class="vtots pf"><div class="totbox"><span>${L('تكلفتنا الإجمالية', 'Our total cost')} · <b id="trCost" dir="ltr">$0</b></span><span>${L('ربحنا', 'Our margin')}: <span id="trMar" dir="ltr">$0</span></span></div><div class="profbox"><span>${L('نسبة الرسوم من المبلغ', 'Fee as % of amount')}</span><b id="trPct">—</b></div></div>` : ''}
+      <div class="sec">5 · ${L('الحالة والإيصال', 'Status & receipt')}</div>
+      <div class="grid">
+        <label class="f"><span>${L('حالة الدفعة', 'Payment status')}</span><select name="status">${PAY_ST.map(x => `<option value="${x.k}" ${(t.status || 'sent') === x.k ? 'selected' : ''}>${esc(L(x.ar, x.en))}</option>`).join('')}</select></label>
+        <label class="f"><span>${L('تاريخ تأكيد الاستلام', 'Confirmed on')}</span><input name="conf_date" type="date" value="${esc(t.conf_date || '')}"></label>
+        <label class="f" style="grid-column:span 2"><span>🧾 ${L('إيصال التحويل (صورة أو PDF)', 'Transfer receipt (image or PDF)')}${t.receipt ? ' — ' + esc(t.receipt.name) : ''}</span><input name="receipt" type="file" accept="application/pdf,image/*"></label>
+      </div>
       <label class="f" style="margin-top:12px"><span>${L('ملاحظات', 'Notes')}</span><textarea name="notes" rows="2">${esc(t.notes || '')}</textarea></label>
       <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form>`);
     A.trCalc();
   },
+  trPurpose(k, vid) {
+    const v = S.vehicles.find(x => x.id === vid), f = (v && v.fin) || {}, box = $('#trItems'); if (!box) return;
+    const filled = [...box.querySelectorAll('input[name=it_a]')].some(i => i.value !== '' && num(i.value) > 0);
+    const presets = { auction: [{ k: 'car', a: num(f.bid_price) || '' }, { k: 'auction_fees', a: num(f.auction_fees) || '' }], shipping: [{ k: 'towing', a: num(f.inland_shipping) || '' }, { k: 'ocean', a: num(f.ocean_shipping) || '' }], towing: [{ k: 'towing', a: num(f.inland_shipping) || '' }], other: [{ k: 'other', a: '' }] };
+    if (!filled || confirm(L('تبديل البنود حسب نوع الدفعة؟', 'Replace the lines to match this payment type?'))) { box.innerHTML = (presets[k] || presets.other).map(trItemRow).join(''); A.trCalc(); }
+    const pe = $('#trf').elements.payee; if (pe && !pe.value) pe.value = k === 'auction' ? (v && v.auction_name) || '' : k === 'shipping' || k === 'towing' ? 'AEC' : '';
+  },
   trM(k) { const m = PAY_METHODS.find(x => x.k === k); const el = $('#trDet'); if (m && el) el.placeholder = L(m.ph[0], m.ph[1]); const sr = $('#trSrc'); if (sr) sr.placeholder = L(...(SRC_EX[k] || SRC_EX.other)); },
   trSrc(val) { const hit = srcList().find(x => x.src === val.trim()); if (!hit) return; const r = document.querySelector(`#trf input[name=method][value="${hit.method}"]`); if (r && !r.checked) { r.checked = true; A.trM(hit.method); } },
   trCalc() {
-    const f = $('#trf'); if (!f) return; const E = f.elements, a = num(E.amount.value), ch = num(E.charged.value), co = E.cost ? num(E.cost.value) : 0;
-    if ($('#trMar')) { $('#trMar').textContent = money(ch - co); $('#trPct').textContent = a > 0 ? (co / a * 100).toFixed(2) + '% ' + L('تكلفة', 'cost') + ' · ' + (ch / a * 100).toFixed(2) + '% ' + L('محمّل', 'charged') : '—'; }
+    const f = $('#trf'); if (!f) return; const E = f.elements;
+    const a = [...f.querySelectorAll('input[name=it_a]')].reduce((s2, i) => s2 + num(i.value), 0), ch = num(E.charged.value);
+    const co = FEE_PARTS.reduce((s2, fp) => s2 + (E['fee_' + fp.k] ? num(E['fee_' + fp.k].value) : 0), 0);
+    $('#trAmt').textContent = money(a);
+    const cur = E.cur.value; f.querySelectorAll('.trcur').forEach(el => el.style.display = cur === 'USD' ? 'none' : '');
+    if (cur !== 'USD') { const ca = num(E.cur_amount.value), rt = num(E.rate.value), eq = rt > 0 ? ca / rt : 0; $('#trCurEq').innerHTML = rt > 0 && ca ? `= <b dir="ltr">${money(eq)}</b>${a ? ` · ${L('الفرق عن البنود', 'difference vs lines')}: <b dir="ltr">${money(eq - a)}</b>` : ''}` : ''; }
+    if ($('#trMar')) { $('#trCost').textContent = money(co); $('#trMar').textContent = money(ch - co); $('#trPct').textContent = a > 0 ? (co / a * 100).toFixed(2) + '% ' + L('تكلفة', 'cost') + ' · ' + (ch / a * 100).toFixed(2) + '% ' + L('محمّل', 'charged') : '—'; }
   },
   async trSave(e, vid, tid) {
     e.preventDefault(); const v = S.vehicles.find(x => x.id === vid); if (!v) return;
-    const fd = new FormData(e.target), g = k => (fd.get(k) || '').toString().trim();
-    const t = { id: tid || ('t' + Date.now().toString(36)), purpose: g('purpose'), method: g('method'), src: g('src'), details: g('details'), ref: g('ref'), date: g('date') || today(), amount: r2(num(g('amount'))), charged: r2(num(g('charged'))), notes: g('notes'), at: now(), by: S.user?.email || '' };
-    const list = (v.transfers || []).filter(x => x.id !== t.id).concat(t);
-    const charged = r2(list.reduce((a, x) => a + num(x.charged), 0)), fin = { ...(v.fin || {}), transfer_commission: charged };
+    const fm = e.target, fd = new FormData(fm), g = k => (fd.get(k) || '').toString().trim();
+    const ks = fd.getAll('it_k'), ns = fd.getAll('it_note'), as = fd.getAll('it_a');
+    const items = ks.map((k, i) => ({ k, note: (ns[i] || '').toString().trim(), a: r2(num(as[i])) })).filter(i => i.a > 0 || i.note);
+    const amount = r2(items.reduce((a, i) => a + i.a, 0));
+    if (!(amount > 0)) return toast(L('أدخل مبلغ بند واحد على الأقل', 'Enter at least one line amount'), 'err');
+    const cur = g('cur') || 'USD';
+    if (cur !== 'USD' && !(num(g('rate')) > 0 && num(g('cur_amount')) > 0)) return toast(L('أدخل المبلغ بالعملة وسعر الصرف', 'Enter the amount in that currency and the rate'), 'err');
+    const old = (v.transfers || []).find(x => x.id === tid) || {};
+    const t = { id: tid || ('t' + Date.now().toString(36)), purpose: g('purpose'), payee: g('payee'), method: g('method'), src: g('src'), details: g('details'), ref: g('ref'), date: g('date') || today(), items, amount, cur, cur_amount: cur === 'USD' ? amount : r2(num(g('cur_amount'))), rate: cur === 'USD' ? 1 : num(g('rate')), charged: r2(num(g('charged'))), status: g('status') || 'sent', conf_date: g('conf_date'), notes: g('notes'), receipt: old.receipt || null, at: now(), by: S.user?.email || '' };
+    const file = fm.elements.receipt && fm.elements.receipt.files[0];
     try {
+      if (file) {
+        const isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+        if (!isPdf && !/^image\//.test(file.type)) return toast(L('الإيصال لازم يكون PDF أو صورة', 'Receipt must be a PDF or an image'), 'err');
+        if (isPdf && file.size > 4 * 1024 * 1024) return toast(L('الإيصال أكبر من 4 ميجا', 'Receipt is larger than 4 MB'), 'err');
+        toast(L('جاري رفع الإيصال...', 'Uploading receipt...'));
+        const data = isPdf ? await readUrl(file) : await compress(file, 1800, 0.8), parts = [];
+        for (let i = 0; i < data.length; i += RC_CHUNK) parts.push(data.slice(i, i + RC_CHUNK));
+        try { for (let i = 0; i < parts.length; i++) await DB.merge('receipts', rcId(vid, t.id, i), { vid, tid: t.id, part: i, d: parts[i] }); }
+        catch (x) { return toast(L('تعذّر رفع الإيصال — لازم تحدّث قواعد Firestore (receipts). شوف التعليمات.', 'Could not upload the receipt — the Firestore rules need the new "receipts" rule.'), 'err'); }
+        if (old.receipt && (old.receipt.parts || 1) > parts.length) for (let i = parts.length; i < old.receipt.parts; i++) await DB.del('receipts', rcId(vid, t.id, i)).catch(() => { });
+        t.receipt = { name: file.name, type: isPdf ? 'application/pdf' : 'image/jpeg', size: Math.round(data.length * 0.75), parts: parts.length, at: now() };
+      }
+      const list = (v.transfers || []).filter(x => x.id !== t.id).concat(t);
+      const charged = r2(list.reduce((a, x) => a + num(x.charged), 0)), fin = { ...(v.fin || {}), transfer_commission: charged };
       await DB.update('vehicles', vid, { transfers: list, fin, total_cost: r2(FIN.reduce((s2, x) => s2 + num(fin[x.k]), 0)) });
-      if (can('profit') && fd.has('cost')) { const tc = { ...tCostMap(v) }; if (g('cost') === '') delete tc[t.id]; else tc[t.id] = r2(num(g('cost'))); await DB.merge('vinternal', vid, { tcost: tc }); }
-      logAct('veh_edit', `${vt(v)} · ${v.vin} · ${pfName(t.purpose)}: ${PAY_METHODS.find(x => x.k === t.method)?.en || t.method} (${t.src}) ${money(t.amount)}`, 'v:' + vid);
+      if (can('profit')) {
+        const det = {}; FEE_PARTS.forEach(fp => { const val = g('fee_' + fp.k); if (val !== '') det[fp.k] = r2(num(val)); });
+        const tc = { ...tCostMap(v) }, tcd = { ...tCostD(v) };
+        if (Object.keys(det).length) { tc[t.id] = r2(Object.values(det).reduce((a, b) => a + b, 0)); tcd[t.id] = det; } else { delete tc[t.id]; delete tcd[t.id]; }
+        await DB.merge('vinternal', vid, { tcost: tc, tcostd: tcd });
+      }
+      logAct('veh_edit', `${vt(v)} · ${v.vin} · ${pfName(t.purpose)}: ${PAY_METHODS.find(x => x.k === t.method)?.en || t.method} (${t.src}) ${money(t.amount)}${cur !== 'USD' ? ` = ${t.cur_amount} ${cur}` : ''}`, 'v:' + vid);
       A.close(); toast(L('تم الحفظ', 'Saved'));
     } catch (x) { toast(x.message, 'err'); }
   },
+  async rcOpen(vid, tid) {
+    const v = S.vehicles.find(x => x.id === vid), t = v && (v.transfers || []).find(x => x.id === tid); if (!t || !t.receipt) return;
+    const w = window.open('', '_blank'); if (w) w.document.write(`<p style="font-family:sans-serif;padding:20px">${L('جاري فتح الإيصال...', 'Opening receipt...')}</p>`);
+    try {
+      const parts = await Promise.all(Array.from({ length: t.receipt.parts || 1 }, (_, i) => DB.get('receipts', rcId(vid, tid, i))));
+      if (parts.some(x => !x || !x.d)) throw new Error(L('ملف الإيصال غير مكتمل', 'Receipt file is incomplete'));
+      const u = URL.createObjectURL(await (await fetch(parts.map(x => x.d).join(''))).blob()); if (w) w.location.href = u; else location.href = u;
+    } catch (x) { if (w) w.close(); toast(x.message, 'err'); }
+  },
   async trDel(vid, tid) {
     const v = S.vehicles.find(x => x.id === vid); if (!v || !confirm(L('حذف هذه الدفعة؟', 'Delete this payment?'))) return;
+    const t = (v.transfers || []).find(x => x.id === tid);
     const list = (v.transfers || []).filter(x => x.id !== tid), fin = { ...(v.fin || {}), transfer_commission: r2(list.reduce((a, x) => a + num(x.charged), 0)) };
     try {
       await DB.update('vehicles', vid, { transfers: list, fin, total_cost: r2(FIN.reduce((s2, x) => s2 + num(fin[x.k]), 0)) });
-      if (can('profit')) { const tc = { ...tCostMap(v) }; delete tc[tid]; await DB.merge('vinternal', vid, { tcost: tc }); }
+      if (t && t.receipt) for (let i = 0; i < (t.receipt.parts || 1); i++) await DB.del('receipts', rcId(vid, tid, i)).catch(() => { });
+      if (can('profit')) { const tc = { ...tCostMap(v) }, tcd = { ...tCostD(v) }; delete tc[tid]; delete tcd[tid]; await DB.merge('vinternal', vid, { tcost: tc, tcostd: tcd }); }
       toast(L('تم الحذف', 'Deleted'));
     } catch (x) { toast(x.message, 'err'); }
   },
@@ -2016,7 +2116,7 @@ const A = {
   }
 };
 Object.entries(NEED).forEach(([k, p]) => { const f = A[k]; if (typeof f !== 'function') return; A[k] = function (...a) { if (!can(p)) { toast(L('ما عندكش صلاحية لهذي العملية', 'You don’t have permission for this'), 'err'); return; } return f.apply(this, a); }; });
-window.A = A; window.$ = $;
+window.A = A; window.$ = $; window.trItemRow = trItemRow;
 
 /* ---------------- التشغيل ---------------- */
 let unsubs = [];
