@@ -376,6 +376,16 @@ tr.sel{background:#fff7ed}
 .invf .acts{display:flex;gap:6px;flex-wrap:wrap}
 .inv-empty{border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;color:var(--mut)}
 .pubinv{width:100%;max-width:860px}
+
+/* طرق الدفع */
+.mchips{display:flex;flex-wrap:wrap;gap:8px}
+.mchip input{position:absolute;opacity:0;pointer-events:none}
+.mchip span{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border:1.5px solid var(--line);border-radius:10px;font-weight:700;font-size:13px;cursor:pointer;background:#fff}
+.mchip input:checked+span{border-color:var(--pri);background:#fff7ed;color:#9a3412}
+.mchip input:focus-visible+span{outline:2px solid #fed7aa}
+.trt td.n,.trt th.n{text-align:end;direction:ltr;white-space:nowrap}
+.trt .sub{font-size:12px;color:var(--mut)}
+.srcb{display:inline-block;margin-top:3px;font-size:12.5px;font-weight:800;color:#9a3412;background:#fff7ed;border:1px solid #fed7aa;border-radius:6px;padding:0 7px}
 </style>
 </head>
 <body>
@@ -485,6 +495,23 @@ const FIN = [
   { k: 'other_fees', ar: 'مصاريف أخرى', en: 'Other fees' }
 ];
 const AUCTIONS = ['Copart', 'IAAI', 'Manheim', 'Other'];
+const PAY_METHODS = [
+  { k: 'paypal', ic: '🅿️', ar: 'PayPal', en: 'PayPal', ph: ['حساب PayPal المستخدم', 'PayPal account used'] },
+  { k: 'card', ic: '💳', ar: 'بطاقة (فيزا / ماستر)', en: 'Card (Visa / Mastercard)', ph: ['نوع البطاقة وآخر 4 أرقام، البنك', 'Card type, last 4 digits, bank'] },
+  { k: 'wire', ic: '🏦', ar: 'حوالة بنكية (SWIFT)', en: 'Bank wire (SWIFT)', ph: ['البنك المرسل، اسم المحوِّل', 'Sending bank, sender name'] },
+  { k: 'moneygram', ic: '🌐', ar: 'MoneyGram', en: 'MoneyGram', ph: ['اسم المرسل، المدينة', 'Sender name, city'] },
+  { k: 'wu', ic: '🟡', ar: 'Western Union', en: 'Western Union', ph: ['اسم المرسل، المدينة', 'Sender name, city'] },
+  { k: 'zelle', ic: '⚡', ar: 'Zelle', en: 'Zelle', ph: ['الحساب أو الإيميل المستخدم', 'Account or email used'] },
+  { k: 'agent', ic: '🤝', ar: 'وسيط / مكتب صرافة', en: 'Agent / exchange office', ph: ['اسم الوسيط أو المكتب', 'Agent or office name'] },
+  { k: 'cash', ic: '💵', ar: 'نقداً', en: 'Cash', ph: ['من استلم', 'Received by'] },
+  { k: 'other', ic: '➕', ar: 'أخرى', en: 'Other', ph: ['التفاصيل', 'Details'] }
+];
+const PAY_FOR = [{ k: 'auction', ar: 'ثمن السيارة للمزاد', en: 'Auction (car + fees)' }, { k: 'shipping', ar: 'الشحن (AEC)', en: 'Shipping (AEC)' }, { k: 'towing', ar: 'السحب', en: 'Towing' }, { k: 'other', ar: 'أخرى', en: 'Other' }];
+const SRC_EX = { paypal: ['PayPal معيد', 'Moayed PayPal'], card: ['بطاقة معيد 5541', 'Moayed card 5541'], wire: ['حساب الشركة – مصرف الجمهورية', 'Company account – Jumhouria Bank'], moneygram: ['MoneyGram – منذر', 'MoneyGram – Monder'], wu: ['Western Union – منذر', 'Western Union – Monder'], zelle: ['Zelle – أحمد', 'Zelle – Ahmed'], agent: ['مكتب الصرافة – الاسم', 'Exchange office – name'], cash: ['نقداً – الاسم', 'Cash – name'], other: ['الاسم', 'Name'] };
+/* كل الأسماء/الحسابات المستخدمة سابقاً مع طريقتها، الأحدث أولاً */
+const srcList = () => { const m = new Map(); S.vehicles.flatMap(v => v.transfers || []).sort((a, b) => (b.at || '').localeCompare(a.at || '')).forEach(t => { if (t.src && !m.has(t.src)) m.set(t.src, t.method); }); return [...m].map(([src, method]) => ({ src, method })); };
+const pmName = k => { const m = PAY_METHODS.find(x => x.k === k); return m ? m.ic + ' ' + L(m.ar, m.en) : (k || '—'); };
+const pfName = k => { const m = PAY_FOR.find(x => x.k === k); return m ? L(m.ar, m.en) : (k || '—'); };
 const STAGES = [{ k: 'auction', ar: 'المزاد', en: 'Auction' }, { k: 'warehouse', ar: 'المستودع', en: 'Warehouse' }, { k: 'arrival', ar: 'الوصول', en: 'Arrival' }];
 
 /* ---------------- الحالة العامة ---------------- */
@@ -526,7 +553,9 @@ const nextCode = () => { const used = S.customers.map(c => parseInt(c.code, 10))
 const statusSince = v => { const h = v.status_history || []; return h.length ? h[h.length - 1].at : (v.purchase_date || v.created_at); };
 const totalCost = v => FIN.reduce((s, f) => s + num((v.fin || {})[f.k]), 0);
 const actCost = v => { const iv = S.internal[v.id]; return num(iv ? iv.shipping_cost_actual : (v.fin || {}).shipping_cost_actual); };
-const profit = v => { const f = v.fin || {}; const act = actCost(v); return num(f.office_commission) + num(f.transfer_commission) + (act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0); };
+const tCostMap = v => (S.internal[v.id] || {}).tcost || {};
+const tCost = v => Object.values(tCostMap(v)).reduce((a, b) => a + num(b), 0);
+const profit = v => { const f = v.fin || {}; const act = actCost(v); return num(f.office_commission) + num(f.transfer_commission) - tCost(v) + (act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0); };
 const vPaid = id => S.agg.v[id] || 0;
 const vBal = v => totalCost(v) - vPaid(v.id);
 const cAgg = id => S.agg.c[id] || { cost: 0, paid: 0, bal: 0, count: 0, active: 0 };
@@ -599,7 +628,7 @@ const isAdmin = () => (LOCAL && S.user?.email === 'demo@local') || isAdminEmail(
 const can = p => p === 'admin' ? isAdmin() : (isAdmin() || !!(S.me && S.me.perms && S.me.perms[p]));
 const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', users: 'admin' };
 const NEED = {
-  vForm: 'edit', vSave: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
+  vForm: 'edit', vSave: 'edit', trForm: 'edit', trSave: 'edit', trDel: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
   pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses',
   printFull: 'profit', sSave: 'settings', unseed: 'admin', backup: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
 };
@@ -924,6 +953,7 @@ function vVehicle() {
     ${pipeline(v.status, v.status_history, v.id)}<div class="hint">${L('يمكنك الضغط على أي مرحلة لنقل السيارة إليها مباشرة. التحديث يظهر فوراً في صفحة تتبع الزبون.', 'Click any stage to move the vehicle there. Updates appear instantly on the customer tracking page.')}</div></div>
   <div class="card"><h3>${L('بيانات السيارة', 'Vehicle details')}</h3><div class="info">${inf.map(x => `<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>${v.notes ? `<div class="hint">📝 ${esc(v.notes)}</div>` : ''}</div>
   <div class="card"><h3>📷 ${L('صور السيارة', 'Vehicle photos')}</h3><div id="gal"><div class="empty">${L('جاري تحميل الصور...', 'Loading photos...')}</div></div></div>
+  ${trCard(v)}
   ${invCard(v)}
   <div class="two">
     <div class="card"><h3>💲 ${L('كشف التكاليف', 'Cost breakdown')}</h3>
@@ -935,6 +965,19 @@ function vVehicle() {
       <div class="internal pf">🔒 ${L('داخلي (لا يظهر في الفاتورة)', 'Internal (not on invoice)')}: ${L('تكلفة الشحن الفعلية', 'Actual shipping cost')} <b>${act > 0 ? money(act) : '—'}</b> · ${L('ربح المكتب من هذه السيارة', 'Office profit on this car')} <b class="pos">${money(profit(v))}</b></div></div>
     <div class="card"><div class="row-b"><h3>💵 ${L('الدفعات', 'Payments')}</h3><button class="btn sm pri" onclick="A.pForm({customer_id:'${v.customer_id}',vehicle_id:'${v.id}'})">+ ${L('دفعة', 'Payment')}</button></div>${payTable(pays, false)}</div>
   </div>`;
+}
+
+/* ---------------- دفع المزاد والحوالات (طريقة الدفع، التكلفة، المحمّل على الزبون) ---------------- */
+function trCard(v) {
+  const list = [...(v.transfers || [])].sort((a, b) => (a.date || '').localeCompare(b.date || '')), cm = tCostMap(v), pf = can('profit');
+  const sent = list.reduce((a, t) => a + num(t.amount), 0), ch = list.reduce((a, t) => a + num(t.charged), 0), co = list.reduce((a, t) => a + num(cm[t.id]), 0);
+  const add = can('edit') ? `<button class="btn sm pri" onclick="A.trForm('${v.id}')">+ ${L('تسجيل دفعة / حوالة', 'Add payment / transfer')}</button>` : '';
+  return `<div class="card"><div class="row-b"><h3 style="margin:0">💳 ${L('دفع المزاد والحوالات', 'Auction payment & transfers')}</h3>${add}</div>
+    ${list.length ? `<div class="tw" style="margin-top:12px"><table class="trt"><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('مقابل', 'For')}</th><th>${L('طريقة الدفع', 'Method')}</th><th>${L('المرجع', 'Reference')}</th><th class="n">${L('المبلغ المدفوع', 'Amount sent')}</th><th class="n">${L('المحمّل على الزبون', 'Charged to customer')}</th>${pf ? `<th class="n pf">🔒 ${L('تكلفتنا', 'Our cost')}</th><th class="n pf">🔒 ${L('الربح', 'Margin')}</th>` : ''}<th></th></tr></thead><tbody>
+      ${list.map(t => `<tr><td>${fdate(t.date)}</td><td>${esc(pfName(t.purpose))}</td><td><b>${pmName(t.method)}</b>${t.src ? `<div class="srcb">👤 ${esc(t.src)}</div>` : ''}${t.details ? `<div class="sub">${esc(t.details)}</div>` : ''}${t.notes ? `<div class="sub">📝 ${esc(t.notes)}</div>` : ''}</td><td class="mono">${esc(t.ref || '—')}</td><td class="n">${money(t.amount)}</td><td class="n">${money(t.charged)}</td>${pf ? `<td class="n pf">${cm[t.id] != null ? money(cm[t.id]) : '—'}</td><td class="n pf ${num(t.charged) - num(cm[t.id]) >= 0 ? 'pos' : 'neg'}">${money(num(t.charged) - num(cm[t.id]))}</td>` : ''}<td style="white-space:nowrap">${can('edit') ? `<button class="btn sm" onclick="A.trForm('${v.id}','${t.id}')">✏️</button> <button class="btn sm red" onclick="A.trDel('${v.id}','${t.id}')">🗑️</button>` : ''}</td></tr>`).join('')}
+      <tr class="t"><td colspan="4">${L('الإجمالي', 'Total')}</td><td class="n">${money(sent)}</td><td class="n">${money(ch)}</td>${pf ? `<td class="n pf">${money(co)}</td><td class="n pf">${money(ch - co)}</td>` : ''}<td></td></tr></tbody></table></div>
+      <div class="hint">${L('مجموع "المحمّل على الزبون" يُكتب تلقائياً في عمولة الحوالة على فاتورة الزبون. تكلفتنا لا تظهر للزبون وتُخصم من الربح.', 'The total "charged to customer" is written to the transfer commission on the customer invoice. Our cost is never shown to the customer and is deducted from profit.')}</div>`
+    : `<div class="inv-empty" style="margin-top:12px">${L('ما فيش دفعات مسجلة. سجّل كيف دفعت للمزاد (PayPal، بطاقة، حوالة، MoneyGram...) وكم كلّفتك وكم حمّلت الزبون.', 'No payments recorded. Record how you paid the auction (PayPal, card, wire, MoneyGram…), what it cost you and what you charged the customer.')}</div>`}</div>`;
 }
 
 /* ---------------- فاتورة المكتب (للطباعة ولصفحة التتبع) ---------------- */
@@ -1376,6 +1419,62 @@ async function renderPublic() {
 
 /* ---------------- الإجراءات ---------------- */
 const A = {
+  /* دفع المزاد والحوالات */
+  trForm(vid, tid) {
+    const v = S.vehicles.find(x => x.id === vid); if (!v) return;
+    const t = (v.transfers || []).find(x => x.id === tid) || {}, f = v.fin || {}, cost = tid ? tCostMap(v)[tid] : '';
+    const sug = num(f.bid_price) + num(f.auction_fees);
+    const m0 = t.method || 'wire', ph = (PAY_METHODS.find(x => x.k === m0) || PAY_METHODS[0]).ph;
+    openModal(`<h2>💳 ${tid ? L('تعديل دفعة', 'Edit payment') : L('تسجيل دفعة / حوالة', 'Add payment / transfer')}</h2><div class="sub" style="margin:-8px 0 12px">${esc(vt(v))} · <span class="mono">${esc(v.vin)}</span></div>
+      <form id="trf" onsubmit="A.trSave(event,'${vid}','${tid || ''}')">
+      <div class="sec" style="margin-top:0">${L('طريقة الدفع', 'Payment method')}</div>
+      <div class="mchips">${PAY_METHODS.map(m => `<label class="mchip"><input type="radio" name="method" value="${m.k}" ${m.k === m0 ? 'checked' : ''} onchange="A.trM(this.value)"><span>${m.ic} ${esc(L(m.ar, m.en))}</span></label>`).join('')}</div>
+      <div class="grid" style="margin-top:12px">
+        <label class="f" style="grid-column:1/-1"><span>👤 ${L('الاسم / الحساب المستخدم', 'Name / account used')} *</span><input name="src" id="trSrc" list="srcDl" required autocomplete="off" value="${esc(t.src || '')}" placeholder="${esc(L(...(SRC_EX[m0] || SRC_EX.other)))}" oninput="A.trSrc(this.value)" style="font-weight:700"><datalist id="srcDl">${srcList().map(x => `<option value="${esc(x.src)}">${esc(pmName(x.method))}</option>`).join('')}</datalist></label>
+        <label class="f"><span>${L('مقابل', 'Paid for')}</span><select name="purpose">${PAY_FOR.map(x => `<option value="${x.k}" ${(t.purpose || 'auction') === x.k ? 'selected' : ''}>${esc(L(x.ar, x.en))}</option>`).join('')}</select></label>
+        <label class="f"><span>${L('التاريخ', 'Date')}</span><input name="date" type="date" value="${esc(t.date || today())}"></label>
+        <label class="f" style="grid-column:1/-1"><span>${L('تفاصيل طريقة الدفع', 'Method details')}</span><input name="details" id="trDet" value="${esc(t.details || '')}" placeholder="${esc(L(ph[0], ph[1]))}"></label>
+        <label class="f"><span>${L('رقم المرجع / العملية', 'Reference / transaction no.')}</span><input name="ref" dir="ltr" class="mono" value="${esc(t.ref || '')}" placeholder="MTCN / SWIFT / PayPal ID"></label>
+        <label class="f"><span>${L('المبلغ المدفوع (USD)', 'Amount sent (USD)')} *</span><input name="amount" type="number" step="0.01" min="0" required dir="ltr" value="${esc(t.amount ?? (sug || ''))}" oninput="A.trCalc()"></label>
+      </div>
+      <div class="sec">${L('الرسوم', 'Fees')}</div>
+      <div class="grid">
+        ${can('profit') ? `<label class="f pf"><span>🔒 ${L('تكلفتنا (رسوم التحويل الفعلية)', 'Our cost (actual transfer fees)')}</span><input name="cost" type="number" step="0.01" min="0" dir="ltr" value="${esc(cost ?? '')}" oninput="A.trCalc()" placeholder="0"></label>` : ''}
+        <label class="f"><span>${L('المحمّل على الزبون (عمولة الحوالة)', 'Charged to customer (transfer fee)')}</span><input name="charged" type="number" step="0.01" min="0" dir="ltr" value="${esc(t.charged ?? '')}" oninput="A.trCalc()" placeholder="0"></label>
+      </div>
+      ${can('profit') ? `<div class="vtots pf"><div class="totbox"><span>${L('ربحنا من الحوالة', 'Our margin on this transfer')}</span><span id="trMar" dir="ltr">$0</span></div><div class="profbox"><span>${L('نسبة الرسوم من المبلغ', 'Fee as % of amount')}</span><b id="trPct">—</b></div></div>` : ''}
+      <label class="f" style="margin-top:12px"><span>${L('ملاحظات', 'Notes')}</span><textarea name="notes" rows="2">${esc(t.notes || '')}</textarea></label>
+      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form>`);
+    A.trCalc();
+  },
+  trM(k) { const m = PAY_METHODS.find(x => x.k === k); const el = $('#trDet'); if (m && el) el.placeholder = L(m.ph[0], m.ph[1]); const sr = $('#trSrc'); if (sr) sr.placeholder = L(...(SRC_EX[k] || SRC_EX.other)); },
+  trSrc(val) { const hit = srcList().find(x => x.src === val.trim()); if (!hit) return; const r = document.querySelector(`#trf input[name=method][value="${hit.method}"]`); if (r && !r.checked) { r.checked = true; A.trM(hit.method); } },
+  trCalc() {
+    const f = $('#trf'); if (!f) return; const E = f.elements, a = num(E.amount.value), ch = num(E.charged.value), co = E.cost ? num(E.cost.value) : 0;
+    if ($('#trMar')) { $('#trMar').textContent = money(ch - co); $('#trPct').textContent = a > 0 ? (co / a * 100).toFixed(2) + '% ' + L('تكلفة', 'cost') + ' · ' + (ch / a * 100).toFixed(2) + '% ' + L('محمّل', 'charged') : '—'; }
+  },
+  async trSave(e, vid, tid) {
+    e.preventDefault(); const v = S.vehicles.find(x => x.id === vid); if (!v) return;
+    const fd = new FormData(e.target), g = k => (fd.get(k) || '').toString().trim();
+    const t = { id: tid || ('t' + Date.now().toString(36)), purpose: g('purpose'), method: g('method'), src: g('src'), details: g('details'), ref: g('ref'), date: g('date') || today(), amount: r2(num(g('amount'))), charged: r2(num(g('charged'))), notes: g('notes'), at: now(), by: S.user?.email || '' };
+    const list = (v.transfers || []).filter(x => x.id !== t.id).concat(t);
+    const charged = r2(list.reduce((a, x) => a + num(x.charged), 0)), fin = { ...(v.fin || {}), transfer_commission: charged };
+    try {
+      await DB.update('vehicles', vid, { transfers: list, fin, total_cost: r2(FIN.reduce((s2, x) => s2 + num(fin[x.k]), 0)) });
+      if (can('profit') && fd.has('cost')) { const tc = { ...tCostMap(v) }; if (g('cost') === '') delete tc[t.id]; else tc[t.id] = r2(num(g('cost'))); await DB.merge('vinternal', vid, { tcost: tc }); }
+      logAct('veh_edit', `${vt(v)} · ${v.vin} · ${pfName(t.purpose)}: ${PAY_METHODS.find(x => x.k === t.method)?.en || t.method} (${t.src}) ${money(t.amount)}`, 'v:' + vid);
+      A.close(); toast(L('تم الحفظ', 'Saved'));
+    } catch (x) { toast(x.message, 'err'); }
+  },
+  async trDel(vid, tid) {
+    const v = S.vehicles.find(x => x.id === vid); if (!v || !confirm(L('حذف هذه الدفعة؟', 'Delete this payment?'))) return;
+    const list = (v.transfers || []).filter(x => x.id !== tid), fin = { ...(v.fin || {}), transfer_commission: r2(list.reduce((a, x) => a + num(x.charged), 0)) };
+    try {
+      await DB.update('vehicles', vid, { transfers: list, fin, total_cost: r2(FIN.reduce((s2, x) => s2 + num(fin[x.k]), 0)) });
+      if (can('profit')) { const tc = { ...tCostMap(v) }; delete tc[tid]; await DB.merge('vinternal', vid, { tcost: tc }); }
+      toast(L('تم الحذف', 'Deleted'));
+    } catch (x) { toast(x.message, 'err'); }
+  },
   /* فاتورة المزاد */
   async invUp(id, input) {
     const v = S.vehicles.find(x => x.id === id), f = input.files[0]; input.value = ''; if (!v || !f) return;
@@ -1470,7 +1569,7 @@ const A = {
   calc() {
     const fd = new FormData($('#vf')), g = k => num(fd.get(k));
     $('#vtot').textContent = money(FIN.reduce((s, x) => s + g('fin_' + x.k), 0));
-    const pe = $('#vprof'); if (pe) { const act = g('fin_shipping_cost_actual'); pe.textContent = money(g('fin_office_commission') + g('fin_transfer_commission') + (act > 0 ? g('fin_inland_shipping') + g('fin_ocean_shipping') - act : 0)); }
+    const pe = $('#vprof'); if (pe) { const act = g('fin_shipping_cost_actual'); const vv = S.vehicles.find(x => x.id === $('#vf').dataset.id); pe.textContent = money(g('fin_office_commission') + g('fin_transfer_commission') - (vv ? tCost(vv) : 0) + (act > 0 ? g('fin_inland_shipping') + g('fin_ocean_shipping') - act : 0)); }
   },
   carsSet(n) { const f = $('#vf'); if (!f) return; f.elements.cars_per_container.value = n; document.querySelectorAll('#carsSeg button').forEach(b => b.classList.toggle('on', +b.textContent === n)); A.yardPick(true); },
   async vSave(e, id) {
@@ -1865,7 +1964,7 @@ const A = {
     const vs = S.vehicles.filter(v => v.customer_id === cid).sort((x, y) => (x.purchase_date || '').localeCompare(y.purchase_date || ''));
     const ps = S.payments.filter(p => p.customer_id === cid).sort((x, y) => (x.date || '').localeCompare(y.date || ''));
     const sumF = k => vs.reduce((s2, v) => s2 + num((v.fin || {})[k]), 0);
-    const com = sumF('office_commission'), trc = sumF('transfer_commission'), shm = vs.reduce((s2, v) => s2 + shipMargin(v), 0), prof = com + trc + shm;
+    const com = sumF('office_commission'), trc = sumF('transfer_commission') - vs.reduce((s2, v) => s2 + tCost(v), 0), shm = vs.reduce((s2, v) => s2 + shipMargin(v), 0), prof = com + trc + shm;
     const usd = ps.filter(p => p.currency !== 'LYD').reduce((s2, p) => s2 + num(p.amount), 0), ly = ps.filter(p => p.currency === 'LYD').reduce((s2, p) => s2 + num(p.amount), 0);
     const dl = vs.filter(v => v.status === 'DELIVERED').length;
     printDoc(L('تقرير شامل', 'Full report') + ' - ' + c.full_name, {
