@@ -408,6 +408,13 @@ tr.sel{background:#fff7ed}
 .sgc .sub{font-size:11.5px}
 .sgfull{display:inline-block;font-size:11.5px;font-weight:800;padding:1px 9px;border-radius:99px;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
 .sgfull.no{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
+/* مراحل الربح */
+.stgs{margin-top:8px;display:flex;flex-direction:column;gap:5px}
+.stg{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:6px 10px;border-radius:9px;background:#fefce8;border:1px solid #fde68a;font-size:12.5px}
+.stg.ok{background:#ecfdf5;border-color:#a7f3d0}
+.stg em{grid-column:1/-1;font-style:normal;font-size:11.5px;color:var(--mut)}
+.stg.ok em{color:#047857;font-weight:700}
+.stg.tot{background:var(--soft);border-color:var(--line);font-weight:800}
 </style>
 </head>
 <body>
@@ -591,6 +598,26 @@ const tCostMap = v => (S.internal[v.id] || {}).tcost || {};
 const tCost = v => Object.values(tCostMap(v)).reduce((a, b) => a + num(b), 0);
 const profit = v => { const f = v.fin || {}; const act = actCost(v); return num(f.office_commission) + num(f.transfer_commission) - tCost(v) + (act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0); };
 const vPaid = id => S.agg.v[id] || 0;
+/* الربح على مرحلتين: 1) حق السيارة (عمولة المكتب + عمولة حوالة السيارة)  2) الشحن (عمولة حوالة الشحن + فرق الشحن)
+   ربح كل مرحلة يتحسب "محقق" بس لما دفعات الزبون تغطي المرحلة كاملة. الدفعات تغطي حق السيارة أولاً ثم الشحن. */
+const SHIP_PURP = ['shipping', 'towing'];
+function profitSplit(v) {
+  const f = v.fin || {}, tr = v.transfers || [], cm = tCostMap(v), act = actCost(v);
+  const shCh = tr.filter(t => SHIP_PURP.includes(t.purpose)).reduce((a, t) => a + num(t.charged), 0);
+  const shTc = tr.filter(t => SHIP_PURP.includes(t.purpose)).reduce((a, t) => a + num(cm[t.id]), 0);
+  const carCh = num(f.transfer_commission) - shCh, carTc = tCost(v) - shTc;
+  const t2 = num(f.inland_shipping) + num(f.ocean_shipping) + shCh, t1 = totalCost(v) - t2;
+  const p1 = num(f.office_commission) + carCh - carTc;
+  const p2 = shCh - shTc + (act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0);
+  const pays = S.payments.filter(x => x.vehicle_id === v.id).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  let cum = 0, d1 = '', d2 = '';
+  for (const x of pays) { cum += num(x.amount_usd); if (!d1 && cum >= t1 - 0.009) d1 = x.date || ''; if (!d2 && t2 > 0 && cum >= t1 + t2 - 0.009) d2 = x.date || ''; }
+  const paid = vPaid(v.id), r1 = paid >= t1 - 0.009, r2 = t2 > 0 && paid >= t1 + t2 - 0.009;
+  return { t1, t2, p1, p2, r1, r2, d1: r1 ? (d1 || today()) : '', d2: r2 ? (d2 || today()) : '', need1: Math.max(0, t1 - paid), need2: Math.max(0, t1 + t2 - paid) };
+}
+const realized = v => { const x = profitSplit(v); return (x.r1 ? x.p1 : 0) + (x.r2 ? x.p2 : 0); };
+const pending = v => profit(v) - realized(v);
+const realizedIn = (v, m) => { const x = profitSplit(v); return (x.r1 && x.d1.startsWith(m) ? x.p1 : 0) + (x.r2 && x.d2.startsWith(m) ? x.p2 : 0); };
 const vBal = v => totalCost(v) - vPaid(v.id);
 const cAgg = id => S.agg.c[id] || { cost: 0, paid: 0, bal: 0, count: 0, active: 0 };
 const advAmt = v => v.auction_paid_by === 'office' ? num((v.fin || {}).bid_price) + num((v.fin || {}).auction_fees) : 0;
@@ -898,8 +925,9 @@ function vDashboard() {
     [L('السيارات النشطة', 'Active vehicles'), V.filter(v => v.status !== 'DELIVERED').length, '🚗', '#2563eb'],
     [L('في البحر', 'At sea'), cnt('LOADED_SHIPPED'), '🚢', '#0891b2'],
     [L('وصلت الميناء المحلي', 'At local port'), cnt('ARRIVED_LOCAL_PORT'), '⚓', '#059669'],
-    [L('الأرباح والعمولات', 'Profit & commissions'), money(V.reduce((s, v) => s + profit(v), 0)), '💰', '#f97316', 'pf'],
-    [L('صافي الربح (بعد المصاريف)', 'Net profit (after expenses)'), money(V.reduce((s, v) => s + profit(v), 0) - totalExp(S.expenses)), '📈', '#16a34a', can('expenses') ? 'pf' : 'pf hide'],
+    [L('الربح المحقق (استلمته)', 'Realized profit (collected)'), money(V.reduce((s, v) => s + realized(v), 0)), '💰', '#f97316', 'pf'],
+    [L('ربح منتظر (الزبون ما خلّصش)', 'Pending profit (unpaid)'), money(V.reduce((s, v) => s + pending(v), 0)), '⏳', '#a16207', 'pf'],
+    [L('صافي الربح المحقق (بعد المصاريف)', 'Net realized profit (after expenses)'), money(V.reduce((s, v) => s + realized(v), 0) - totalExp(S.expenses)), '📈', '#16a34a', can('expenses') ? 'pf' : 'pf hide'],
     [L('ديون على الزبائن', 'Customer debts'), money(debts), '⚠️', '#dc2626'],
     [L('فلوس المكتب عند الزبائن (سلف)', 'Office advances outstanding'), money(V.reduce((s, v) => s + advOut(v), 0)), '💸', '#ea580c']
   ];
@@ -1005,7 +1033,7 @@ function vVehicle() {
       <tr><td>${L('المدفوع', 'Paid')}</td><td class="pos">${money(paid)}</td></tr>
       <tr class="t"><td>${L('المتبقي على الزبون', 'Balance due')}</td><td class="${bal > 0.009 ? 'neg' : 'pos'}">${money(bal)}</td></tr></tbody></table>
       ${advAmt(v) > 0 ? `<div class="internal" style="border-color:#fed7aa;background:#fff7ed">💸 ${L('سلفة المكتب (ثمن السيارة + رسوم المزاد)', 'Office advance (bid + auction fees)')}: <b>${money(advAmt(v))}</b> · ${L('المتبقي منها على الزبون', 'Still owed')}: <b class="${advOut(v) > 0.009 ? 'neg' : 'pos'}">${money(advOut(v))}</b>${advOut(v) > 0.009 ? ` · ${daysSince(v.auction_paid_date || v.purchase_date)} ${L('يوم', 'days')}` : ''}</div>` : ''}
-      <div class="internal pf">🔒 ${L('داخلي (لا يظهر في الفاتورة)', 'Internal (not on invoice)')}: ${L('تكلفة الشحن الفعلية', 'Actual shipping cost')} <b>${act > 0 ? money(act) : '—'}</b> · ${L('ربح المكتب من هذه السيارة', 'Office profit on this car')} <b class="pos">${money(profit(v))}</b></div></div>
+      <div class="internal pf">🔒 ${L('داخلي (لا يظهر في الفاتورة)', 'Internal (not on invoice)')}: ${L('تكلفة الشحن الفعلية', 'Actual shipping cost')} <b>${act > 0 ? money(act) : '—'}</b> · ${L('ربح المكتب من هذه السيارة', 'Office profit on this car')} <b class="pos">${money(profit(v))}</b>${(() => { const x = profitSplit(v); const row = (n, lab, p, r, d, need) => `<div class="stg ${r ? 'ok' : ''}"><span>${n}. ${lab}</span><b dir="ltr">${money(p)}</b><em>${r ? '✓ ' + L('تحقق', 'collected') + ' ' + fdate(d) : '⏳ ' + (need > 0.009 ? L('ناقص', 'needs') + ' ' + money(need) : L('ما فيش شحن مسجل', 'no shipping yet'))}</em></div>`; return `<div class="stgs">${row(1, L('حق السيارة (عمولة المكتب + حوالة السيارة)', 'Car (office + car transfer commission)'), x.p1, x.r1, x.d1, x.need1)}${row(2, L('الشحن (حوالة الشحن + فرق الشحن)', 'Shipping (shipping transfer + margin)'), x.p2, x.r2, x.d2, x.t2 > 0 ? x.need2 : 0)}<div class="stg tot"><span>${L('المحقق من هذه السيارة', 'Realized on this car')}</span><b dir="ltr">${money(realized(v))}</b><em>${L('منتظر', 'pending')} ${money(pending(v))}</em></div></div>`; })()}</div></div>
     <div class="card"><div class="row-b"><h3>💵 ${L('الدفعات', 'Payments')}</h3><button class="btn sm pri" onclick="A.pForm({customer_id:'${v.customer_id}',vehicle_id:'${v.id}'})">+ ${L('دفعة', 'Payment')}</button></div>${payTable(pays, false)}</div>
   </div>`;
 }
@@ -1305,22 +1333,22 @@ function vUsers() {
 /* ---------------- المصاريف ---------------- */
 function vExpenses() {
   const m = S.em, list = S.expenses.filter(e => (e.date || '').startsWith(m)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  const prof = S.vehicles.filter(v => (v.purchase_date || '').startsWith(m)).reduce((s, v) => s + profit(v), 0), ex = totalExp(list), net = prof - ex;
+  const prof = S.vehicles.reduce((s, v) => s + realizedIn(v, m), 0), ex = totalExp(list), net = prof - ex;
   const byCat = EXP_CATS.map(c => [c, totalExp(list.filter(e => e.category === c[0]))]).filter(x => x[1] > 0).sort((a, b) => b[1] - a[1]);
-  const allProf = S.vehicles.reduce((s, v) => s + profit(v), 0), allEx = totalExp(S.expenses);
+  const allProf = S.vehicles.reduce((s, v) => s + realized(v), 0), allEx = totalExp(S.expenses);
   const exLyd = list.filter(e => e.currency === 'LYD').reduce((s, e) => s + num(e.amount), 0), exUsd = list.filter(e => e.currency !== 'LYD').reduce((s, e) => s + num(e.amount), 0);
   return `<div class="top"><h1>${L('مصاريف المكتب', 'Office expenses')}</h1><div class="acts"><input type="month" value="${esc(m)}" onchange="A.emSet(this.value)" style="width:auto"><button class="btn pri" onclick="A.eForm()">+ ${L('مصروف جديد', 'New expense')}</button></div></div>
   <div class="stats">
-    <div class="card stat pf" style="--c:#f97316"><div class="ic">💰</div><div><div class="k">${L('أرباح سيارات الشهر', 'Profit from this month’s cars')}</div><div class="v">${money(prof)}</div></div></div>
+    <div class="card stat pf" style="--c:#f97316"><div class="ic">💰</div><div><div class="k">${L('الربح المحقق هذا الشهر', 'Profit collected this month')}</div><div class="v">${money(prof)}</div></div></div>
     <div class="card stat" style="--c:#dc2626"><div class="ic">🧾</div><div><div class="k">${L('مصاريف الشهر', 'Expenses this month')}</div><div class="v">${money(ex)}</div></div></div>
     <div class="card stat pf" style="--c:#16a34a"><div class="ic">📈</div><div><div class="k">${L('صافي الشهر', 'Net this month')}</div><div class="v ${net < 0 ? 'neg' : 'pos'}">${money(net)}</div></div></div>
-    <div class="card stat pf" style="--c:#475569"><div class="ic">Σ</div><div><div class="k">${L('الصافي الكلي (من البداية)', 'Net all-time')}</div><div class="v ${allProf - allEx < 0 ? 'neg' : 'pos'}">${money(allProf - allEx)}</div></div></div>
+    <div class="card stat pf" style="--c:#475569"><div class="ic">Σ</div><div><div class="k">${L('الصافي المحقق الكلي (من البداية)', 'Net realized all-time')}</div><div class="v ${allProf - allEx < 0 ? 'neg' : 'pos'}">${money(allProf - allEx)}</div></div></div>
   </div>
   <div class="stats">
     <div class="card stat" style="--c:#7c3aed"><div class="ic">د.ل</div><div><div class="k">${L('مصاريف بالدينار (هذا الشهر)', 'Paid in LYD (this month)')}</div><div class="v" style="direction:${S.lang === 'ar' ? 'rtl' : 'ltr'}">${lyd(exLyd)}</div></div></div>
     <div class="card stat" style="--c:#0891b2"><div class="ic">$</div><div><div class="k">${L('مصاريف بالدولار (هذا الشهر)', 'Paid in USD (this month)')}</div><div class="v">${money(exUsd)}</div></div></div>
   </div>
-  <div class="hint pf" style="margin-top:-6px">${L('مصاريف الشهر بالدولار = الدولار + الدينار محوّل بسعر الصرف المسجّل مع كل مصروف. ', 'Monthly USD total = USD + LYD converted at each expense’s rate. ')}${L('أرباح الشهر = عمولات المكتب والحوالات وهامش الشحن للسيارات المشتراة في هذا الشهر.', 'Monthly profit = office/transfer commissions + shipping margin for cars purchased this month.')}</div>
+  <div class="hint pf" style="margin-top:-6px">${L('مصاريف الشهر بالدولار = الدولار + الدينار محوّل بسعر الصرف المسجّل مع كل مصروف. ', 'Monthly USD total = USD + LYD converted at each expense’s rate. ')}${L('الربح المحقق = ربح كل مرحلة (حق السيارة / الشحن) يتحسب في الشهر اللي خلّص فيه الزبون المرحلة.', 'Realized profit = each stage (car / shipping) counts in the month the customer finished paying it.')}</div>
   <div class="two">
     <div class="card"><h3>${L('مصاريف الشهر', 'This month')}</h3>${list.length ? `<div class="tw"><table><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('البند', 'Category')}</th><th>${L('المبلغ', 'Amount')}</th><th>${L('المعادل بالدولار', 'USD equiv.')}</th><th>${L('ملاحظات', 'Notes')}</th><th></th></tr></thead><tbody>
       ${list.map(e => `<tr><td>${fdate(e.date)}</td><td><b>${esc(expCat(e.category))}</b></td><td><b>${e.currency === 'LYD' ? lyd(e.amount) : money(e.amount)}</b></td><td class="sub">${e.currency === 'LYD' ? '≈ ' + money(e.amount_usd) + ' @' + esc(e.rate) : '—'}</td><td style="white-space:normal;max-width:200px">${esc(e.notes || '')}</td><td><button class="btn sm red" onclick="A.eDel('${e.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty">${L('لا توجد مصاريف في هذا الشهر', 'No expenses this month')}</div>`}</div>
@@ -2086,6 +2114,7 @@ const A = {
     const ps = S.payments.filter(p => p.customer_id === cid).sort((x, y) => (x.date || '').localeCompare(y.date || ''));
     const sumF = k => vs.reduce((s2, v) => s2 + num((v.fin || {})[k]), 0);
     const com = sumF('office_commission'), trc = sumF('transfer_commission') - vs.reduce((s2, v) => s2 + tCost(v), 0), shm = vs.reduce((s2, v) => s2 + shipMargin(v), 0), prof = com + trc + shm;
+    const rlz = vs.reduce((s2, v) => s2 + realized(v), 0), pnd = prof - rlz;
     const usd = ps.filter(p => p.currency !== 'LYD').reduce((s2, p) => s2 + num(p.amount), 0), ly = ps.filter(p => p.currency === 'LYD').reduce((s2, p) => s2 + num(p.amount), 0);
     const dl = vs.filter(v => v.status === 'DELIVERED').length;
     printDoc(L('تقرير شامل', 'Full report') + ' - ' + c.full_name, {
@@ -2094,9 +2123,9 @@ const A = {
       main: `<div class="int">🔒 ${L('تقرير داخلي للمكتب — فيه الأرباح، لا يُسلَّم للزبون', 'Internal office report — includes profit, do not hand to customer')}</div>` + custKv(c) +
         sumBox([[L('السيارات المشتراة', 'Vehicles bought') + ` (${dl} ${L('مسلّمة', 'delivered')})`, vs.length, '#2563eb'], [L('قيمة السيارات في المزاد', 'Total bid value'), money(sumF('bid_price')), '#475569'], [L('إجمالي ما عليه', 'Total charged'), money(a.cost), '#475569'], [L('أرباحنا منه', 'Our profit'), money(prof), '#f97316', 'grn']]) +
         sumBox([[L('إجمالي ما دفعه', 'Total paid'), money(a.paid), '#059669', 'grn'], [L('المتبقي عليه', 'Still owed'), money(a.bal), '#dc2626', a.bal > 0.009 ? 'red' : 'grn'], [L('سلف المكتب المتبقية', 'Advances outstanding'), money(vs.reduce((s2, v) => s2 + advOut(v), 0)), '#ea580c'], [L('أول تعامل', 'First deal'), fdate(c.created_at), '#94a3b8']]) +
-        `<h3>${L('تفصيل الأرباح', 'Profit breakdown')}</h3><table><tbody><tr><td>${L('عمولات المكتب', 'Office commissions')}</td><td class="num">${money(com)}</td></tr><tr><td>${L('عمولات الحوالات', 'Transfer commissions')}</td><td class="num">${money(trc)}</td></tr><tr><td>${L('هامش ربح الشحن', 'Shipping margin')}</td><td class="num">${money(shm)}</td></tr><tr class="t"><td>${L('إجمالي الربح', 'Total profit')}</td><td class="num">${money(prof)}</td></tr></tbody></table>
+        `<h3>${L('تفصيل الأرباح', 'Profit breakdown')}</h3><table><tbody><tr><td>${L('عمولات المكتب', 'Office commissions')}</td><td class="num">${money(com)}</td></tr><tr><td>${L('عمولات الحوالات', 'Transfer commissions')}</td><td class="num">${money(trc)}</td></tr><tr><td>${L('هامش ربح الشحن', 'Shipping margin')}</td><td class="num">${money(shm)}</td></tr><tr class="t"><td>${L('إجمالي الربح', 'Total profit')}</td><td class="num">${money(prof)}</td></tr><tr><td>💰 ${L('منه محقق (الزبون خلّص المرحلة)', 'of which collected')}</td><td class="num grn">${money(rlz)}</td></tr><tr><td>⏳ ${L('منه منتظر (الزبون ما خلّصش)', 'of which pending')}</td><td class="num">${money(pnd)}</td></tr></tbody></table>
         <h3>${L('كل السيارات', 'All vehicles')}</h3><table><thead><tr><th>${L('السيارة', 'Vehicle')}</th><th>${L('الشراء', 'Bought')}</th><th>${L('الحالة', 'Status')}</th><th class="num">${L('سعر المزاد', 'Bid')}</th><th class="num">${L('الإجمالي', 'Total')}</th><th class="num">${L('المدفوع', 'Paid')}</th><th class="num">${L('المتبقي', 'Due')}</th><th class="num">${L('ربحنا', 'Profit')}</th></tr></thead><tbody>
-        ${vs.map(v => `<tr><td>${esc(vt(v))}<br><small class="mono">${esc(v.vin)}</small></td><td>${fdate(v.purchase_date)}</td><td>${esc(stName(v.status))}</td><td class="num">${money((v.fin || {}).bid_price)}</td><td class="num">${money(totalCost(v))}</td><td class="num">${money(vPaid(v.id))}</td><td class="num ${vBal(v) > 0.009 ? 'red' : ''}">${money(vBal(v))}</td><td class="num grn">${money(profit(v))}</td></tr>`).join('') || `<tr><td colspan="8">—</td></tr>`}
+        ${vs.map(v => `<tr><td>${esc(vt(v))}<br><small class="mono">${esc(v.vin)}</small></td><td>${fdate(v.purchase_date)}</td><td>${esc(stName(v.status))}</td><td class="num">${money((v.fin || {}).bid_price)}</td><td class="num">${money(totalCost(v))}</td><td class="num">${money(vPaid(v.id))}</td><td class="num ${vBal(v) > 0.009 ? 'red' : ''}">${money(vBal(v))}</td><td class="num grn">${money(profit(v))}${pending(v) > 0.009 ? `<br><small>⏳ ${money(pending(v))}</small>` : ''}</td></tr>`).join('') || `<tr><td colspan="8">—</td></tr>`}
         ${vs.length ? `<tr class="tot"><td colspan="3">${L('المجموع', 'Total')}</td><td class="num">${money(sumF('bid_price'))}</td><td class="num">${money(a.cost)}</td><td class="num">${money(vs.reduce((s2, v) => s2 + vPaid(v.id), 0))}</td><td class="num">${money(vs.reduce((s2, v) => s2 + vBal(v), 0))}</td><td class="num">${money(prof)}</td></tr>` : ''}</tbody></table>
         <h3>${L('كل الدفعات', 'All payments')} — ${L('بالدولار', 'USD')}: <span dir="ltr">${money(usd)}</span> · ${L('بالدينار', 'LYD')}: ${lyd(ly)}</h3><table>${payHead()}<tbody>${payRows(ps)}</tbody></table>`
     });
