@@ -397,6 +397,17 @@ tr.sel{background:#fff7ed}
 .trd-l{font-size:11.5px;font-weight:800;color:var(--mut);margin-inline-end:4px}
 .trd-c{font-size:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:2px 8px}
 .trd-c b{direction:ltr;unicode-bidi:isolate}
+/* تجميع الحاويات */
+.sgp{border:1px solid var(--line);border-inline-start:5px solid var(--pc);border-radius:14px;padding:12px 14px;margin-top:12px}
+.sgp-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.sgp-h b{font-size:16px}
+.sgp-n{font-size:12.5px;color:var(--mut);margin-top:2px}
+.sgst{font-size:12px;font-weight:800;color:var(--mut);margin:10px 0 2px}
+.sgc{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 8px;border-radius:10px;text-decoration:none;color:var(--ink);font-size:13px}
+.sgc:hover{background:var(--soft)}.sgc.me{background:#fff7ed;outline:1px solid #fed7aa}
+.sgc .sub{font-size:11.5px}
+.sgfull{display:inline-block;font-size:11.5px;font-weight:800;padding:1px 9px;border-radius:99px;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}
+.sgfull.no{background:#fff7ed;color:#c2410c;border-color:#fed7aa}
 </style>
 </head>
 <body>
@@ -651,7 +662,7 @@ const isAdmin = () => (LOCAL && S.user?.email === 'demo@local') || isAdminEmail(
 const can = p => p === 'admin' ? isAdmin() : (isAdmin() || !!(S.me && S.me.perms && S.me.perms[p]));
 const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', users: 'admin' };
 const NEED = {
-  vForm: 'edit', vSave: 'edit', trForm: 'edit', trSave: 'edit', trDel: 'edit', rcOpen: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
+  shipSelect: 'edit', vForm: 'edit', vSave: 'edit', trForm: 'edit', trSave: 'edit', trDel: 'edit', rcOpen: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
   pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses',
   printFull: 'profit', sSave: 'settings', unseed: 'admin', backup: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
 };
@@ -943,7 +954,7 @@ const bulkBar = () => !can('edit') ? '' : !S.sel.size ? `<div class="hint" style
 const vListInner = () => { const l = filteredVehicles(); return bulkBar() + `<div class="sub" style="margin-bottom:8px">${l.length} ${L('سيارة', 'vehicles')} · ${L('الإجمالي', 'Total')}: ${money(l.reduce((s, v) => s + totalCost(v), 0))} · ${L('المتبقي', 'Balance')}: ${money(l.reduce((s, v) => s + vBal(v), 0))}</div>` + vTable(l, true); };
 const custOpts = (sel, all) => (all ? `<option value="">${L('كل الزبائن', 'All customers')}</option>` : `<option value="">— ${L('اختر الزبون', 'Select customer')} —</option>`) + [...S.customers].sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '')).map(c => `<option value="${c.id}" ${c.id === sel ? 'selected' : ''}>${c.code ? '#' + esc(c.code) + ' · ' : ''}${esc(c.full_name)}${c.phone ? ' - ' + esc(c.phone) : ''}</option>`).join('');
 function vVehicles() {
-  return `<div class="top"><h1>${L('السيارات والتتبع', 'Vehicles & Tracking')}</h1><button class="btn pri" onclick="A.vForm()">+ ${L('سيارة جديدة', 'New vehicle')}</button></div>
+  return `<div class="top"><h1>${L('السيارات والتتبع', 'Vehicles & Tracking')}</h1><div class="acts"><button class="btn" onclick="A.shipGroups()">📦 ${L('تجميع الحاويات', 'Group for containers')}</button><button class="btn pri" onclick="A.vForm()">+ ${L('سيارة جديدة', 'New vehicle')}</button></div></div>
   <div class="card"><div class="filters">
     <input id="fq" placeholder="🔍 ${L('بحث: VIN، رقم اللوت، الزبون، الحاوية...', 'Search: VIN, lot, customer, container...')}" value="${esc(S.f.q)}" oninput="A.fq(this.value)">
     <select onchange="A.ff('status',this.value)"><option value="">${L('كل الحالات', 'All statuses')}</option>${ST.map(s => `<option value="${s.k}" ${S.f.status === s.k ? 'selected' : ''}>${esc(L(s.ar, s.en))} (${cnt(s.k)})</option>`).join('')}</select>
@@ -977,7 +988,7 @@ function vVehicle() {
     [L('تاريخ الشراء', 'Purchase date'), fdate(v.purchase_date)], [L('مدة المرحلة الحالية', 'Days in stage'), daysSince(statusSince(v)) + ' ' + L('يوم', 'days')]
   ];
   return `<div class="top"><div><a href="#/vehicles" class="back">${L('→ السيارات', '← Vehicles')}</a><h1>${esc(vt(v))} ${badge(v.status)}</h1><div class="sub mono">VIN: ${esc(v.vin)}${v.lot_number ? ' · LOT ' + esc(v.lot_number) : ''}</div></div>
-    <div class="acts"><button class="btn wa" onclick="A.wa('v','${v.id}')">💬 ${L('واتساب', 'WhatsApp')}</button><button class="btn" onclick="A.copyLink('${esc(v.vin)}')">🔗 ${L('رابط التتبع', 'Tracking link')}</button><button class="btn" onclick="A.printVeh('${v.id}')">📋 ${L('تقرير السيارة', 'Vehicle report')}</button><button class="btn" onclick="A.printInv('${v.id}')">🖨️ ${L('الفاتورة', 'Invoice')}</button><button class="btn" onclick="A.vForm('${v.id}')">✏️ ${L('تعديل', 'Edit')}</button><button class="btn red" onclick="A.vDel('${v.id}')">🗑️</button></div></div>
+    <div class="acts">${stIdx(v.status) < stIdx('LOADED_SHIPPED') ? `<button class="btn" onclick="A.shipGroups('${esc(v.us_port || 'NONE')}','${v.id}')">📦 ${L('تنشحن معاها', 'Ship together')}</button>` : ''}<button class="btn wa" onclick="A.wa('v','${v.id}')">💬 ${L('واتساب', 'WhatsApp')}</button><button class="btn" onclick="A.copyLink('${esc(v.vin)}')">🔗 ${L('رابط التتبع', 'Tracking link')}</button><button class="btn" onclick="A.printVeh('${v.id}')">📋 ${L('تقرير السيارة', 'Vehicle report')}</button><button class="btn" onclick="A.printInv('${v.id}')">🖨️ ${L('الفاتورة', 'Invoice')}</button><button class="btn" onclick="A.vForm('${v.id}')">✏️ ${L('تعديل', 'Edit')}</button><button class="btn red" onclick="A.vDel('${v.id}')">🗑️</button></div></div>
   ${late ? `<div class="alert"><div class="alert-h" style="margin:0">🔴 ${L('مضى', 'It has been')} ${late.d} ${L('يوم على الشراء ولم تُسدَّد للمزاد — سدّد الآن لتفادي غرامات التأخير والتخزين.', 'days since purchase without paying the auction — pay now to avoid late/storage fees.')}</div></div>` : ''}
   <div class="card"><div class="row-b"><h3>${L('مراحل الشحن', 'Shipping stages')}</h3><div class="acts">
     ${i > 0 ? `<button class="btn sm" onclick="A.setStatus('${v.id}','${ST[i - 1].k}')">${L('→ السابقة', '← Previous')}</button>` : ''}
@@ -2125,6 +2136,40 @@ const A = {
     } catch (x) { toast(x.message, 'err'); }
   }
 };
+Object.assign(A, {
+  /* تجميع السيارات اللي تنشحن مع بعض (نفس ميناء التصدير) */
+  async shipGroups(port, me) {
+    try { await loadPorts(); } catch (e) { }
+    const PO = window.AWS_PORTS ? PM_ORDER() : ['SAV', 'HOU', 'NYC', 'CHI', 'LAX', 'SEA', 'HNL'];
+    const SHIP = stIdx('LOADED_SHIPPED');
+    const wait = S.vehicles.filter(v => stIdx(v.status) >= 0 && stIdx(v.status) < SHIP);
+    const groups = {}; wait.forEach(v => { const k = v.us_port || 'NONE'; (groups[k] = groups[k] || []).push(v); });
+    const order = PO.concat(['NONE']).filter(k => groups[k] && (!port || k === port));
+    const ready = v => stIdx(v.status) >= stIdx('AT_US_WAREHOUSE');
+    const car = v => `<a class="sgc ${v.id === me ? 'me' : ''}" href="#/vehicle/${v.id}" onclick="A.close()"><div><b>${esc(vt(v))}</b> <span class="sub mono">${esc((v.vin || '').slice(-6))}</span><div class="sub">👤 ${esc(custName(v.customer_id))}${v.yard ? ' · 📍 ' + esc(v.yard) : ''}${v.container_number ? ' · 📦 ' + esc(v.container_number) : ''}</div></div>${badge(v.status)}</a>`;
+    const box = k => {
+      const list = groups[k].sort((a, b) => (stIdx(b.status) - stIdx(a.status)) || (a.yard_state || '').localeCompare(b.yard_state || ''));
+      const n = list.length, rd = list.filter(ready).length, full = Math.floor(n / 4), rest = n % 4;
+      const states = [...new Set(list.map(v => v.yard_state || ''))].sort();
+      return `<div class="sgp" style="--pc:${PCLR[k] || PCLR.NONE}"><div class="sgp-h"><div><b>${k === 'NONE' ? '⚠️ ' + L('بدون ميناء — افتح السيارة واختار الساحة', 'No port — open the car and pick its yard') : '🚢 ' + esc(pName(k))}</b>
+        <div class="sgp-n">${n} ${L('سيارة', 'cars')} · ${rd} ${L('في المستودع', 'at warehouse')}${k !== 'NONE' ? ` · ${full ? `<span class="sgfull">${full} ${L('حاوية كاملة', full > 1 ? 'full containers' : 'full container')}</span> ` : ''}${rest ? `<span class="sgfull no">${L(`ناقص ${4 - rest} لحاوية ${full ? 'ثانية' : 'كاملة'}`, `${4 - rest} short of ${full ? 'another' : 'a full'} container`)}</span>` : ''}` : ''}</div></div>
+        ${k !== 'NONE' && can('edit') ? `<button class="btn sm pri" onclick="A.shipSelect('${k}')">☑️ ${L('حددهم لرقم الحاوية', 'Select for container #')}</button>` : ''}</div>
+        ${states.map(st => { const g = list.filter(v => (v.yard_state || '') === st); return `${states.length > 1 || st ? `<div class="sgst">${st ? esc(window.AWS_PORTS ? pmState(st) : st) + ' (' + esc(st) + ')' : L('ولاية غير محددة', 'State not set')} — ${g.length}</div>` : ''}${g.map(car).join('')}`; }).join('')}</div>`;
+    };
+    openModal(`<h2>📦 ${L('سيارات تنشحن مع بعض', 'Cars that can ship together')}</h2>
+      <div class="hint" style="margin-top:-6px">${L('السيارات اللي تمشي لنفس ميناء التصدير تقدر تنشحن في نفس الحاوية، حتى لو من ولايات مختلفة (مثلاً تكساس وكولورادو كلهم لهيوستن). القائمة فيها السيارات اللي لسه ما انشحنتش بس.', 'Cars going to the same US port can share a container, even from different states (e.g. TX and CO both go to Houston). Only cars not yet shipped are listed.')}</div>
+      ${port ? `<div style="margin-top:8px"><button class="btn sm" onclick="A.shipGroups()">${L('عرض كل الموانئ', 'Show all ports')}</button></div>` : ''}
+      ${order.length ? order.map(box).join('') : `<div class="empty">${L('ما فيش سيارات تستنى الشحن', 'No cars waiting to ship')}</div>`}
+      <div class="mfoot"><button class="btn" onclick="A.close()">${L('إغلاق', 'Close')}</button></div>`);
+  },
+  shipSelect(k) {
+    const SHIP = stIdx('LOADED_SHIPPED');
+    S.sel = new Set(S.vehicles.filter(v => (v.us_port || 'NONE') === k && stIdx(v.status) >= 0 && stIdx(v.status) < SHIP).map(v => v.id));
+    S.f = { q: '', status: '', auction: '', cust: '' }; A.close();
+    if (location.hash !== '#/vehicles') location.hash = '#/vehicles'; else render();
+    toast(L(`تم تحديد ${S.sel.size} سيارة — اكتب رقم الحاوية فوق القائمة واضغط تطبيق`, `${S.sel.size} cars selected — enter the container # above the list and press Apply`));
+  }
+});
 Object.entries(NEED).forEach(([k, p]) => { const f = A[k]; if (typeof f !== 'function') return; A[k] = function (...a) { if (!can(p)) { toast(L('ما عندكش صلاحية لهذي العملية', 'You don’t have permission for this'), 'err'); return; } return f.apply(this, a); }; });
 window.A = A; window.$ = $; window.trItemRow = trItemRow;
 
