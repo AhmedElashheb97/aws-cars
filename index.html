@@ -415,6 +415,11 @@ tr.sel{background:#fff7ed}
 .stg em{grid-column:1/-1;font-style:normal;font-size:11.5px;color:var(--mut)}
 .stg.ok em{color:#047857;font-weight:700}
 .stg.tot{background:var(--soft);border-color:var(--line);font-weight:800}
+.stat.clk{cursor:pointer;transition:transform .12s,box-shadow .12s}.stat.clk:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,23,42,.08)}
+.stat.clk .k::after{content:' ›';font-weight:800}
+.plt td{white-space:nowrap}.plt td.num{text-align:end;direction:ltr;font-family:ui-monospace,Consolas,monospace}
+.plt tr.click{cursor:pointer}.plt tfoot td{font-weight:800;background:var(--soft)}
+.pch{display:inline-block;font-size:11px;font-weight:800;padding:1px 8px;border-radius:99px;background:#ecfdf5;color:#047857;border:1px solid #a7f3d0}.pch.w{background:#fefce8;color:#a16207;border-color:#fde68a}
 </style>
 </head>
 <body>
@@ -689,7 +694,7 @@ const isAdmin = () => (LOCAL && S.user?.email === 'demo@local') || isAdminEmail(
 const can = p => p === 'admin' ? isAdmin() : (isAdmin() || !!(S.me && S.me.perms && S.me.perms[p]));
 const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', users: 'admin' };
 const NEED = {
-  shipSelect: 'edit', vForm: 'edit', vSave: 'edit', trForm: 'edit', trSave: 'edit', trDel: 'edit', rcOpen: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
+  profList: 'profit', shipSelect: 'edit', vForm: 'edit', vSave: 'edit', trForm: 'edit', trSave: 'edit', trDel: 'edit', rcOpen: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
   pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses',
   printFull: 'profit', sSave: 'settings', unseed: 'admin', backup: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
 };
@@ -925,8 +930,8 @@ function vDashboard() {
     [L('السيارات النشطة', 'Active vehicles'), V.filter(v => v.status !== 'DELIVERED').length, '🚗', '#2563eb'],
     [L('في البحر', 'At sea'), cnt('LOADED_SHIPPED'), '🚢', '#0891b2'],
     [L('وصلت الميناء المحلي', 'At local port'), cnt('ARRIVED_LOCAL_PORT'), '⚓', '#059669'],
-    [L('الربح المحقق (استلمته)', 'Realized profit (collected)'), money(V.reduce((s, v) => s + realized(v), 0)), '💰', '#f97316', 'pf'],
-    [L('ربح منتظر (الزبون ما خلّصش)', 'Pending profit (unpaid)'), money(V.reduce((s, v) => s + pending(v), 0)), '⏳', '#a16207', 'pf'],
+    [L('الربح المحقق (استلمته)', 'Realized profit (collected)'), money(V.reduce((s, v) => s + realized(v), 0)), '💰', '#f97316', 'pf', "A.profList('done')"],
+    [L('ربح منتظر (الزبون ما خلّصش)', 'Pending profit (unpaid)'), money(V.reduce((s, v) => s + pending(v), 0)), '⏳', '#a16207', 'pf', "A.profList('wait')"],
     [L('صافي الربح المحقق (بعد المصاريف)', 'Net realized profit (after expenses)'), money(V.reduce((s, v) => s + realized(v), 0) - totalExp(S.expenses)), '📈', '#16a34a', can('expenses') ? 'pf' : 'pf hide'],
     [L('ديون على الزبائن', 'Customer debts'), money(debts), '⚠️', '#dc2626'],
     [L('فلوس المكتب عند الزبائن (سلف)', 'Office advances outstanding'), money(V.reduce((s, v) => s + advOut(v), 0)), '💸', '#ea580c']
@@ -940,7 +945,7 @@ function vDashboard() {
     ${late.map(x => `<a class="alert-row" href="#/vehicle/${x.v.id}"><b>${esc(vt(x.v))}</b><span class="mono">${x.v.lot_number ? 'LOT ' + esc(x.v.lot_number) : esc(x.v.vin)}</span><span>${esc(x.v.auction_name || '')}</span><span>${esc(custName(x.v.customer_id))}</span><span class="pill-red">${x.d} ${L('يوم', 'days')}</span></a>`).join('')}</div>` : ''}
   ${adv.length ? `<div class="alert orange"><div class="alert-h">💸 ${L('سلف متأخرة', 'Overdue advances')} — ${adv.length} ${L('سيارة دفعنا ثمنها للمزاد من فلوس المكتب ومضى عليها', 'car(s) paid by the office, unpaid by customer for')} ${num(S.settings.advDays) || 7} ${L('يوم أو أكثر', 'days or more')}</div>
     ${adv.map(x => `<a class="alert-row" href="#/vehicle/${x.v.id}"><b>${esc(custName(x.v.customer_id))}</b><span>${esc(vt(x.v))}</span><span class="mono">${esc(x.v.vin.slice(-6))}</span><b class="neg">${money(x.o)}</b><span class="pill-or" style="margin-inline-start:auto">${x.d} ${L('يوم', 'days')}</span></a>`).join('')}</div>` : ''}
-  <div class="stats">${cards.filter(c => !(c[4] || '').includes('hide')).map(c => `<div class="card stat ${c[4] || ''}" style="--c:${c[3]}"><div class="ic">${c[2]}</div><div><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div></div>`).join('')}</div>
+  <div class="stats">${cards.filter(c => !(c[4] || '').includes('hide')).map(c => `<div class="card stat ${c[4] || ''} ${c[5] ? 'clk' : ''}" style="--c:${c[3]}"${c[5] ? ` role="button" tabindex="0" onclick="${c[5]}" onkeydown="if(event.key==='Enter'){${c[5]}}" title="${L('اضغط للتفاصيل', 'Click for details')}"` : ''}><div class="ic">${c[2]}</div><div><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div></div>`).join('')}</div>
   <div class="two">
     <div class="card"><h3>${L('السيارات حسب المرحلة', 'Vehicles by stage')}</h3>
       ${ST.map(s => { const n = cnt(s.k); return `<a class="sbar" href="javascript:A.goStatus('${s.k}')"><span>${esc(L(s.ar, s.en))}</span><div class="bar"><i style="width:${V.length ? n / V.length * 100 : 0}%;background:${s.c}"></i></div><b>${n}</b></a>`; }).join('')}</div>
@@ -2197,6 +2202,27 @@ Object.assign(A, {
     S.f = { q: '', status: '', auction: '', cust: '' }; A.close();
     if (location.hash !== '#/vehicles') location.hash = '#/vehicles'; else render();
     toast(L(`تم تحديد ${S.sel.size} سيارة — اكتب رقم الحاوية فوق القائمة واضغط تطبيق`, `${S.sel.size} cars selected — enter the container # above the list and press Apply`));
+  }
+});
+Object.assign(A, {
+  /* قائمة الربح: من كل سيارة كم كسبت */
+  profList(tab) {
+    S.plTab = tab || S.plTab || 'done';
+    const t = S.plTab, rows = S.vehicles.map(v => { const x = profitSplit(v); return { v, x, r: realized(v), p: pending(v), d: [x.r1 ? x.d1 : '', x.r2 ? x.d2 : ''].filter(Boolean).sort().pop() || '' }; })
+      .filter(o => t === 'done' ? o.r > 0.009 || o.r < -0.009 : o.p > 0.009 || o.p < -0.009)
+      .sort((a, b) => t === 'done' ? (b.d || '').localeCompare(a.d || '') : b.p - a.p);
+    const tot = rows.reduce((a, o) => a + (t === 'done' ? o.r : o.p), 0);
+    const st = (ok, need, has) => ok ? `<span class="pch">✓</span>` : has ? `<span class="pch w">⏳ ${money(need)}</span>` : '—';
+    openModal(`<h2>${t === 'done' ? '💰 ' + L('الربح المحقق — من كل سيارة', 'Realized profit — per car') : '⏳ ' + L('الربح المنتظر — من كل سيارة', 'Pending profit — per car')}</h2>
+      <div class="tabs"><button class="tab ${t === 'done' ? 'on' : ''}" onclick="A.profList('done')">💰 ${L('محقق', 'Realized')}</button><button class="tab ${t === 'wait' ? 'on' : ''}" onclick="A.profList('wait')">⏳ ${L('منتظر', 'Pending')}</button></div>
+      ${rows.length ? `<div class="tw"><table class="plt"><thead><tr><th>${L('السيارة', 'Car')}</th><th>${L('الزبون', 'Customer')}</th><th>${L('حق السيارة', 'Car stage')}</th><th>${L('الشحن', 'Shipping')}</th><th>${t === 'done' ? L('تاريخ التحقق', 'Collected on') : L('المتبقي على الزبون', 'Customer owes')}</th><th>${t === 'done' ? L('الربح المحقق', 'Realized') : L('الربح المنتظر', 'Pending')}</th></tr></thead><tbody>
+        ${rows.map(o => `<tr class="click" onclick="A.close();location.hash='#/vehicle/${o.v.id}'"><td><b>${esc(vt(o.v))}</b><div class="sub mono">${esc((o.v.vin || '').slice(-6))}</div></td><td>${esc(custName(o.v.customer_id))}</td>
+          <td class="num">${money(o.x.p1)} ${st(o.x.r1, o.x.need1, true)}</td><td class="num">${o.x.t2 > 0 || Math.abs(o.x.p2) > 0.009 ? money(o.x.p2) + ' ' + st(o.x.r2, o.x.need2, o.x.t2 > 0) : '—'}</td>
+          <td>${t === 'done' ? fdate(o.d) : `<span class="neg">${money(Math.max(0, vBal(o.v)))}</span>`}</td><td class="num"><b class="${t === 'done' ? 'pos' : ''}">${money(t === 'done' ? o.r : o.p)}</b></td></tr>`).join('')}</tbody>
+        <tfoot><tr><td colspan="5">${L('المجموع', 'Total')} — ${rows.length} ${L('سيارة', 'cars')}</td><td class="num">${money(tot)}</td></tr></tfoot></table></div>`
+        : `<div class="empty">${t === 'done' ? L('ما فيش ربح محقق بعد', 'No realized profit yet') : L('ما فيش ربح منتظر 🎉', 'Nothing pending 🎉')}</div>`}
+      <div class="hint">${L('✓ = المرحلة تحققت · ⏳ = كم ناقص الزبون يدفع عشان تتحقق. اضغط على أي سيارة تفتحها.', '✓ = stage collected · ⏳ = how much the customer still needs to pay. Click a car to open it.')}</div>
+      <div class="mfoot"><button class="btn" onclick="A.close()">${L('إغلاق', 'Close')}</button></div>`);
   }
 });
 Object.entries(NEED).forEach(([k, p]) => { const f = A[k]; if (typeof f !== 'function') return; A[k] = function (...a) { if (!can(p)) { toast(L('ما عندكش صلاحية لهذي العملية', 'You don’t have permission for this'), 'err'); return; } return f.apply(this, a); }; });
