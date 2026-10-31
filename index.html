@@ -448,6 +448,7 @@ tr.sel{background:#fff7ed}
 .exbox-h{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
 .exbox #exList:empty{display:none}
 .profd{margin:8px 0 4px;padding:10px 12px;border:1px dashed #bbf7d0;border-radius:12px;background:#f0fdf4;font-size:13px}.profd>div:not(.hint){display:flex;justify-content:space-between;gap:10px;padding:3px 0}.profd small{color:#64748b;font-weight:400}.profd .neg{color:#dc2626}.profd .hint{margin-top:6px}
+.exmove{display:grid;gap:6px;margin:10px 0 12px;padding-bottom:12px;border-bottom:1px dashed #fcd9a8}.exmove .f{margin:0}#moveInfo b{font-weight:700}select.flash{outline:3px solid #f97316;outline-offset:2px;transition:outline .2s}
 </style>
 </head>
 <body>
@@ -1577,15 +1578,12 @@ function vFormHtml(v, cid) {
     <div class="f"><span style="display:block;font-size:12px;color:var(--mut);margin-bottom:4px;font-weight:700">${L('سيارات في الحاوية', 'Cars / container')}</span><input type="hidden" name="cars_per_container" value="${ncar}"><div class="pseg" id="carsSeg">${[2, 3, 4].map(k => `<button type="button" class="${ncar === k ? 'on' : ''}" onclick="A.carsSet(${k})">${k}</button>`).join('')}</div></div>
   </div>
   <div id="yardInfo"><div class="yhint">${L('اختار الساحة وتتعبّى أجرة السحب والشحن البحري تلقائياً في الحساب المالي.', 'Pick the yard and towing and ocean freight are filled in automatically below.')}</div></div></div>
-  <div class="grid" style="margin-bottom:12px">
-    <label class="f"><span>${L('الشحن من ميناء آخر (اختياري)', 'Ship from another port (optional)')}</span><select name="ship_port" onchange="A.yardPick(true);A.exMove()"><option value="">${L('نفس ميناء الساحة', 'Same as the yard')}</option>${Object.keys(PSHORT).map(k => `<option value="${k}" ${v.ship_port === k ? 'selected' : ''}>${esc(L(PSHORT[k][0], PSHORT[k][1]))}</option>`).join('')}</select></label>
-    <div class="hint" style="align-self:end;margin:0 0 10px">${L('مثلاً سيارة من هونولولو والزبون طلب تنشحن من لوس أنجلوس. البحري يتحسب على الميناء الجديد، ويتضاف سطر النقل تلقائياً في "نقل ومصاريف إضافية".', 'For example a car from Honolulu that the customer wants shipped from Los Angeles. Ocean uses the new port, and a transfer line is added under "Transfers and extra charges".')}</div>
-  </div>
   <div class="exbox">
     <div class="exbox-h"><b>${L('نقل ومصاريف إضافية على الزبون', 'Transfers and extra charges to the customer')}</b><span class="hint" style="margin:0">${L('كل مبلغ هنا يُضاف لإجمالي الزبون ويظهر في الفاتورة ضمن مرحلة الشحن. هذه تكاليف تمررها للزبون — لا تُحسب ربح.', 'Every amount here is added to the customer total and shown on the invoice in the shipping stage. These are costs passed on to the customer — not counted as profit.')}</span></div>
+    <div class="exmove"><label class="f"><span>${L('نقل السيارة إلى موقع آخر لـ Atlantic Express (اختياري)', 'Move the car to another Atlantic Express location (optional)')}</span><select name="ship_port" onchange="A.yardPick(true);A.exMove()"><option value="">${L('لا — تنشحن من ميناء الساحة', 'No, ship from the yard\'s port')}</option>${Object.keys(PSHORT).map(k => `<option value="${k}" ${v.ship_port === k ? 'selected' : ''}>${esc(L(PSHORT[k][0], PSHORT[k][1]))}</option>`).join('')}</select></label><div class="hint" id="moveInfo"></div></div>
     <div id="exList">${(v.extras || []).map(exRow).join('')}</div>
     <div class="acts" style="margin-top:8px">
-      <button type="button" class="btn sm" onclick="A.exAdd('${L('نقل السيارة من ... إلى ...', 'Car transfer from ... to ...')}')">+ ${L('نقل من مكان لمكان', 'Transfer point to point')}</button>
+      <button type="button" class="btn sm" onclick="A.moveStart()">+ ${L('نقل من مكان لمكان', 'Transfer point to point')}</button>
       <button type="button" class="btn sm" onclick="A.exAdd('FedEx ${L('للتايتل', 'for the title')}', 45)">+ FedEx</button>
       <button type="button" class="btn sm" onclick="A.exAdd('${L('تخزين', 'Storage')}')">+ ${L('تخزين', 'Storage')}</button>
       <button type="button" class="btn sm" onclick="A.exAdd('')">+ ${L('مصروف آخر', 'Other charge')}</button>
@@ -1887,7 +1885,8 @@ const A = {
     const dl = $('#yardDl'), f = $('#vf'); if (!dl || !f || !PD()) return;
     const au = f.elements.auction_name.value;
     dl.innerHTML = PD().yards.filter(y => !['Copart', 'IAAI'].includes(au) || y.a === au).sort(pmByPort(4)).map(y => `<option value="${esc(yLabel(y))}">${y.tow == null ? esc(L('بانتظار السعر', 'Waiting for price')) : ''}</option>`).join('');
-    const port = f.elements.us_port.value;
+    const port = f.elements.ship_port.value || f.elements.us_port.value;
+    A.moveInfo();
     if (port && !$('#yardInfo .ytiles')) $('#yardInfo').innerHTML = yardInfoHtml(PD().yards.find(y => yLabel(y) === $('#yardIn').value) || null, num(f.elements.cars_per_container.value) || 4, port);
   },
   yardPick(recalc) {
@@ -1907,7 +1906,7 @@ const A = {
     E.fin_inland_shipping.value = y.tow == null ? '' : pmTow(y);
     if (E.fin_shipping_cost_actual) E.fin_shipping_cost_actual.value = y.tow == null ? '' : r2(y.tow + pPort(sp || y.p).ocean[n] / n);
     $('#yardInfo').innerHTML = yardInfoHtml(y, n, sp);
-    A.calc();
+    A.moveInfo(); A.calc();
   },
   close() { $('#modal').innerHTML = ''; },
   lang() { S.lang = S.lang === 'ar' ? 'en' : 'ar'; localStorage.setItem('cop_lang', S.lang); rerender(); },
@@ -1929,12 +1928,27 @@ const A = {
   exAdd(d, a) { const box = $('#exList'); if (!box) return; box.insertAdjacentHTML('beforeend', exRow({ d, a })); const rows = box.querySelectorAll('.exr'), last = rows[rows.length - 1]; const inp = last.querySelector(d ? 'input[name=ex_a]' : 'input[name=ex_d]'); if (inp) inp.focus(); A.calc(); },
   exMove() {
     const f = $('#vf'); if (!f) return; const E = f.elements, to = E.ship_port.value, from = E.us_port.value;
-    if (!to || to === from) return;
-    const d = L('نقل من', 'Transfer from') + ' ' + pName(from || '') + ' ' + L('إلى', 'to') + ' ' + pName(to);
-    const rows = [...document.querySelectorAll('#exList .exr')], hit = rows.find(r => r.dataset.move);
-    if (hit) { hit.querySelector('input[name=ex_d]').value = d; return; }
-    A.exAdd(d); const all = document.querySelectorAll('#exList .exr'); all[all.length - 1].dataset.move = '1';
-    toast(L('اكتب تكلفة النقل في السطر الجديد تحت "نقل ومصاريف إضافية"', 'Enter the transfer cost in the new line under "Transfers and extra charges"'));
+    const hit = [...document.querySelectorAll('#exList .exr')].find(r => r.dataset.move);
+    if (!to || to === from) { if (hit && !num(hit.querySelector('input[name=ex_a]').value)) { hit.remove(); A.calc(); } A.moveInfo(); return; }
+    const d = L('نقل السيارة من', 'Car transfer from') + ' ' + pName(from || '') + ' ' + L('إلى', 'to') + ' ' + pName(to);
+    let row = hit;
+    if (row) row.querySelector('input[name=ex_d]').value = d;
+    else { A.exAdd(d); const all = document.querySelectorAll('#exList .exr'); row = all[all.length - 1]; row.dataset.move = '1'; }
+    const a = row.querySelector('input[name=ex_a]'); a.focus();
+    toast(L('اكتب تكلفة النقل', 'Enter the transfer cost') + ': ' + pName(from || '') + ' → ' + pName(to));
+    A.moveInfo();
+  },
+  moveStart() {
+    const f = $('#vf'); if (!f) return; const sel = f.elements.ship_port;
+    if (sel.value) { const hit = [...document.querySelectorAll('#exList .exr')].find(r => r.dataset.move); if (hit) return hit.querySelector('input[name=ex_a]').focus(); return A.exMove(); }
+    sel.scrollIntoView({ block: 'center' }); sel.focus(); sel.classList.add('flash'); setTimeout(() => sel.classList.remove('flash'), 1600);
+    toast(L('اختار الميناء اللي بتنقل له السيارة', 'Choose the port you are moving the car to'));
+  },
+  moveInfo() {
+    const f = $('#vf'), el = $('#moveInfo'); if (!f || !el) return; const E = f.elements, to = E.ship_port.value, from = E.us_port.value;
+    if (!to || to === from || !PD()) { el.innerHTML = ''; return; }
+    const n = num(E.cars_per_container.value) || 4, tow = num(E.fin_inland_shipping.value), oc = pPort(to) ? r2(pmOcean(to, n)) : num(E.fin_ocean_shipping.value);
+    el.innerHTML = `1. ${L('السحب', 'Towing')}: ${L('الساحة', 'yard')} → ${esc(pName(from || ''))} <b dir="ltr">${money(tow)}</b> &nbsp; 2. ${L('النقل', 'Transfer')}: ${esc(pName(from || ''))} → ${esc(pName(to))} <b>${L('اكتبه في السطر تحت', 'enter it in the line below')}</b> &nbsp; 3. ${L('البحري من', 'Ocean from')} ${esc(pName(to))} <b dir="ltr">${money(oc)}</b>`;
   },
   calc() {
     const vf = $('#vf'); if (!vf) return;
