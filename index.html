@@ -353,7 +353,7 @@ tr.sel{background:#fff7ed}
 .shiprow{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:12px;align-items:end}
 .yardin{position:relative}
 .yardin input{padding-left:36px;font-weight:700}
-.yardin::before{content:'🔍';position:absolute;left:11px;bottom:12px;font-size:14px;opacity:.7;pointer-events:none}
+.yardin::before{content:'';position:absolute;left:11px;bottom:12px;font-size:14px;opacity:.7;pointer-events:none}
 .shipbox .pseg{background:#fff}
 .shipbox .pseg button{min-width:44px;padding:9px 12px}
 .yhint{font-size:12px;color:var(--mut);margin-top:8px}
@@ -397,6 +397,14 @@ tr.sel{background:#fff7ed}
 .trd-l{font-size:11.5px;font-weight:800;color:var(--mut);margin-inline-end:4px}
 .trd-c{font-size:12px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:2px 8px}
 .trd-c b{direction:ltr;unicode-bidi:isolate}
+
+.trres{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:10px 14px;background:var(--soft)}
+.trres .rr{display:flex;justify-content:space-between;padding:4px 0;font-size:13.5px}
+.trres .rr.g b{color:var(--green)}.trres .rr.c b{color:var(--red)}
+.trres .rr.tot{border-top:1px solid var(--line);margin-top:6px;padding-top:8px;font-size:16px;font-weight:800}
+.trres .rr.tot.pos b{color:var(--green)}.trres .rr.tot.neg b{color:var(--red)}
+.icn{width:1.15em;height:1.15em;vertical-align:-.2em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex-shrink:0}
+.stat .ic .icn{width:22px;height:22px}.logo .icn{width:30px;height:30px;stroke:#fff}
 /* تجميع الحاويات */
 .sgp{border:1px solid var(--line);border-inline-start:5px solid var(--pc);border-radius:14px;padding:12px 14px;margin-top:12px}
 .sgp-h{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
@@ -509,6 +517,8 @@ const DB = (() => {
   };
 })();
 
+const ICN = {"chart": "<path d=\"M3 3v18h18\"/><path d=\"M7 15l4-4 3 3 5-6\"/>", "car": "<path d=\"M5 17h14v-5l-2-5H7l-2 5z\"/><circle cx=\"7.5\" cy=\"17\" r=\"1.5\"/><circle cx=\"16.5\" cy=\"17\" r=\"1.5\"/><path d=\"M5 12h14\"/>", "users": "<circle cx=\"9\" cy=\"8\" r=\"3\"/><path d=\"M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6\"/><path d=\"M16 4.5a3 3 0 0 1 0 6\"/><path d=\"M18 14c2 .7 3 2.9 3 6\"/>", "user": "<circle cx=\"12\" cy=\"8\" r=\"4\"/><path d=\"M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8\"/>", "cash": "<rect x=\"2\" y=\"6\" width=\"20\" height=\"12\" rx=\"2\"/><circle cx=\"12\" cy=\"12\" r=\"2.5\"/>", "phone": "<path d=\"M5 3h4l2 5-2.5 1.5a11 11 0 0 0 6 6L16 13l5 2v4a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z\"/>", "map": "<path d=\"M9 4l-6 2v14l6-2 6 2 6-2V4l-6 2z\"/><path d=\"M9 4v14M15 6v14\"/>", "receipt": "<path d=\"M6 2h12v20l-3-2-3 2-3-2-3 2z\"/><path d=\"M9 7h6M9 11h6M9 15h4\"/>", "clock": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/>", "settings": "<circle cx=\"12\" cy=\"12\" r=\"3\"/><path d=\"M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z\"/>", "lock": "<rect x=\"4\" y=\"11\" width=\"16\" height=\"10\" rx=\"2\"/><path d=\"M8 11V7a4 4 0 0 1 8 0v4\"/>", "search": "<circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"M20 20l-4-4\"/>", "home": "<path d=\"M3 11l9-8 9 8\"/><path d=\"M5 10v10h14V10\"/>", "menu": "<path d=\"M4 6h16M4 12h16M4 18h16\"/>", "edit": "<path d=\"M4 20h4L19 9l-4-4L4 16z\"/><path d=\"M14 6l4 4\"/>", "trash": "<path d=\"M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3\"/>", "check": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M8 12l3 3 5-6\"/>", "scale": "<path d=\"M12 3v18M5 21h14M6 7h12\"/><path d=\"M6 7l-3 7a3 3 0 0 0 6 0zM18 7l-3 7a3 3 0 0 0 6 0z\"/>", "wallet": "<rect x=\"3\" y=\"6\" width=\"18\" height=\"14\" rx=\"2\"/><path d=\"M16 13h2M3 10h18\"/>", "coins": "<ellipse cx=\"12\" cy=\"6\" rx=\"7\" ry=\"3\"/><path d=\"M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6\"/>", "trend": "<path d=\"M3 17l6-6 4 4 8-8\"/><path d=\"M15 7h6v6\"/>", "truck": "<path d=\"M2 6h11v10H2zM13 10h5l3 3v3h-8\"/><circle cx=\"6\" cy=\"18\" r=\"2\"/><circle cx=\"17\" cy=\"18\" r=\"2\"/>", "note": "<path d=\"M5 3h10l4 4v14H5z\"/><path d=\"M8 11h8M8 15h6\"/>", "globe": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18\"/>", "logout": "<path d=\"M15 4h4v16h-4M10 8l-4 4 4 4M6 12h11\"/>", "key": "<circle cx=\"8\" cy=\"15\" r=\"4\"/><path d=\"M11 12l9-9M17 6l3 3\"/>", "alert": "<path d=\"M12 3l10 18H2z\"/><path d=\"M12 10v5M12 18h.01\"/>", "ship": "<path d=\"M3 17l2 4h14l2-4M5 17V9h14v8M9 9V5h6v4\"/>", "anchor": "<circle cx=\"12\" cy=\"5\" r=\"2\"/><path d=\"M12 7v14M5 13a7 7 0 0 0 14 0M8 11h8\"/>", "file": "<path d=\"M6 2h9l5 5v15H6z\"/><path d=\"M14 2v6h6\"/>"};
+const ic = n => `<svg class="icn" viewBox="0 0 24 24" aria-hidden="true">${ICN[n] || ""}</svg>`;
 /* ---------------- الثوابت ---------------- */
 const ST = [
   { k: 'WON_PENDING_PAYMENT', ar: 'تم الشراء - بانتظار السداد', en: 'Won - Pending Payment', c: '#dc2626' },
@@ -530,15 +540,15 @@ const FIN = [
 ];
 const AUCTIONS = ['Copart', 'IAAI', 'Manheim', 'Other'];
 const PAY_METHODS = [
-  { k: 'paypal', ic: '🅿️', ar: 'PayPal', en: 'PayPal', ph: ['حساب PayPal المستخدم', 'PayPal account used'] },
-  { k: 'card', ic: '💳', ar: 'بطاقة (فيزا / ماستر)', en: 'Card (Visa / Mastercard)', ph: ['نوع البطاقة وآخر 4 أرقام، البنك', 'Card type, last 4 digits, bank'] },
-  { k: 'wire', ic: '🏦', ar: 'حوالة بنكية (SWIFT)', en: 'Bank wire (SWIFT)', ph: ['البنك المرسل، اسم المحوِّل', 'Sending bank, sender name'] },
-  { k: 'moneygram', ic: '🌐', ar: 'MoneyGram', en: 'MoneyGram', ph: ['اسم المرسل، المدينة', 'Sender name, city'] },
-  { k: 'wu', ic: '🟡', ar: 'Western Union', en: 'Western Union', ph: ['اسم المرسل، المدينة', 'Sender name, city'] },
-  { k: 'zelle', ic: '⚡', ar: 'Zelle', en: 'Zelle', ph: ['الحساب أو الإيميل المستخدم', 'Account or email used'] },
-  { k: 'agent', ic: '🤝', ar: 'وسيط / مكتب صرافة', en: 'Agent / exchange office', ph: ['اسم الوسيط أو المكتب', 'Agent or office name'] },
-  { k: 'cash', ic: '💵', ar: 'نقداً', en: 'Cash', ph: ['من استلم', 'Received by'] },
-  { k: 'other', ic: '➕', ar: 'أخرى', en: 'Other', ph: ['التفاصيل', 'Details'] }
+  { k: 'paypal', ic: '', ar: 'PayPal', en: 'PayPal', ph: ['حساب PayPal المستخدم', 'PayPal account used'] },
+  { k: 'card', ic: '', ar: 'بطاقة (فيزا / ماستر)', en: 'Card (Visa / Mastercard)', ph: ['نوع البطاقة وآخر 4 أرقام، البنك', 'Card type, last 4 digits, bank'] },
+  { k: 'wire', ic: '', ar: 'حوالة بنكية (SWIFT)', en: 'Bank wire (SWIFT)', ph: ['البنك المرسل، اسم المحوِّل', 'Sending bank, sender name'] },
+  { k: 'moneygram', ic: ic('globe'), ar: 'MoneyGram', en: 'MoneyGram', ph: ['اسم المرسل، المدينة', 'Sender name, city'] },
+  { k: 'wu', ic: '', ar: 'Western Union', en: 'Western Union', ph: ['اسم المرسل، المدينة', 'Sender name, city'] },
+  { k: 'zelle', ic: '', ar: 'Zelle', en: 'Zelle', ph: ['الحساب أو الإيميل المستخدم', 'Account or email used'] },
+  { k: 'agent', ic: '', ar: 'وسيط / مكتب صرافة', en: 'Agent / exchange office', ph: ['اسم الوسيط أو المكتب', 'Agent or office name'] },
+  { k: 'cash', ic: ic('cash'), ar: 'نقداً', en: 'Cash', ph: ['من استلم', 'Received by'] },
+  { k: 'other', ic: '', ar: 'أخرى', en: 'Other', ph: ['التفاصيل', 'Details'] }
 ];
 const PAY_FOR = [{ k: 'auction', ar: 'ثمن السيارة للمزاد', en: 'Auction (car + fees)' }, { k: 'shipping', ar: 'الشحن (AEC)', en: 'Shipping (AEC)' }, { k: 'towing', ar: 'السحب', en: 'Towing' }, { k: 'other', ar: 'أخرى', en: 'Other' }];
 const SRC_EX = { paypal: ['PayPal معيد', 'Moayed PayPal'], card: ['بطاقة معيد 5541', 'Moayed card 5541'], wire: ['حساب الشركة – مصرف الجمهورية', 'Company account – Jumhouria Bank'], moneygram: ['MoneyGram – منذر', 'MoneyGram – Monder'], wu: ['Western Union – منذر', 'Western Union – Monder'], zelle: ['Zelle – أحمد', 'Zelle – Ahmed'], agent: ['مكتب الصرافة – الاسم', 'Exchange office – name'], cash: ['نقداً – الاسم', 'Cash – name'], other: ['الاسم', 'Name'] };
@@ -556,6 +566,24 @@ const PAY_ST = [{ k: 'pending', ar: 'لم تُرسل بعد', en: 'Not sent yet'
 const psBadge = k => { const m = PAY_ST.find(x => x.k === k) || PAY_ST[1]; return `<span class="badge" style="--c:${m.c}">${esc(L(m.ar, m.en))}</span>`; };
 const FEE_PARTS = [{ k: 'transfer', ar: 'رسوم التحويل', en: 'Transfer fee' }, { k: 'bank', ar: 'رسوم البنك / البطاقة', en: 'Bank / card charges' }, { k: 'fx', ar: 'فرق سعر الصرف', en: 'Exchange-rate difference' }, { k: 'other', ar: 'أخرى', en: 'Other' }];
 const tCostD = v => (S.internal[v.id] || {}).tcostd || {};
+/* قواعد تكلفة الدفع حسب الطريقة — الافتراضيات من الإعدادات وتتعدّل لكل دفعة */
+const PAYDEF = () => ({ cust: num(S.settings.fee_cust ?? 1.5), paypal: num(S.settings.fee_paypal ?? 2.5), disc: num(S.settings.disc_copart ?? 3.5), card: num(S.settings.card_back ?? 0.08) });
+const HAND_METHODS = ['wire', 'moneygram', 'wu', 'agent', 'zelle', 'cash', 'other'];
+const DISC_METHODS = ['wire', 'moneygram', 'wu', 'agent'];
+const lastCardBack = () => { let best = null; Object.values(S.internal || {}).forEach(iv => Object.values(iv.tcostd || {}).forEach(d => { if (d && d.card_back != null && (!best || (d.at || '') > (best.at || ''))) best = d; })); return best ? best.card_back : PAYDEF().card; };
+/* يحسب نتيجة دفعة: الموجب ربح لنا، السالب خسارة. يرجع التفاصيل بالدولار */
+function payResult(method, payee, amount, charged, d) {
+  const R = num(d.rate) || num(S.settings.rate) || 1, a = num(amount);
+  const cardGain = method === 'card' ? a * num(d.card_back) / R : 0;
+  const ppCost = method === 'paypal' ? a * num(d.pp_pct) / 100 : 0;
+  const lydCost = HAND_METHODS.includes(method) ? num(d.lyd_cost) / R : 0;
+  const agent = HAND_METHODS.includes(method) ? num(d.agent_fee) : 0;
+  const other = num(d.other_cost);
+  const disc = DISC_METHODS.includes(method) && /copart/i.test(payee || '') ? a * num(d.disc_pct) / 100 : 0;
+  const legacy = d.method ? 0 : ['transfer', 'bank', 'fx', 'other'].reduce((x, k) => x + num(d[k]), 0);
+  const cost = ppCost + lydCost + agent + other + legacy, gain = cardGain + disc;
+  return { R, cardGain, ppCost, lydCost, agent, other: other + legacy, disc, cost, gain, net: num(charged) + gain - cost };
+}
 const RC_CHUNK = 700000, rcId = (vid, tid, i) => `${vid}_${tid}_${i}`;
 const pfName = k => { const m = PAY_FOR.find(x => x.k === k); return m ? L(m.ar, m.en) : (k || '—'); };
 const STAGES = [{ k: 'auction', ar: 'المزاد', en: 'Auction' }, { k: 'warehouse', ar: 'المستودع', en: 'Warehouse' }, { k: 'arrival', ar: 'الوصول', en: 'Arrival' }];
@@ -598,7 +626,12 @@ const CODE_START = 4478;
 const nextCode = () => { const used = S.customers.map(c => parseInt(c.code, 10)).filter(n => n >= 1000 && n <= 9999); let n = Math.max(CODE_START - 1, ...used) + 1; if (n > 9999) { n = CODE_START; while (used.includes(n)) n++; } return String(n); };
 const statusSince = v => { const h = v.status_history || []; return h.length ? h[h.length - 1].at : (v.purchase_date || v.created_at); };
 const totalCost = v => FIN.reduce((s, f) => s + num((v.fin || {})[f.k]), 0);
-const actCost = v => { const iv = S.internal[v.id]; return num(iv ? iv.shipping_cost_actual : (v.fin || {}).shipping_cost_actual); };
+const shipPays = v => (v.transfers || []).filter(t => ['shipping', 'towing'].includes(t.purpose));
+const shipPaid = v => shipPays(v).reduce((a, t) => a + num(t.amount), 0);
+const actCost = v => { const p = shipPaid(v); if (p > 0) return p; const iv = S.internal[v.id]; return num(iv ? iv.shipping_cost_actual : (v.fin || {}).shipping_cost_actual); };
+/* الربح نهائي فقط بعد تسجيل دفعة الشحن (غير معلّقة) */
+const profitFinal = v => shipPays(v).some(t => t.purpose === 'shipping' && t.status !== 'pending');
+const trResult = v => num((v.fin || {}).transfer_commission) - tCost(v);
 const tCostMap = v => (S.internal[v.id] || {}).tcost || {};
 const tCost = v => Object.values(tCostMap(v)).reduce((a, b) => a + num(b), 0);
 const profit = v => { const f = v.fin || {}; const act = actCost(v); return num(f.office_commission) + num(f.transfer_commission) - tCost(v) + (act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0); };
@@ -627,7 +660,7 @@ const vBal = v => totalCost(v) - vPaid(v.id);
 const cAgg = id => S.agg.c[id] || { cost: 0, paid: 0, bal: 0, count: 0, active: 0 };
 const advAmt = v => v.auction_paid_by === 'office' ? num((v.fin || {}).bid_price) + num((v.fin || {}).auction_fees) : 0;
 const advOut = v => { const a = advAmt(v); return a > 0 ? Math.max(0, Math.min(a, vBal(v))) : 0; };
-const advTag = v => { const o = advOut(v); return o > 0.009 ? ` <span class="advtag">💸 ${L('سلفة', 'Advance')} ${money(o)}</span>` : (advAmt(v) > 0 ? ` <span class="advtag ok">✓ ${L('سلفة مسددة', 'Advance repaid')}</span>` : ''); };
+const advTag = v => { const o = advOut(v); return o > 0.009 ? ` <span class="advtag">${L('سلفة', 'Advance')} ${money(o)}</span>` : (advAmt(v) > 0 ? ` <span class="advtag ok">✓ ${L('سلفة مسددة', 'Advance repaid')}</span>` : ''); };
 function advList() {
   const lim = num(S.settings.advDays) || 7;
   return S.vehicles.filter(v => advOut(v) > 0.009).map(v => ({ v, o: advOut(v), d: daysSince(v.auction_paid_date || v.purchase_date) })).filter(x => x.d >= lim).sort((a, b) => b.d - a.d);
@@ -692,7 +725,7 @@ const roleName = r => r === 'admin' ? L('المدير الرئيسي', 'Main adm
 const isAdminEmail = e => String(e || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
 const isAdmin = () => (LOCAL && S.user?.email === 'demo@local') || isAdminEmail(S.user?.email);
 const can = p => p === 'admin' ? isAdmin() : (isAdmin() || !!(S.me && S.me.perms && S.me.perms[p]));
-const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', users: 'admin' };
+const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', users: 'admin', profit: 'profit' };
 const NEED = {
   profList: 'profit', shipSelect: 'edit', vForm: 'edit', vSave: 'edit', trForm: 'edit', trSave: 'edit', trDel: 'edit', rcOpen: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
   pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses',
@@ -821,21 +854,21 @@ function vPorts() {
       ${others.length ? `<div class="hint">${L('بعض الساحات هنا تذهب إلى', 'Some yards here go to')} ${others.map(pName).join(L(' و', ' and '))}</div>` : ''}
       ${!ys.length ? `<div class="hint">${L('لا يوجد سعر سحب لهذه الولاية في قائمة Atlantic Express. اسألهم قبل الشراء من هنا.', 'No towing route in the Atlantic Express list. Ask them before bidding here.')}</div>` :
       `<div class="pmbest">${priced.length ? `${L('أرخص ساحة', 'Cheapest yard')}: ${esc(priced[0].n)} (${priced[0].a})<br><b style="font-size:18px" dir="ltr">${usd0(pmTotal(priced[0], n))}</b> ${L('للسيارة إلى الخمس', 'per car to Khoms')}` : L('أسعار السحب لهذه الولاية لم تصل بعد.', 'Towing prices for this state are still pending.')}</div>
-      <button class="btn sm" style="margin-top:10px" onclick="A.pmPrint('state')">🖨️ ${L('طباعة / PDF', 'Print / PDF')}</button>${pmYardList(ys, n, false)}`}`;
+      <button class="btn sm" style="margin-top:10px" onclick="A.pmPrint('state')">${L('طباعة / PDF', 'Print / PDF')}</button>${pmYardList(ys, n, false)}`}`;
   } else if (P.port) {
     const p = pPort(P.port), ys = D.yards.filter(y => y.p === p.id).sort(pmSort(n));
     det = `<div class="pmh"><span class="pdot" style="background:${PCLR[p.id]}"></span>${L('مستودع', '')} ${esc(pName(p.id))} ${L('', 'warehouse')}</div>
       <div class="hint">${ys.length} ${L('ساحة تُشحن من هنا', 'yards ship from here')} (${ys.filter(y => y.tow != null).length} ${L('بسعر سحب', 'with a towing price')}). ${L('البحري', 'Ocean')}: <b dir="ltr">${usd0(pmOceanC(p.id, n))}</b> ${L('للحاوية', 'per container')}، <b dir="ltr">${usd0(pmOcean(p.id, n))}</b> ${L('للسيارة', 'per car')} (${n} ${L('سيارات', 'cars')}).</div>
-      <button class="btn sm" style="margin-top:10px" onclick="A.pmPrint('port')">🖨️ ${L('طباعة / PDF', 'Print / PDF')}</button>${pmYardList(ys, n, true)}`;
+      <button class="btn sm" style="margin-top:10px" onclick="A.pmPrint('port')">${L('طباعة / PDF', 'Print / PDF')}</button>${pmYardList(ys, n, true)}`;
   } else det = `<div class="pmh">${L('اختر ولاية', 'Pick a state')}</div><div class="hint">${L('اضغط على أي ولاية لتشوف كل ساحات Copart و IAAI فيها، والميناء اللي تروح له، وسعر السحب والتكلفة الكاملة للسيارة إلى الخمس. أو اضغط على أي ميناء.', 'Tap a state to see every Copart and IAAI yard in it, its port, the towing price and the full cost per car to Khoms. Or tap a port.')}</div>`;
   const tb = pmTableHtml();
   const cards = D.ports.map(p => { const sts = D.states.filter(s => s.p === p.id).map(s => s.a);
     return `<button class="card pcard${P.port === p.id ? ' on' : ''}" onclick="A.pmPort('${p.id}')"><b><span class="pdot" style="background:${PCLR[p.id]}"></span>${esc(pName(p.id))}</b><div class="sub">${ltr(usd0(pmOcean(p.id, n)))}/${L('سيارة', 'car')} · ${ltr(usd0(pmOceanC(p.id, n)))}/${L('حاوية', 'container')}</div><div class="sub">${D.yards.filter(y => y.p === p.id).length} ${L('ساحة', 'yards')}</div><div class="tags">${sts.map(a => `<span>${a}</span>`).join('')}</div></button>`; }).join('');
-  return `<div class="top"><div><h1>🗺️ ${L('خريطة موانئ الشحن إلى الخمس', 'Khoms Port Routing Map')}</h1><div class="hint" style="margin-top:0">${L('من أي ميناء تُشحن كل ساحة Copart و IAAI، مع سعر السحب والتكلفة الكاملة للسيارة.', 'Which port each Copart and IAAI yard ships from, with the towing price and the full cost per car.')}</div></div>
+  return `<div class="top"><div><h1>${L('خريطة موانئ الشحن إلى الخمس', 'Khoms Port Routing Map')}</h1><div class="hint" style="margin-top:0">${L('من أي ميناء تُشحن كل ساحة Copart و IAAI، مع سعر السحب والتكلفة الكاملة للسيارة.', 'Which port each Copart and IAAI yard ships from, with the towing price and the full cost per car.')}</div></div>
     <div><div class="hint" style="margin:0 0 4px">${L('عدد السيارات في الحاوية 40 قدم', 'Cars per 40ft container')}</div>${seg}</div></div>
   <div class="pmwrap"><div class="card pmapbox">${pmMapSvg(focus, P.st, false)}</div>
-    <div class="pmside"><div class="card"><h3>🚢 ${L('الشحن البحري إلى الخمس', 'Ocean freight to Khoms')}</h3>${ocean}</div><div class="card">${det}</div></div></div>
-  <div class="card"><div class="row-b"><h3>${L('البحث عن ساحة', 'Yard finder')}</h3><button class="btn sm" onclick="A.pmPrint('list')">🖨️ ${L('طباعة القائمة / PDF', 'Print list / PDF')}</button></div>
+    <div class="pmside"><div class="card"><h3>${L('الشحن البحري إلى الخمس', 'Ocean freight to Khoms')}</h3>${ocean}</div><div class="card">${det}</div></div></div>
+  <div class="card"><div class="row-b"><h3>${L('البحث عن ساحة', 'Yard finder')}</h3><button class="btn sm" onclick="A.pmPrint('list')">${L('طباعة القائمة / PDF', 'Print list / PDF')}</button></div>
     <div class="pmtools"><input id="pmQ" type="search" value="${esc(P.q)}" placeholder="${L('ابحث عن ساحة أو ولاية، مثلاً Dallas أو TX', 'Search a yard or state, e.g. Dallas, TX')}" oninput="A.pmQ(this.value)" dir="ltr">
       <select onchange="A.pmA(this.value)"><option value="">${L('كل المزادات', 'All auctions')}</option>${['Copart', 'IAAI'].map(a => `<option ${P.a === a ? 'selected' : ''}>${a}</option>`).join('')}</select>
       ${P.port ? `<span class="pchip"><span class="pdot" style="background:${PCLR[P.port]}"></span>${esc(pName(P.port))} ${L('فقط', 'only')}<button onclick="A.pmPort('${P.port}')" aria-label="${L('إزالة', 'Clear')}">×</button></span>` : ''}
@@ -872,8 +905,8 @@ function yardInfoHtml(y, n, port) {
   const t = [tile(L('ميناء الشحن', 'US port'), `<i class="pdot" style="background:${PCLR[pid]};margin:0"></i>${esc(pName(pid))}`, 'port')];
   if (y && y.tow != null) t.push(tile(L('السحب للميناء', 'Towing'), money(pmTow(y))));
   t.push(tile(L('البحري للسيارة', 'Ocean / car') + ` (${n})`, money(r2(oc))));
-  if (y && y.tow != null) { t.push(tile(L('الإجمالي للسيارة', 'Total / car'), money(r2(pmTotal(y, n))), 'tot')); t.push(tile('🔒 ' + L('تكلفتنا', 'Our cost'), money(r2(pmCost(y, n))), 'own pf')); }
-  return `<div class="ytiles">${t.join('')}</div>` + (y && y.tow == null ? `<div class="ywarn">⚠️ ${L('هذه الساحة ما عندهاش سعر سحب بعد إلى', 'No towing price yet from this yard to')} ${esc(pName(pid))}. ${L('تعبّى الشحن البحري فقط — اكتب السحب بيدك.', 'Only ocean was filled — enter towing by hand.')}</div>` : `<div class="yhint">✓ ${L('تعبّى الشحن الداخلي والبحري في الحساب المالي تحت. تقدر تعدّلهم.', 'Inland and ocean shipping were filled in below. You can still edit them.')}</div>`);
+  if (y && y.tow != null) { t.push(tile(L('الإجمالي للسيارة', 'Total / car'), money(r2(pmTotal(y, n))), 'tot')); t.push(tile('' + L('تكلفتنا', 'Our cost'), money(r2(pmCost(y, n))), 'own pf')); }
+  return `<div class="ytiles">${t.join('')}</div>` + (y && y.tow == null ? `<div class="ywarn">${L('هذه الساحة ما عندهاش سعر سحب بعد إلى', 'No towing price yet from this yard to')} ${esc(pName(pid))}. ${L('تعبّى الشحن البحري فقط — اكتب السحب بيدك.', 'Only ocean was filled — enter towing by hand.')}</div>` : `<div class="yhint">✓ ${L('تعبّى الشحن الداخلي والبحري في الحساب المالي تحت. تقدر تعدّلهم.', 'Inland and ocean shipping were filled in below. You can still edit them.')}</div>`);
 }
 
 /* ---------------- الهيكل والتنقل ---------------- */
@@ -885,27 +918,27 @@ function parseRoute() {
 function shell(body) {
   const act = { vehicle: 'vehicles', customer: 'customers' }[S.route] || S.route;
   const late = lateList().length;
-  let nav = [['dashboard', '📊', L('لوحة التحكم', 'Dashboard'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['payments', '💵', L('الدفعات', 'Payments')], ['collect', '📞', L('التحصيل', 'Collections'), collectList().filter(x => x.age >= 30).length], ['ports', '🗺️', L('خريطة الموانئ', 'Port map')], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')]];
+  let nav = [['dashboard', ic('chart'), L('لوحة التحكم', 'Dashboard'), late], ['vehicles', ic('car'), L('السيارات', 'Vehicles')], ['customers', ic('users'), L('الزبائن', 'Customers')], ['payments', ic('cash'), L('الدفعات', 'Payments')], ['collect', ic('phone'), L('التحصيل', 'Collections'), collectList().filter(x => x.age >= 30).length], ['ports', ic('map'), L('خريطة الموانئ', 'Port map')], ['profit', ic('trend'), L('الأرباح', 'Profit')], ['expenses', ic('receipt'), L('المصاريف', 'Expenses')], ['logs', ic('clock'), L('سجل العمليات', 'Activity log')], ['settings', ic('settings'), L('الإعدادات', 'Settings')]];
   const okR = r => !ROUTE_PERM[r] || can(ROUTE_PERM[r]);
-  if (isAdmin()) nav.push(['users', '🔐', L('المستخدمين', 'Users')]);
+  if (isAdmin()) nav.push(['users', ic('lock'), L('المستخدمين', 'Users')]);
   for (let k = nav.length - 1; k >= 0; k--) if (!okR(nav[k][0])) nav.splice(k, 1);
-  const bn = [['dashboard', '🏠', L('الرئيسية', 'Home'), late], ['vehicles', '🚗', L('السيارات', 'Vehicles')], ['customers', '👥', L('الزبائن', 'Customers')], ['collect', '📞', L('التحصيل', 'Collect'), nav[4][3]]];
-  const inMore = ['ports', 'payments', 'expenses', 'logs', 'settings', 'users'].includes(act);
+  const bn = [['dashboard', ic('home'), L('الرئيسية', 'Home'), late], ['vehicles', ic('car'), L('السيارات', 'Vehicles')], ['customers', ic('users'), L('الزبائن', 'Customers')], ['collect', ic('phone'), L('التحصيل', 'Collect'), nav[4][3]]];
+  const inMore = ['ports', 'profit', 'payments', 'expenses', 'logs', 'settings', 'users'].includes(act);
   return `<header class="mtop"><img class="mlogo" src="logo-light.png" alt="AXS"><b style="font-size:14px">${esc(S.settings.office)}</b><button onclick="A.lang()">${L('EN', 'ع')}</button></header>
   <nav class="bnav">${bn.map(n => `<a href="#/${n[0]}" class="${act === n[0] ? 'on' : ''}"><i>${n[1]}</i>${n[2]}${n[3] ? `<span class="dotc">${n[3]}</span>` : ''}</a>`).join('')}
-    <a href="javascript:A.more()" class="${inMore ? 'on' : ''}"><i>☰</i>${L('المزيد', 'More')}</a></nav>
+    <a href="javascript:A.more()" class="${inMore ? 'on' : ''}"><i>${ic('menu')}</i>${L('المزيد', 'More')}</a></nav>
   <button class="fab" onclick="A.quick()" aria-label="${L('إضافة', 'Add')}">+</button>
   <div class="layout">
   <aside class="side">
     <div class="brand withlogo"><img class="blogo" src="logo-light.png" alt="AXS"><small>${esc(S.settings.office)}</small></div>
     <nav class="nav">${nav.map(n => `<a href="#/${n[0]}" class="${act === n[0] ? 'on' : ''}">${n[1]} <span>${n[2]}</span>${n[3] ? `<b class="cnt">${n[3]}</b>` : ''}</a>`).join('')}
-    <a href="#/track" target="_blank">🔎 <span>${L('صفحة التتبع', 'Tracking page')}</span></a></nav>
+    <a href="#/track" target="_blank">${ic('search')}<span>${L('صفحة التتبع', 'Tracking page')}</span></a></nav>
     <div class="side-foot"><span class="em">${esc(S.me?.name || S.user?.email || '')}<br><small>${esc(roleName(isAdmin() ? 'admin' : S.me?.role))}</small></span>
       <button onclick="A.lang()">${L('English', 'العربية')}</button>
       ${LOCAL ? '' : `<button onclick="A.logout()">${L('تسجيل الخروج', 'Sign out')}</button>`}</div>
   </aside>
   <main class="main">
-    ${LOCAL ? `<div class="banner"><span>⚠️ ${L('وضع تجريبي: البيانات محفوظة في هذا المتصفح فقط. أضف إعدادات Firebase داخل الملف للتشغيل الفعلي.', 'Demo mode: data is saved in this browser only. Add your Firebase config in the file to go live.')}</span></div>` : ''}
+    ${LOCAL ? `<div class="banner"><span>${L('وضع تجريبي: البيانات محفوظة في هذا المتصفح فقط. أضف إعدادات Firebase داخل الملف للتشغيل الفعلي.', 'Demo mode: data is saved in this browser only. Add your Firebase config in the file to go live.')}</span></div>` : ''}
     ${body}
   </main></div>`;
 }
@@ -913,8 +946,8 @@ function render() {
   if (!S.user) return;
   const ae = document.activeElement, fid = ae && ae.id;
   let sel = null; try { if (fid && ae.selectionStart != null) sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) { }
-  let V = { vehicles: vVehicles, vehicle: vVehicle, customers: vCustomers, customer: vCustomer, payments: vPayments, collect: vCollect, expenses: vExpenses, logs: vLogs, settings: vSettings, users: vUsers, ports: vPorts }[S.route] || vDashboard;
-  if (ROUTE_PERM[S.route] && !can(ROUTE_PERM[S.route])) V = () => `<div class="card empty">🔒 ${L('ما عندكش صلاحية لهذي الصفحة', 'You don’t have access to this page')}</div>`;
+  let V = { vehicles: vVehicles, vehicle: vVehicle, customers: vCustomers, customer: vCustomer, payments: vPayments, collect: vCollect, expenses: vExpenses, logs: vLogs, settings: vSettings, users: vUsers, ports: vPorts, profit: vProfit }[S.route] || vDashboard;
+  if (ROUTE_PERM[S.route] && !can(ROUTE_PERM[S.route])) V = () => `<div class="card empty">${L('ما عندكش صلاحية لهذي الصفحة', 'You don’t have access to this page')}</div>`;
   $('#app').innerHTML = shell(V());
   applyPerms();
   if (fid) { const el = document.getElementById(fid); if (el) { el.focus(); if (sel) try { el.setSelectionRange(...sel); } catch (e) { } } }
@@ -927,30 +960,27 @@ function vDashboard() {
   const V = S.vehicles, late = lateList();
   const debts = S.customers.reduce((s, c) => s + Math.max(0, cAgg(c.id).bal), 0);
   const cards = [
-    [L('السيارات النشطة', 'Active vehicles'), V.filter(v => v.status !== 'DELIVERED').length, '🚗', '#2563eb'],
-    [L('في البحر', 'At sea'), cnt('LOADED_SHIPPED'), '🚢', '#0891b2'],
-    [L('وصلت الميناء المحلي', 'At local port'), cnt('ARRIVED_LOCAL_PORT'), '⚓', '#059669'],
-    [L('الربح المحقق (استلمته)', 'Realized profit (collected)'), money(V.reduce((s, v) => s + realized(v), 0)), '💰', '#f97316', 'pf', "A.profList('done')"],
-    [L('ربح منتظر (الزبون ما خلّصش)', 'Pending profit (unpaid)'), money(V.reduce((s, v) => s + pending(v), 0)), '⏳', '#a16207', 'pf', "A.profList('wait')"],
-    [L('صافي الربح المحقق (بعد المصاريف)', 'Net realized profit (after expenses)'), money(V.reduce((s, v) => s + realized(v), 0) - totalExp(S.expenses)), '📈', '#16a34a', can('expenses') ? 'pf' : 'pf hide'],
-    [L('ديون على الزبائن', 'Customer debts'), money(debts), '⚠️', '#dc2626'],
-    [L('فلوس المكتب عند الزبائن (سلف)', 'Office advances outstanding'), money(V.reduce((s, v) => s + advOut(v), 0)), '💸', '#ea580c']
+    [L('السيارات النشطة', 'Active vehicles'), V.filter(v => v.status !== 'DELIVERED').length, ic('car'), '#2563eb'],
+    [L('في البحر', 'At sea'), cnt('LOADED_SHIPPED'), ic('ship'), '#0891b2'],
+    [L('وصلت الميناء المحلي', 'At local port'), cnt('ARRIVED_LOCAL_PORT'), ic('anchor'), '#059669'],
+    [L('ديون على الزبائن', 'Customer debts'), money(debts), ic('alert'), '#dc2626'],
+    [L('فلوس المكتب عند الزبائن (سلف)', 'Office advances outstanding'), money(V.reduce((s, v) => s + advOut(v), 0)), ic('wallet'), '#ea580c']
   ];
   const adv = advList();
   const debtors = S.customers.map(c => ({ c, b: cAgg(c.id).bal })).filter(x => x.b > 0.009).sort((a, b) => b.b - a.b).slice(0, 6);
   const recent = [...V].sort((a, b) => (b.created_at || '').localeCompare(a.created_at || '')).slice(0, 6);
   return `<div class="top"><h1>${L('لوحة التحكم', 'Dashboard')}</h1>
     <div class="acts"><button class="btn pri" onclick="A.vForm()">+ ${L('سيارة جديدة', 'New vehicle')}</button><button class="btn" onclick="A.pForm()">+ ${L('دفعة', 'Payment')}</button><button class="btn" onclick="A.cForm()">+ ${L('زبون', 'Customer')}</button></div></div>
-  ${late.length ? `<div class="alert"><div class="alert-h">🔴 ${L('تنبيه غرامات التأخير', 'Late fee alert')} — ${late.length} ${L('سيارة لم تُسدَّد للمزاد بعد مرور', 'vehicle(s) still unpaid after')} ${num(S.settings.lateDays) || 2} ${L('يوم أو أكثر (خطر Late / Storage fees)', 'days or more (late/storage fee risk)')}</div>
+  ${late.length ? `<div class="alert"><div class="alert-h">${L('تنبيه غرامات التأخير', 'Late fee alert')} — ${late.length} ${L('سيارة لم تُسدَّد للمزاد بعد مرور', 'vehicle(s) still unpaid after')} ${num(S.settings.lateDays) || 2} ${L('يوم أو أكثر (خطر Late / Storage fees)', 'days or more (late/storage fee risk)')}</div>
     ${late.map(x => `<a class="alert-row" href="#/vehicle/${x.v.id}"><b>${esc(vt(x.v))}</b><span class="mono">${x.v.lot_number ? 'LOT ' + esc(x.v.lot_number) : esc(x.v.vin)}</span><span>${esc(x.v.auction_name || '')}</span><span>${esc(custName(x.v.customer_id))}</span><span class="pill-red">${x.d} ${L('يوم', 'days')}</span></a>`).join('')}</div>` : ''}
-  ${adv.length ? `<div class="alert orange"><div class="alert-h">💸 ${L('سلف متأخرة', 'Overdue advances')} — ${adv.length} ${L('سيارة دفعنا ثمنها للمزاد من فلوس المكتب ومضى عليها', 'car(s) paid by the office, unpaid by customer for')} ${num(S.settings.advDays) || 7} ${L('يوم أو أكثر', 'days or more')}</div>
+  ${adv.length ? `<div class="alert orange"><div class="alert-h">${L('سلف متأخرة', 'Overdue advances')} — ${adv.length} ${L('سيارة دفعنا ثمنها للمزاد من فلوس المكتب ومضى عليها', 'car(s) paid by the office, unpaid by customer for')} ${num(S.settings.advDays) || 7} ${L('يوم أو أكثر', 'days or more')}</div>
     ${adv.map(x => `<a class="alert-row" href="#/vehicle/${x.v.id}"><b>${esc(custName(x.v.customer_id))}</b><span>${esc(vt(x.v))}</span><span class="mono">${esc(x.v.vin.slice(-6))}</span><b class="neg">${money(x.o)}</b><span class="pill-or" style="margin-inline-start:auto">${x.d} ${L('يوم', 'days')}</span></a>`).join('')}</div>` : ''}
   <div class="stats">${cards.filter(c => !(c[4] || '').includes('hide')).map(c => `<div class="card stat ${c[4] || ''} ${c[5] ? 'clk' : ''}" style="--c:${c[3]}"${c[5] ? ` role="button" tabindex="0" onclick="${c[5]}" onkeydown="if(event.key==='Enter'){${c[5]}}" title="${L('اضغط للتفاصيل', 'Click for details')}"` : ''}><div class="ic">${c[2]}</div><div><div class="k">${c[0]}</div><div class="v">${c[1]}</div></div></div>`).join('')}</div>
   <div class="two">
     <div class="card"><h3>${L('السيارات حسب المرحلة', 'Vehicles by stage')}</h3>
       ${ST.map(s => { const n = cnt(s.k); return `<a class="sbar" href="javascript:A.goStatus('${s.k}')"><span>${esc(L(s.ar, s.en))}</span><div class="bar"><i style="width:${V.length ? n / V.length * 100 : 0}%;background:${s.c}"></i></div><b>${n}</b></a>`; }).join('')}</div>
-    <div class="card"><div class="row-b"><h3>${L('أعلى المبالغ المتبقية على الزبائن', 'Top customer balances')}</h3><a href="#/collect" class="btn sm">📞 ${L('قائمة التحصيل', 'Collections')}</a></div>
-      ${debtors.length ? `<table><tbody>${debtors.map(x => `<tr class="click" onclick="location.hash='#/customer/${x.c.id}'"><td><b>${esc(x.c.full_name)}</b><div class="sub">${esc(x.c.city || '')}</div></td><td class="neg" style="text-align:end">${money(x.b)}</td></tr>`).join('')}</tbody></table>` : `<div class="empty">${L('لا توجد ديون 🎉', 'No outstanding balances 🎉')}</div>`}</div>
+    <div class="card"><div class="row-b"><h3>${L('أعلى المبالغ المتبقية على الزبائن', 'Top customer balances')}</h3><a href="#/collect" class="btn sm">${L('قائمة التحصيل', 'Collections')}</a></div>
+      ${debtors.length ? `<table><tbody>${debtors.map(x => `<tr class="click" onclick="location.hash='#/customer/${x.c.id}'"><td><b>${esc(x.c.full_name)}</b><div class="sub">${esc(x.c.city || '')}</div></td><td class="neg" style="text-align:end">${money(x.b)}</td></tr>`).join('')}</tbody></table>` : `<div class="empty">${L('لا توجد ديون ', 'No outstanding balances ')}</div>`}</div>
   </div>
   <div class="card"><div class="row-b"><h3>${L('آخر السيارات المضافة', 'Latest vehicles')}</h3><a href="#/vehicles" class="btn sm">${L('عرض الكل', 'View all')}</a></div>${vTable(recent)}</div>`;
 }
@@ -962,7 +992,7 @@ function vTable(list, sel) {
   const allOn = sel && list.every(v => S.sel.has(v.id));
   return `<div class="tw dt"><table><thead><tr>${sel ? `<th class="cb"><input type="checkbox" ${allOn ? 'checked' : ''} onchange="A.selAll(this.checked)" title="${L('تحديد الكل', 'Select all')}"></th>` : ''}<th>${L('السيارة', 'Vehicle')}</th><th>VIN</th><th>${L('اللوت', 'Lot')}</th><th>${L('الزبون', 'Customer')}</th><th>${L('الحالة', 'Status')}</th><th>${L('الإجمالي', 'Total')}</th><th>${L('المتبقي', 'Balance')}</th><th>${L('في المرحلة', 'In stage')}</th></tr></thead><tbody>
   ${list.map(v => { const b = vBal(v); return `<tr class="click ${lateIds.has(v.id) ? 'late' : ''} ${sel && S.sel.has(v.id) ? 'sel' : ''}" onclick="location.hash='#/vehicle/${v.id}'">
-    ${sel ? `<td class="cb" onclick="event.stopPropagation()"><input type="checkbox" ${S.sel.has(v.id) ? 'checked' : ''} onchange="A.selT('${v.id}',this.checked)"></td>` : ''}<td><b>${esc(vt(v))}</b>${advTag(v)}<div class="sub">${v.trim ? esc(v.trim) + ' · ' : ''}${esc(v.auction_name || '')}${v.color ? ' · ' + esc(v.color) : ''}${v.container_number ? ' · 📦 ' + esc(v.container_number) : ''}</div></td>
+    ${sel ? `<td class="cb" onclick="event.stopPropagation()"><input type="checkbox" ${S.sel.has(v.id) ? 'checked' : ''} onchange="A.selT('${v.id}',this.checked)"></td>` : ''}<td><b>${esc(vt(v))}</b>${advTag(v)}<div class="sub">${v.trim ? esc(v.trim) + ' · ' : ''}${esc(v.auction_name || '')}${v.color ? ' · ' + esc(v.color) : ''}${v.container_number ? ' · ' + esc(v.container_number) : ''}</div></td>
     <td class="mono">${esc(v.vin)}</td><td class="mono">${esc(v.lot_number || '—')}</td><td>${esc(custName(v.customer_id))}</td>
     <td>${badge(v.status)}</td><td>${money(totalCost(v))}</td><td class="${b > 0.009 ? 'neg' : 'pos'}">${money(b)}</td>
     <td>${daysSince(statusSince(v))} ${L('يوم', 'd')}</td></tr>`; }).join('')}</tbody></table></div>
@@ -970,8 +1000,8 @@ function vTable(list, sel) {
     ${sel ? `<label class="mcb" onclick="event.stopPropagation()"><input type="checkbox" ${on ? 'checked' : ''} onchange="A.selT('${v.id}',this.checked)"></label>` : ''}
     <div class="mc-h"><b>${esc(vt(v))}</b>${badge(v.status)}</div>
     <div class="mc-s mono">${esc(v.vin)}${v.lot_number ? ' · LOT ' + esc(v.lot_number) : ''}</div>
-    <div class="mc-r"><span>👤 ${esc(custName(v.customer_id))}</span><b class="${b > 0.009 ? 'neg' : 'pos'}">${money(b)}</b></div>
-    <div class="mc-f">${advTag(v)}${v.container_number ? `<span>📦 ${esc(v.container_number)}</span>` : ''}<span>⏱ ${daysSince(statusSince(v))} ${L('يوم في المرحلة', 'days in stage')}</span></div></div>`; }).join('')}</div>`;
+    <div class="mc-r"><span>${esc(custName(v.customer_id))}</span><b class="${b > 0.009 ? 'neg' : 'pos'}">${money(b)}</b></div>
+    <div class="mc-f">${advTag(v)}${v.container_number ? `<span>${esc(v.container_number)}</span>` : ''}<span>${daysSince(statusSince(v))} ${L('يوم في المرحلة', 'days in stage')}</span></div></div>`; }).join('')}</div>`;
 }
 function filteredVehicles() {
   const q = S.f.q.trim().toLowerCase();
@@ -979,7 +1009,7 @@ function filteredVehicles() {
     (!q || [v.vin, v.lot_number, v.make, v.model, v.year, v.container_number, v.booking_number, custName(v.customer_id), custCode(v.customer_id), '#' + custCode(v.customer_id)].join(' ').toLowerCase().includes(q)))
     .sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
 }
-const bulkBar = () => !can('edit') ? '' : !S.sel.size ? `<div class="hint" style="margin:0 0 8px">☑️ ${L('حدد أكثر من سيارة (مثلاً ابحث برقم الحاوية ثم حدد الكل) لتحديث مرحلتها أو رقم حاويتها مرة وحدة.', 'Select several vehicles (e.g. search a container number, then select all) to update their stage or container at once.')}</div>` :
+const bulkBar = () => !can('edit') ? '' : !S.sel.size ? `<div class="hint" style="margin:0 0 8px">${L('حدد أكثر من سيارة (مثلاً ابحث برقم الحاوية ثم حدد الكل) لتحديث مرحلتها أو رقم حاويتها مرة وحدة.', 'Select several vehicles (e.g. search a container number, then select all) to update their stage or container at once.')}</div>` :
   `<div class="bulk"><b>${S.sel.size} ${L('سيارة محددة', 'selected')}</b>
    <select id="bkSt"><option value="">${L('— بدون تغيير المرحلة —', '— keep stage —')}</option>${ST.map(s => `<option value="${s.k}">${esc(L(s.ar, s.en))}</option>`).join('')}</select>
    <input id="bkCt" placeholder="${L('رقم الحاوية (اختياري)', 'Container # (optional)')}" dir="ltr"><input id="bkBk" placeholder="${L('رقم الحجز (اختياري)', 'Booking # (optional)')}" dir="ltr">
@@ -987,9 +1017,9 @@ const bulkBar = () => !can('edit') ? '' : !S.sel.size ? `<div class="hint" style
 const vListInner = () => { const l = filteredVehicles(); return bulkBar() + `<div class="sub" style="margin-bottom:8px">${l.length} ${L('سيارة', 'vehicles')} · ${L('الإجمالي', 'Total')}: ${money(l.reduce((s, v) => s + totalCost(v), 0))} · ${L('المتبقي', 'Balance')}: ${money(l.reduce((s, v) => s + vBal(v), 0))}</div>` + vTable(l, true); };
 const custOpts = (sel, all) => (all ? `<option value="">${L('كل الزبائن', 'All customers')}</option>` : `<option value="">— ${L('اختر الزبون', 'Select customer')} —</option>`) + [...S.customers].sort((a, b) => (a.full_name || '').localeCompare(b.full_name || '')).map(c => `<option value="${c.id}" ${c.id === sel ? 'selected' : ''}>${c.code ? '#' + esc(c.code) + ' · ' : ''}${esc(c.full_name)}${c.phone ? ' - ' + esc(c.phone) : ''}</option>`).join('');
 function vVehicles() {
-  return `<div class="top"><h1>${L('السيارات والتتبع', 'Vehicles & Tracking')}</h1><div class="acts"><button class="btn" onclick="A.shipGroups()">📦 ${L('تجميع الحاويات', 'Group for containers')}</button><button class="btn pri" onclick="A.vForm()">+ ${L('سيارة جديدة', 'New vehicle')}</button></div></div>
+  return `<div class="top"><h1>${L('السيارات والتتبع', 'Vehicles & Tracking')}</h1><div class="acts"><button class="btn" onclick="A.shipGroups()">${L('تجميع الحاويات', 'Group for containers')}</button><button class="btn pri" onclick="A.vForm()">+ ${L('سيارة جديدة', 'New vehicle')}</button></div></div>
   <div class="card"><div class="filters">
-    <input id="fq" placeholder="🔍 ${L('بحث: VIN، رقم اللوت، الزبون، الحاوية...', 'Search: VIN, lot, customer, container...')}" value="${esc(S.f.q)}" oninput="A.fq(this.value)">
+    <input id="fq" placeholder="${L('بحث: VIN، رقم اللوت، الزبون، الحاوية...', 'Search: VIN, lot, customer, container...')}" value="${esc(S.f.q)}" oninput="A.fq(this.value)">
     <select onchange="A.ff('status',this.value)"><option value="">${L('كل الحالات', 'All statuses')}</option>${ST.map(s => `<option value="${s.k}" ${S.f.status === s.k ? 'selected' : ''}>${esc(L(s.ar, s.en))} (${cnt(s.k)})</option>`).join('')}</select>
     <select onchange="A.ff('auction',this.value)"><option value="">${L('كل المزادات', 'All auctions')}</option>${AUCTIONS.map(a => `<option ${S.f.auction === a ? 'selected' : ''}>${a}</option>`).join('')}</select>
     <select onchange="A.ff('cust',this.value)">${custOpts(S.f.cust, true)}</select>
@@ -1017,30 +1047,60 @@ function vVehicle() {
     [L('الفئة', 'Trim'), esc(v.trim || '—')], [L('المحرك', 'Engine'), esc(v.engine || '—')],
     [L('اللون', 'Color'), esc(v.color || '—')], [L('رقم اللوت', 'Lot #'), `<span class="mono">${esc(v.lot_number || '—')}</span>`],
     [L('رقم الحاوية', 'Container #'), `<span class="mono">${esc(v.container_number || '—')}</span>`], [L('رقم الحجز', 'Booking #'), `<span class="mono">${esc(v.booking_number || '—')}</span>`],
-    [L('دفع ثمن المزاد', 'Auction paid by'), v.auction_paid_by === 'office' ? L('💸 المكتب (سلفة)', '💸 Office (advance)') : v.auction_paid_by === 'customer' ? L('الزبون', 'Customer') : '—'], [L('تاريخ الدفع للمزاد', 'Auction paid on'), fdate(v.auction_paid_date)],
+    [L('دفع ثمن المزاد', 'Auction paid by'), v.auction_paid_by === 'office' ? L('المكتب (سلفة)', 'Office (advance)') : v.auction_paid_by === 'customer' ? L('الزبون', 'Customer') : '—'], [L('تاريخ الدفع للمزاد', 'Auction paid on'), fdate(v.auction_paid_date)],
     [L('تاريخ الشراء', 'Purchase date'), fdate(v.purchase_date)], [L('مدة المرحلة الحالية', 'Days in stage'), daysSince(statusSince(v)) + ' ' + L('يوم', 'days')]
   ];
   return `<div class="top"><div><a href="#/vehicles" class="back">${L('→ السيارات', '← Vehicles')}</a><h1>${esc(vt(v))} ${badge(v.status)}</h1><div class="sub mono">VIN: ${esc(v.vin)}${v.lot_number ? ' · LOT ' + esc(v.lot_number) : ''}</div></div>
-    <div class="acts">${stIdx(v.status) < stIdx('LOADED_SHIPPED') ? `<button class="btn" onclick="A.shipGroups('${esc(v.us_port || 'NONE')}','${v.id}')">📦 ${L('تنشحن معاها', 'Ship together')}</button>` : ''}<button class="btn wa" onclick="A.wa('v','${v.id}')">💬 ${L('واتساب', 'WhatsApp')}</button><button class="btn" onclick="A.copyLink('${esc(v.vin)}')">🔗 ${L('رابط التتبع', 'Tracking link')}</button><button class="btn" onclick="A.printVeh('${v.id}')">📋 ${L('تقرير السيارة', 'Vehicle report')}</button><button class="btn" onclick="A.printInv('${v.id}')">🖨️ ${L('الفاتورة', 'Invoice')}</button><button class="btn" onclick="A.vForm('${v.id}')">✏️ ${L('تعديل', 'Edit')}</button><button class="btn red" onclick="A.vDel('${v.id}')">🗑️</button></div></div>
-  ${late ? `<div class="alert"><div class="alert-h" style="margin:0">🔴 ${L('مضى', 'It has been')} ${late.d} ${L('يوم على الشراء ولم تُسدَّد للمزاد — سدّد الآن لتفادي غرامات التأخير والتخزين.', 'days since purchase without paying the auction — pay now to avoid late/storage fees.')}</div></div>` : ''}
+    <div class="acts">${stIdx(v.status) < stIdx('LOADED_SHIPPED') ? `<button class="btn" onclick="A.shipGroups('${esc(v.us_port || 'NONE')}','${v.id}')">${L('تنشحن معاها', 'Ship together')}</button>` : ''}<button class="btn wa" onclick="A.wa('v','${v.id}')">${L('واتساب', 'WhatsApp')}</button><button class="btn" onclick="A.copyLink('${esc(v.vin)}')">${L('رابط التتبع', 'Tracking link')}</button><button class="btn" onclick="A.printVeh('${v.id}')">${L('تقرير السيارة', 'Vehicle report')}</button><button class="btn" onclick="A.printInv('${v.id}')">${L('الفاتورة', 'Invoice')}</button><button class="btn" onclick="A.vForm('${v.id}')">${L('تعديل', 'Edit')}</button><button class="btn red" onclick="A.vDel('${v.id}')">${ic('trash')}</button></div></div>
+  ${late ? `<div class="alert"><div class="alert-h" style="margin:0">${L('مضى', 'It has been')} ${late.d} ${L('يوم على الشراء ولم تُسدَّد للمزاد — سدّد الآن لتفادي غرامات التأخير والتخزين.', 'days since purchase without paying the auction — pay now to avoid late/storage fees.')}</div></div>` : ''}
   <div class="card"><div class="row-b"><h3>${L('مراحل الشحن', 'Shipping stages')}</h3><div class="acts">
     ${i > 0 ? `<button class="btn sm" onclick="A.setStatus('${v.id}','${ST[i - 1].k}')">${L('→ السابقة', '← Previous')}</button>` : ''}
     ${i < ST.length - 1 ? `<button class="btn sm pri" onclick="A.setStatus('${v.id}','${ST[i + 1].k}')">${L('نقل إلى', 'Move to')}: ${esc(L(ST[i + 1].ar, ST[i + 1].en))} ${L('←', '→')}</button>` : ''}</div></div>
     ${pipeline(v.status, v.status_history, v.id)}<div class="hint">${L('يمكنك الضغط على أي مرحلة لنقل السيارة إليها مباشرة. التحديث يظهر فوراً في صفحة تتبع الزبون.', 'Click any stage to move the vehicle there. Updates appear instantly on the customer tracking page.')}</div></div>
-  <div class="card"><h3>${L('بيانات السيارة', 'Vehicle details')}</h3><div class="info">${inf.map(x => `<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>${v.notes ? `<div class="hint">📝 ${esc(v.notes)}</div>` : ''}</div>
-  <div class="card"><h3>📷 ${L('صور السيارة', 'Vehicle photos')}</h3><div id="gal"><div class="empty">${L('جاري تحميل الصور...', 'Loading photos...')}</div></div></div>
+  <div class="card"><h3>${L('بيانات السيارة', 'Vehicle details')}</h3><div class="info">${inf.map(x => `<div><span>${x[0]}</span><b>${x[1]}</b></div>`).join('')}</div>${v.notes ? `<div class="hint">${esc(v.notes)}</div>` : ''}</div>
+  <div class="card"><h3>${L('صور السيارة', 'Vehicle photos')}</h3><div id="gal"><div class="empty">${L('جاري تحميل الصور...', 'Loading photos...')}</div></div></div>
   ${trCard(v)}
   ${invCard(v)}
   <div class="two">
-    <div class="card"><h3>💲 ${L('كشف التكاليف', 'Cost breakdown')}</h3>
+    <div class="card"><h3>${L('كشف التكاليف', 'Cost breakdown')}</h3>
       <table class="fin"><tbody>${can('profit') ? FIN.map(x => `<tr><td>${L(x.ar, x.en)}</td><td>${money(f[x.k])}</td></tr>`).join('') : custFin(v).map(x => `<tr><td>${x[0]}</td><td>${money(x[1])}</td></tr>`).join('')}
       <tr class="t"><td>${L('الإجمالي', 'Total')}</td><td>${money(tot)}</td></tr>
       <tr><td>${L('المدفوع', 'Paid')}</td><td class="pos">${money(paid)}</td></tr>
       <tr class="t"><td>${L('المتبقي على الزبون', 'Balance due')}</td><td class="${bal > 0.009 ? 'neg' : 'pos'}">${money(bal)}</td></tr></tbody></table>
-      ${advAmt(v) > 0 ? `<div class="internal" style="border-color:#fed7aa;background:#fff7ed">💸 ${L('سلفة المكتب (ثمن السيارة + رسوم المزاد)', 'Office advance (bid + auction fees)')}: <b>${money(advAmt(v))}</b> · ${L('المتبقي منها على الزبون', 'Still owed')}: <b class="${advOut(v) > 0.009 ? 'neg' : 'pos'}">${money(advOut(v))}</b>${advOut(v) > 0.009 ? ` · ${daysSince(v.auction_paid_date || v.purchase_date)} ${L('يوم', 'days')}` : ''}</div>` : ''}
-      <div class="internal pf">🔒 ${L('داخلي (لا يظهر في الفاتورة)', 'Internal (not on invoice)')}: ${L('تكلفة الشحن الفعلية', 'Actual shipping cost')} <b>${act > 0 ? money(act) : '—'}</b> · ${L('ربح المكتب من هذه السيارة', 'Office profit on this car')} <b class="pos">${money(profit(v))}</b>${(() => { const x = profitSplit(v); const row = (n, lab, p, r, d, need) => `<div class="stg ${r ? 'ok' : ''}"><span>${n}. ${lab}</span><b dir="ltr">${money(p)}</b><em>${r ? '✓ ' + L('تحقق', 'collected') + ' ' + fdate(d) : '⏳ ' + (need > 0.009 ? L('ناقص', 'needs') + ' ' + money(need) : L('ما فيش شحن مسجل', 'no shipping yet'))}</em></div>`; return `<div class="stgs">${row(1, L('حق السيارة (عمولة المكتب + حوالة السيارة)', 'Car (office + car transfer commission)'), x.p1, x.r1, x.d1, x.need1)}${row(2, L('الشحن (حوالة الشحن + فرق الشحن)', 'Shipping (shipping transfer + margin)'), x.p2, x.r2, x.d2, x.t2 > 0 ? x.need2 : 0)}<div class="stg tot"><span>${L('المحقق من هذه السيارة', 'Realized on this car')}</span><b dir="ltr">${money(realized(v))}</b><em>${L('منتظر', 'pending')} ${money(pending(v))}</em></div></div>`; })()}</div></div>
-    <div class="card"><div class="row-b"><h3>💵 ${L('الدفعات', 'Payments')}</h3><button class="btn sm pri" onclick="A.pForm({customer_id:'${v.customer_id}',vehicle_id:'${v.id}'})">+ ${L('دفعة', 'Payment')}</button></div>${payTable(pays, false)}</div>
+      ${advAmt(v) > 0 ? `<div class="internal" style="border-color:#fed7aa;background:#fff7ed">${L('سلفة المكتب (ثمن السيارة + رسوم المزاد)', 'Office advance (bid + auction fees)')}: <b>${money(advAmt(v))}</b> · ${L('المتبقي منها على الزبون', 'Still owed')}: <b class="${advOut(v) > 0.009 ? 'neg' : 'pos'}">${money(advOut(v))}</b>${advOut(v) > 0.009 ? ` · ${daysSince(v.auction_paid_date || v.purchase_date)} ${L('يوم', 'days')}` : ''}</div>` : ''}
+      <div class="internal pf">${L('داخلي (لا يظهر في الفاتورة)', 'Internal (not on invoice)')}: ${L('تكلفة الشحن الفعلية', 'Actual shipping cost')} <b>${act > 0 ? money(act) : '—'}</b> · ${L('ربح المكتب من هذه السيارة', 'Office profit on this car')} <b class="pos">${money(profit(v))}</b>${(() => { const x = profitSplit(v); const row = (n, lab, p, r, d, need) => `<div class="stg ${r ? 'ok' : ''}"><span>${n}. ${lab}</span><b dir="ltr">${money(p)}</b><em>${r ? '✓ ' + L('تحقق', 'collected') + ' ' + fdate(d) : '' + (need > 0.009 ? L('ناقص', 'needs') + ' ' + money(need) : L('ما فيش شحن مسجل', 'no shipping yet'))}</em></div>`; return `<div class="stgs">${row(1, L('حق السيارة (عمولة المكتب + حوالة السيارة)', 'Car (office + car transfer commission)'), x.p1, x.r1, x.d1, x.need1)}${row(2, L('الشحن (حوالة الشحن + فرق الشحن)', 'Shipping (shipping transfer + margin)'), x.p2, x.r2, x.d2, x.t2 > 0 ? x.need2 : 0)}<div class="stg tot"><span>${L('المحقق من هذه السيارة', 'Realized on this car')}</span><b dir="ltr">${money(realized(v))}</b><em>${L('منتظر', 'pending')} ${money(pending(v))}</em></div></div>`; })()}</div></div>
+    <div class="card"><div class="row-b"><h3>${L('الدفعات', 'Payments')}</h3><button class="btn sm pri" onclick="A.pForm({customer_id:'${v.customer_id}',vehicle_id:'${v.id}'})">+ ${L('دفعة', 'Payment')}</button></div>${payTable(pays, false)}</div>
   </div>`;
+}
+
+/* ---------------- صفحة الأرباح (لمن عنده صلاحية الأرباح فقط) ---------------- */
+function vProfit() {
+  S.pr = S.pr || { m: new Date().toISOString().slice(0, 7), st: '' };
+  const P = S.pr, inM = v => !P.m || (v.purchase_date || v.created_at || '').startsWith(P.m);
+  const rows = S.vehicles.filter(inM).map(v => { const f = v.fin || {}, com = num(f.office_commission), tr = trResult(v), sh = shipMargin(v); return { v, fin: profitFinal(v), com, tr, sh, tot: com + tr + sh, got: realized(v) }; })
+    .filter(r => !P.st || (P.st === 'final' ? r.fin : !r.fin)).sort((a, b) => (b.v.purchase_date || '').localeCompare(a.v.purchase_date || ''));
+  const sum = (l, k) => l.reduce((a, r) => a + r[k], 0), fl = rows.filter(r => r.fin), es = rows.filter(r => !r.fin);
+  const exps = S.expenses.filter(e => !P.m || (e.date || '').startsWith(P.m)), ex = totalExp(exps);
+  const months = [...new Set(S.vehicles.map(v => (v.purchase_date || v.created_at || '').slice(0, 7)).filter(Boolean))].sort().reverse();
+  const by = key => { const m = {}; S.vehicles.filter(inM).forEach(v => { const cd = tCostD(v); (v.transfers || []).forEach(t => { const k = key(t) || '-'; const r = payResult(t.method, t.payee, t.amount, t.charged, cd[t.id] || {}); const o = m[k] = m[k] || { n: 0, amt: 0, ch: 0, cost: 0, gain: 0, net: 0 }; o.n++; o.amt += num(t.amount); o.ch += num(t.charged); o.cost += r.cost; o.gain += r.gain; o.net += r.net; }); }); return Object.entries(m).sort((a, b) => b[1].amt - a[1].amt); };
+  const byTable = (title, list, nameFn) => `<div class="card"><h3>${title}</h3>${list.length ? `<div class="tw"><table class="trt"><thead><tr><th></th><th class="n">${L('عدد', 'Count')}</th><th class="n">${L('المبلغ المدفوع', 'Amount paid')}</th><th class="n">${L('محمّل على الزبائن', 'Charged to customers')}</th><th class="n">${L('تكاليف', 'Costs')}</th><th class="n">${L('عوائد وخصومات', 'Returns and discounts')}</th><th class="n">${L('النتيجة', 'Result')}</th></tr></thead><tbody>${list.map(([k, o]) => `<tr><td><b>${esc(nameFn(k))}</b></td><td class="n">${o.n}</td><td class="n">${money(r2(o.amt))}</td><td class="n">${money(r2(o.ch))}</td><td class="n neg">${money(r2(o.cost))}</td><td class="n pos">${money(r2(o.gain))}</td><td class="n ${o.net >= 0 ? 'pos' : 'neg'}"><b>${money(r2(o.net))}</b></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty">${L('لا توجد دفعات مسجلة', 'No payments recorded')}</div>`}</div>`;
+  const kpi = (k, v, c, sub = '') => `<div class="card stat" style="--c:${c}"><div><div class="k">${k}</div><div class="v" dir="ltr">${v}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div></div>`;
+  return `<div class="top"><h1>${L('الأرباح', 'Profit')}</h1><div class="acts">
+      <select onchange="S.pr.m=this.value;render()"><option value="">${L('كل الفترات', 'All time')}</option>${months.map(m => `<option ${P.m === m ? 'selected' : ''}>${m}</option>`).join('')}${P.m && !months.includes(P.m) ? `<option selected>${P.m}</option>` : ''}</select>
+      <select onchange="S.pr.st=this.value;render()"><option value="">${L('كل السيارات', 'All cars')}</option><option value="final" ${P.st === 'final' ? 'selected' : ''}>${L('نهائي فقط', 'Final only')}</option><option value="est" ${P.st === 'est' ? 'selected' : ''}>${L('تقديري فقط', 'Estimated only')}</option></select></div></div>
+  <div class="hint" style="margin-top:-6px">${L('الربح يصبح "نهائي" بعد تسجيل دفعة الشحن للسيارة. قبل ذلك هو "تقديري" ويعتمد على تكلفة الشحن المتوقعة.', 'A car\'s profit becomes "Final" once its shipping payment is recorded. Before that it is "Estimated", based on the expected shipping cost.')}</div>
+  <div class="stats">
+    ${kpi(L('ربح نهائي', 'Final profit'), money(r2(sum(fl, 'tot'))), '#16a34a', `${fl.length} ${L('سيارة', 'cars')}`)}
+    ${kpi(L('ربح تقديري', 'Estimated profit'), money(r2(sum(es, 'tot'))), '#ca8a04', `${es.length} ${L('سيارة لم يُدفع شحنها بعد', 'cars, shipping not paid yet')}`)}
+    ${kpi(L('محصّل من الزبائن', 'Collected from customers'), money(r2(sum(rows, 'got'))), '#0891b2', L('ربح دفع الزبون ثمنه', 'profit the customer has paid for'))}
+    ${kpi(L('لم يُحصّل بعد', 'Not collected yet'), money(r2(sum(rows, 'tot') - sum(rows, 'got'))), '#a16207', L('الزبون ما خلّصش', 'customer has not paid in full'))}
+    ${can('expenses') ? kpi(L('مصاريف المكتب', 'Office expenses'), money(r2(ex)), '#dc2626', `${exps.length} ${L('مصروف', 'expenses')}`) : ''}
+    ${can('expenses') ? kpi(L('صافي الربح النهائي', 'Net final profit'), money(r2(sum(fl, 'tot') - ex)), '#0f766e', L('الربح النهائي ناقص المصاريف', 'Final profit minus expenses')) : ''}
+  </div>
+  <div class="card"><h3>${L('الربح لكل سيارة', 'Profit per car')}</h3>${rows.length ? `<div class="tw"><table class="trt"><thead><tr><th>${L('السيارة', 'Car')}</th><th>${L('الزبون', 'Customer')}</th><th>${L('تاريخ الشراء', 'Purchased')}</th><th>${L('الحالة', 'Status')}</th><th class="n">${L('عمولة المكتب', 'Office commission')}</th><th class="n">${L('نتيجة الدفعات', 'Payments result')}</th><th class="n">${L('هامش الشحن', 'Shipping margin')}</th><th class="n">${L('الإجمالي', 'Total')}</th><th class="n">${L('محصّل', 'Collected')}</th></tr></thead><tbody>
+    ${rows.map(r => `<tr class="click" onclick="location.hash='#/vehicle/${r.v.id}'"><td><b>${esc(vt(r.v))}</b><div class="sub mono">${esc(r.v.vin.slice(-6))}</div></td><td>${codeTag(custCode(r.v.customer_id))}${esc(custName(r.v.customer_id))}</td><td>${fdate(r.v.purchase_date)}</td><td>${r.fin ? `<span class="badge" style="--c:#16a34a">${L('نهائي', 'Final')}</span>` : `<span class="badge" style="--c:#ca8a04">${L('تقديري', 'Estimated')}</span>`}</td><td class="n">${money(r.com)}</td><td class="n ${r.tr >= 0 ? '' : 'neg'}">${money(r2(r.tr))}</td><td class="n ${r.sh >= 0 ? '' : 'neg'}">${money(r2(r.sh))}</td><td class="n ${r.tot >= 0 ? 'pos' : 'neg'}"><b>${money(r2(r.tot))}</b></td><td class="n">${money(r2(r.got))}</td></tr>`).join('')}
+    <tr class="t"><td colspan="4">${L('الإجمالي', 'Total')}</td><td class="n">${money(r2(sum(rows, 'com')))}</td><td class="n">${money(r2(sum(rows, 'tr')))}</td><td class="n">${money(r2(sum(rows, 'sh')))}</td><td class="n">${money(r2(sum(rows, 'tot')))}</td><td class="n">${money(r2(sum(rows, 'got')))}</td></tr></tbody></table></div>` : `<div class="empty">${L('لا توجد سيارات في هذه الفترة', 'No cars in this period')}</div>`}</div>
+  <div class="two">${byTable(L('حسب طريقة الدفع', 'By payment method'), by(t => t.method), k => pmName(k))}${byTable(L('حسب الاسم / الحساب', 'By name / account'), by(t => t.src), k => k)}</div>`;
 }
 
 /* ---------------- دفع المزاد والحوالات (طريقة الدفع، التكلفة، المحمّل على الزبون) ---------------- */
@@ -1053,13 +1113,21 @@ function trCard(v) {
     const parts = [];
     if ((t.items || []).length) parts.push(`<div class="trd-b"><span class="trd-l">${L('تفاصيل المبلغ', 'Breakdown')}</span>${t.items.map(i => `<span class="trd-c">${esc(piName(i.k))}${i.note ? ' (' + esc(i.note) + ')' : ''} <b>${money(i.a)}</b></span>`).join('')}</div>`);
     if (t.cur && t.cur !== 'USD') parts.push(`<div class="trd-b"><span class="trd-l">${L('العملة', 'Currency')}</span><span class="trd-c"><b dir="ltr">${num(t.cur_amount).toLocaleString('en-US', { maximumFractionDigits: 2 })} ${esc(t.cur)}</b> @ <b dir="ltr">${esc(t.rate)}</b> ${L('للدولار', 'per USD')} = <b>${money(t.amount)}</b></span></div>`);
-    if (pf && cd[t.id]) { const d = cd[t.id]; const fp = FEE_PARTS.filter(f => num(d[f.k])); if (fp.length) parts.push(`<div class="trd-b pf"><span class="trd-l">🔒 ${L('تفاصيل تكلفتنا', 'Our cost breakdown')}</span>${fp.map(f => `<span class="trd-c">${esc(L(f.ar, f.en))} <b>${money(d[f.k])}</b></span>`).join('')}</div>`); }
-    const meta = [psBadge(t.status), t.conf_date ? `${L('تأكيد الاستلام', 'Confirmed')}: ${fdate(t.conf_date)}` : '', t.receipt ? `<button class="btn sm" onclick="A.rcOpen('${v.id}','${t.id}')">🧾 ${L('الإيصال', 'Receipt')}</button>` : '', t.by ? `<span class="sub">✍️ ${esc(t.by)}</span>` : ''].filter(Boolean);
+    if (pf && cd[t.id]) { const d = cd[t.id], r = payResult(t.method, t.payee, t.amount, t.charged, d); const bits = [];
+      if (r.cardGain) bits.push(`${L('عائد البطاقة', 'Card return')} ${esc(d.card_back)} LYD/$ <b>+${money(r2(r.cardGain))}</b>`);
+      if (r.disc) bits.push(`${L('خصم Copart', 'Copart discount')} ${esc(d.disc_pct)}% <b>+${money(r2(r.disc))}</b>`);
+      if (r.ppCost) bits.push(`PayPal ${esc(d.pp_pct)}% <b>-${money(r2(r.ppCost))}</b>`);
+      if (r.lydCost) bits.push(`${L('فرق الدينار', 'LYD difference')} ${esc(d.lyd_cost)} LYD <b>-${money(r2(r.lydCost))}</b>`);
+      if (r.agent) bits.push(`${L('أجرة الوسيط', 'Agent fee')} <b>-${money(r.agent)}</b>`);
+      if (r.other) bits.push(`${L('تكاليف أخرى', 'Other costs')} <b>-${money(r.other)}</b>`);
+      bits.push(`${L('سعر الصرف', 'Rate')} ${esc(d.rate || S.settings.rate)}`);
+      parts.push(`<div class="trd-b pf"><span class="trd-l">${L('حساب الربح', 'Profit calculation')}</span>${bits.map(b => `<span class="trd-c">${b}</span>`).join('')}</div>`); }
+    const meta = [psBadge(t.status), t.conf_date ? `${L('تأكيد الاستلام', 'Confirmed')}: ${fdate(t.conf_date)}` : '', t.receipt ? `<button class="btn sm" onclick="A.rcOpen('${v.id}','${t.id}')">${L('الإيصال', 'Receipt')}</button>` : '', t.by ? `<span class="sub">${esc(t.by)}</span>` : ''].filter(Boolean);
     return `<tr class="trd"><td colspan="${cols}">${parts.join('')}<div class="trd-b">${meta.join(' ')}</div></td></tr>`;
   };
-  return `<div class="card"><div class="row-b"><h3 style="margin:0">💳 ${L('دفع المزاد والحوالات', 'Auction payment & transfers')}</h3>${add}</div>
-    ${list.length ? `<div class="tw" style="margin-top:12px"><table class="trt"><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('مقابل', 'For')}</th><th>${L('طريقة الدفع والحساب', 'Method & account')}</th><th>${L('المرجع', 'Reference')}</th><th class="n">${L('المبلغ المدفوع', 'Amount sent')}</th><th class="n">${L('المحمّل على الزبون', 'Charged to customer')}</th>${pf ? `<th class="n pf">🔒 ${L('تكلفتنا', 'Our cost')}</th><th class="n pf">🔒 ${L('الربح', 'Margin')}</th>` : ''}<th></th></tr></thead><tbody>
-      ${list.map(t => `<tr class="trm"><td>${fdate(t.date)}</td><td>${esc(pfName(t.purpose))}</td><td><b>${pmName(t.method)}</b>${t.src ? `<div class="srcb">👤 ${esc(t.src)}</div>` : ''}${t.details ? `<div class="sub">${esc(t.details)}</div>` : ''}${t.notes ? `<div class="sub">📝 ${esc(t.notes)}</div>` : ''}</td><td class="mono">${esc(t.ref || '—')}</td><td class="n">${money(t.amount)}</td><td class="n">${money(t.charged)}</td>${pf ? `<td class="n pf">${cm[t.id] != null ? money(cm[t.id]) : '—'}</td><td class="n pf ${num(t.charged) - num(cm[t.id]) >= 0 ? 'pos' : 'neg'}">${money(num(t.charged) - num(cm[t.id]))}</td>` : ''}<td style="white-space:nowrap">${can('edit') ? `<button class="btn sm" onclick="A.trForm('${v.id}','${t.id}')">✏️</button> <button class="btn sm red" onclick="A.trDel('${v.id}','${t.id}')">🗑️</button>` : ''}</td></tr>${detail(t)}`).join('')}
+  return `<div class="card"><div class="row-b"><h3 style="margin:0">${L('دفع المزاد والحوالات', 'Auction payment & transfers')}</h3>${add}</div>
+    ${list.length ? `<div class="tw" style="margin-top:12px"><table class="trt"><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('مقابل', 'For')}</th><th>${L('طريقة الدفع والحساب', 'Method & account')}</th><th>${L('المرجع', 'Reference')}</th><th class="n">${L('المبلغ المدفوع', 'Amount sent')}</th><th class="n">${L('المحمّل على الزبون', 'Charged to customer')}</th>${pf ? `<th class="n pf">${L('تكلفة صافية', 'Net cost')}</th><th class="n pf">${L('ربح / خسارة', 'Profit / loss')}</th>` : ''}<th></th></tr></thead><tbody>
+      ${list.map(t => `<tr class="trm"><td>${fdate(t.date)}</td><td>${esc(pfName(t.purpose))}</td><td><b>${pmName(t.method)}</b>${t.src ? `<div class="srcb">${esc(t.src)}</div>` : ''}${t.details ? `<div class="sub">${esc(t.details)}</div>` : ''}${t.notes ? `<div class="sub">${esc(t.notes)}</div>` : ''}</td><td class="mono">${esc(t.ref || '—')}</td><td class="n">${money(t.amount)}</td><td class="n">${money(t.charged)}</td>${pf ? `<td class="n pf">${cm[t.id] != null ? money(cm[t.id]) : '—'}</td><td class="n pf ${num(t.charged) - num(cm[t.id]) >= 0 ? 'pos' : 'neg'}">${money(num(t.charged) - num(cm[t.id]))}</td>` : ''}<td style="white-space:nowrap">${can('edit') ? `<button class="btn sm" onclick="A.trForm('${v.id}','${t.id}')">${ic('edit')}</button> <button class="btn sm red" onclick="A.trDel('${v.id}','${t.id}')">${ic('trash')}</button>` : ''}</td></tr>${detail(t)}`).join('')}
       <tr class="t"><td colspan="4">${L('الإجمالي', 'Total')}</td><td class="n">${money(sent)}</td><td class="n">${money(ch)}</td>${pf ? `<td class="n pf">${money(co)}</td><td class="n pf">${money(ch - co)}</td>` : ''}<td></td></tr></tbody></table></div>
       <div class="hint">${L('مجموع "المحمّل على الزبون" يُكتب تلقائياً في عمولة الحوالة على فاتورة الزبون. تكلفتنا والإيصالات لا تظهر للزبون، وتكلفتنا تُخصم من الربح.', 'The total "charged to customer" is written to the transfer commission on the customer invoice. Our cost and receipts are never shown to the customer; our cost is deducted from profit.')}</div>`
     : `<div class="inv-empty" style="margin-top:12px">${L('ما فيش دفعات مسجلة. سجّل كيف دفعت للمزاد (PayPal، بطاقة، حوالة، MoneyGram...) وكم كلّفتك وكم حمّلت الزبون.', 'No payments recorded. Record how you paid the auction (PayPal, card, wire, MoneyGram…), what it cost you and what you charged the customer.')}</div>`}</div>`;
@@ -1102,7 +1170,7 @@ function invoicePrint(d, auto) {
     internal: true, noAuto: !auto,
     head: `<div class="ivh"><span class="t">${L('فاتورة', 'INVOICE')}</span><span class="n">${esc(d.no)}</span><span class="d">${L('التاريخ', 'Date')}: ${fdate(now())}</span></div>`,
     main: INV_CSS + `<div class="ivc">
-      <div class="bx"><div class="l">${L('فاتورة إلى', 'Bill to')}</div><b class="big">${esc(d.customer || '—')}</b><div class="r">${d.code ? `${L('رقم الزبون', 'Customer ID')}: <b class="mono">#${esc(d.code)}</b><br>` : ''}${d.phone ? `📞 <span class="mono">${esc(d.phone)}</span><br>` : ''}${d.city ? '📍 ' + esc(d.city) + '<br>' : ''}<span class="pill" style="--c:${stColor(d.status)}">${esc(stName(d.status))}</span></div></div>
+      <div class="bx"><div class="l">${L('فاتورة إلى', 'Bill to')}</div><b class="big">${esc(d.customer || '—')}</b><div class="r">${d.code ? `${L('رقم الزبون', 'Customer ID')}: <b class="mono">#${esc(d.code)}</b><br>` : ''}${d.phone ? `<span class="mono">${esc(d.phone)}</span><br>` : ''}${d.city ? '' + esc(d.city) + '<br>' : ''}<span class="pill" style="--c:${stColor(d.status)}">${esc(stName(d.status))}</span></div></div>
       <div class="bx"><div class="l">${L('السيارة', 'Vehicle')}</div><div class="vb">${d.img ? `<div class="ph"><img src="${esc(d.img)}"></div>` : ''}<div><b class="big">${esc(d.title)}</b><div class="r">${d.spec ? esc(d.spec) + '<br>' : ''}VIN: <span class="mono">${esc(d.vin)}</span><br>${d.lot ? `LOT: <span class="mono">${esc(d.lot)}</span> · ` : ''}${esc(d.auction)}${d.loc ? ' — ' + esc(d.loc) : ''}${d.port ? `<br>${L('ميناء الشحن', 'Port')}: ${esc(pName(d.port))} → ${L('الخمس', 'Khoms')}` : ''}${d.container ? `<br>${L('الحاوية', 'Container')}: <span class="mono">${esc(d.container)}</span>` : ''}</div></div></div></div>
     </div>
     <table class="it"><thead><tr><th>#</th><th>${L('البيان', 'Description')}</th><th class="num">${L('المبلغ (USD)', 'Amount (USD)')}</th></tr></thead><tbody>
@@ -1110,7 +1178,7 @@ function invoicePrint(d, auto) {
     <div class="ivt"><div class="tb"><div class="r g"><span>${L('الإجمالي', 'Total')}</span><b>${money(d.tot)}</b></div><div class="r"><span>${L('المدفوع', 'Paid')}</span><b>${money(d.paid)}</b></div>
       <div class="r bd ${bal <= 0.009 ? 'ok' : ''}"><span>${bal <= 0.009 ? L('خالص ✓', 'Paid in full ✓') : L('المتبقي', 'Balance due')}</span><b>${money(Math.max(0, bal))}</b></div></div></div>
     ${(d.pays || []).length ? `<h3>${L('الدفعات المستلمة', 'Payments received')}</h3><table class="py"><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('المبلغ', 'Amount')}</th><th class="num">USD</th></tr></thead><tbody>${d.pays.map(p => `<tr><td>${fdate(p.date)}</td><td>${p.cur === 'LYD' ? lyd(p.amt) + ' @' + esc(p.rate) : money(p.amt)}</td><td class="num">${money(p.usd)}</td></tr>`).join('')}</tbody></table>` : ''}
-    <div class="ivf"><div class="thx"><b>${esc(S.settings.note || L('شكراً لثقتكم', 'Thank you for your business'))}</b><br>${d.auction_inv ? '🧾 ' + L('فاتورة المزاد الأصلية متاحة في صفحة التتبع', 'The original auction invoice is available on the tracking page') + '<br>' : ''}🔎 ${L('تتبّع سيارتك', 'Track your car')}: <span class="mono" style="font-size:11px">${esc(trackUrl(d.vin))}</span></div>
+    <div class="ivf"><div class="thx"><b>${esc(S.settings.note || L('شكراً لثقتكم', 'Thank you for your business'))}</b><br>${d.auction_inv ? '' + L('فاتورة المزاد الأصلية متاحة في صفحة التتبع', 'The original auction invoice is available on the tracking page') + '<br>' : ''}${L('تتبّع سيارتك', 'Track your car')}: <span class="mono" style="font-size:11px">${esc(trackUrl(d.vin))}</span></div>
       <div class="sg">${L('توقيع المحاسب', 'Accountant signature')}</div><div class="sg">${L('الختم', 'Stamp')}</div></div>
     <div class="ivx"></div>`
   });
@@ -1162,12 +1230,12 @@ async function invMove(oldVin, newVin, meta) {
 }
 function invCard(v) {
   const m = v.auction_invoice, vin = esc(v.vin);
-  const up = can('edit') ? `<label class="btn ${m ? 'sm' : 'pri'} fileb">⬆️ ${m ? L('استبدال', 'Replace') : L('رفع فاتورة المزاد', 'Upload auction invoice')}<input type="file" accept="application/pdf,image/*" onchange="A.invUp('${v.id}',this)"></label>` : '';
-  return `<div class="card"><div class="row-b"><h3 style="margin:0">🧾 ${L('فاتورة المزاد', 'Auction invoice')}</h3>${m ? '' : up}</div>
-    ${m ? `<div class="invf" style="margin-top:12px"><div class="ic">${/pdf/.test(m.type) ? '📄' : '🖼️'}</div><div class="nm"><b>${esc(m.name)}</b><small><span dir="ltr">${fsize(m.size)}</span> · ${fdate(m.at)}</small></div>
-      <div class="acts"><button class="btn sm pri" onclick="A.invOpen('${vin}')">👁️ ${L('عرض', 'View')}</button><button class="btn sm" onclick="A.invDl('${vin}')">⬇️ ${L('تنزيل', 'Download')}</button>${up}${can('edit') ? `<button class="btn sm red" onclick="A.invDel('${v.id}')">🗑️</button>` : ''}</div></div>`
+  const up = can('edit') ? `<label class="btn ${m ? 'sm' : 'pri'} fileb">${m ? L('استبدال', 'Replace') : L('رفع فاتورة المزاد', 'Upload auction invoice')}<input type="file" accept="application/pdf,image/*" onchange="A.invUp('${v.id}',this)"></label>` : '';
+  return `<div class="card"><div class="row-b"><h3 style="margin:0">${L('فاتورة المزاد', 'Auction invoice')}</h3>${m ? '' : up}</div>
+    ${m ? `<div class="invf" style="margin-top:12px"><div class="ic">${/pdf/.test(m.type) ? ic('file') : ''}</div><div class="nm"><b>${esc(m.name)}</b><small><span dir="ltr">${fsize(m.size)}</span> · ${fdate(m.at)}</small></div>
+      <div class="acts"><button class="btn sm pri" onclick="A.invOpen('${vin}')">${L('عرض', 'View')}</button><button class="btn sm" onclick="A.invDl('${vin}')">${L('تنزيل', 'Download')}</button>${up}${can('edit') ? `<button class="btn sm red" onclick="A.invDel('${v.id}')">${ic('trash')}</button>` : ''}</div></div>`
     : `<div class="inv-empty" style="margin-top:12px">${L('ما فيش فاتورة مزاد مرفوعة لهذه السيارة بعد.', 'No auction invoice uploaded for this car yet.')}<br><small>PDF ${L('أو صورة', 'or image')} · ${L('حتى', 'up to')} 6 MB</small></div>`}
-    <div class="hint">👁️ ${L('الفاتورة تظهر للزبون في صفحة تتبع السيارة برقم الهيكل.', 'The invoice is visible to the customer on the car tracking page (by VIN).')}</div></div>`;
+    <div class="hint">${L('الفاتورة تظهر للزبون في صفحة تتبع السيارة برقم الهيكل.', 'The invoice is visible to the customer on the car tracking page (by VIN).')}</div></div>`;
 }
 
 /* ---------------- الصور ---------------- */
@@ -1192,7 +1260,7 @@ function renderGallery(vin) {
     ${can('edit') ? `<div class="addimg"><select id="imgStage">${STAGES.map(s => `<option value="${s.k}" ${tab === s.k ? 'selected' : ''}>${esc(L(s.ar, s.en))}</option>`).join('')}</select>
       <input id="imgUrl" placeholder="${L('رابط صورة (https://...)', 'Image URL (https://...)')}" dir="ltr">
       <button class="btn" onclick="A.imgUrl('${esc(vin)}')">${L('إضافة رابط', 'Add URL')}</button>
-      <label class="btn pri fileb">⬆️ ${L('رفع صور', 'Upload')}<input type="file" accept="image/*" multiple onchange="A.imgFiles('${esc(vin)}',this)"></label></div>
+      <label class="btn pri fileb">${L('رفع صور', 'Upload')}<input type="file" accept="image/*" multiple onchange="A.imgFiles('${esc(vin)}',this)"></label></div>
     <div class="hint">${L('الصور المرفوعة تُضغط تلقائياً وتُحفظ مع بيانات التتبع (يفضّل حتى ~8 صور مرفوعة لكل سيارة، والروابط بلا حد تقريباً).', 'Uploaded photos are compressed and stored with tracking data (~8 uploads per car recommended; URLs are almost unlimited).')}</div>` : ''}`;
 }
 function compress(file, max = 1000, q = 0.62) {
@@ -1226,11 +1294,11 @@ const cListInner = () => {
   return `<div class="tw dt"><table><thead><tr><th>${L('رقم الزبون', 'ID')}</th><th>${L('الاسم', 'Name')}</th><th>${L('الهاتف', 'Phone')}</th><th>${L('المدينة', 'City')}</th><th>${L('السيارات', 'Vehicles')}</th><th>${L('الإجمالي', 'Total')}</th><th>${L('المدفوع', 'Paid')}</th><th>${L('الرصيد المتبقي', 'Balance')}</th></tr></thead><tbody>
   ${l.map(c => { const a = cAgg(c.id); return `<tr class="click" onclick="location.hash='#/customer/${c.id}'"><td>${codeTag(c.code) || '—'}</td><td><b>${esc(c.full_name)}</b></td><td class="mono">${esc(c.phone || '—')}</td><td>${esc(c.city || '—')}</td><td>${a.count} <span class="sub">(${a.active} ${L('نشطة', 'active')})</span></td><td>${money(a.cost)}</td><td>${money(a.paid)}</td><td class="${a.bal > 0.009 ? 'neg' : 'pos'}">${money(a.bal)}</td></tr>`; }).join('')}</tbody></table></div>
   <div class="mcards">${l.map(c => { const a = cAgg(c.id); return `<div class="mc" onclick="location.hash='#/customer/${c.id}'"><div class="mc-h"><b>${codeTag(c.code)}${esc(c.full_name)}</b><b class="${a.bal > 0.009 ? 'neg' : 'pos'}" dir="ltr">${money(a.bal)}</b></div>
-    <div class="mc-f"><span class="mono">📱 ${esc(c.phone || '—')}</span>${c.city ? `<span>📍 ${esc(c.city)}</span>` : ''}<span>🚗 ${a.count} (${a.active} ${L('نشطة', 'active')})</span></div></div>`; }).join('')}</div>`;
+    <div class="mc-f"><span class="mono">${esc(c.phone || '—')}</span>${c.city ? `<span>${esc(c.city)}</span>` : ''}<span>${a.count} (${a.active} ${L('نشطة', 'active')})</span></div></div>`; }).join('')}</div>`;
 };
 function vCustomers() {
   return `<div class="top"><h1>${L('الزبائن', 'Customers')}</h1><button class="btn pri" onclick="A.cForm()">+ ${L('زبون جديد', 'New customer')}</button></div>
-  <div class="card"><input id="cq" placeholder="🔍 ${L('بحث برقم الزبون أو الاسم أو الهاتف أو المدينة', 'Search by ID, name, phone or city')}" value="${esc(S.cq)}" oninput="A.cqf(this.value)"></div>
+  <div class="card"><input id="cq" placeholder="${L('بحث برقم الزبون أو الاسم أو الهاتف أو المدينة', 'Search by ID, name, phone or city')}" value="${esc(S.cq)}" oninput="A.cqf(this.value)"></div>
   <div class="card" id="clist">${cListInner()}</div>`;
 }
 function vCustomer() {
@@ -1239,15 +1307,15 @@ function vCustomer() {
   const a = cAgg(c.id);
   const vs = S.vehicles.filter(v => v.customer_id === c.id).sort((x, y) => (y.created_at || '').localeCompare(x.created_at || ''));
   const ps = S.payments.filter(p => p.customer_id === c.id).sort((x, y) => (y.date || '').localeCompare(x.date || ''));
-  return `<div class="top"><div><a href="#/customers" class="back">${L('→ الزبائن', '← Customers')}</a><h1>👤 ${codeTag(c.code)}${esc(c.full_name)}</h1>
+  return `<div class="top"><div><a href="#/customers" class="back">${L('→ الزبائن', '← Customers')}</a><h1>${codeTag(c.code)}${esc(c.full_name)}</h1>
     <div class="sub"><span class="mono">${esc(c.phone || '')}</span>${c.alternate_phone ? ' · <span class="mono">' + esc(c.alternate_phone) + '</span>' : ''}${c.city ? ' · ' + esc(c.city) : ''} · ${L('منذ', 'since')} ${fdate(c.created_at)}</div></div>
-    <div class="acts"><button class="btn wa" onclick="A.wa('c','${c.id}')">💬 ${L('واتساب', 'WhatsApp')}</button><button class="btn pri" onclick="A.pForm({customer_id:'${c.id}'})">+ ${L('دفعة', 'Payment')}</button><button class="btn" onclick="A.vForm(null,'${c.id}')">+ ${L('سيارة', 'Vehicle')}</button><button class="btn" onclick="A.printDue('${c.id}')">🧾 ${L('تقرير المستحقات', 'Amounts due')}</button><button class="btn" onclick="A.printFull('${c.id}')">📊 ${L('تقرير شامل', 'Full report')}</button><button class="btn" onclick="A.cForm('${c.id}')">✏️</button><button class="btn red" onclick="A.cDel('${c.id}')">🗑️</button></div></div>
+    <div class="acts"><button class="btn wa" onclick="A.wa('c','${c.id}')">${L('واتساب', 'WhatsApp')}</button><button class="btn pri" onclick="A.pForm({customer_id:'${c.id}'})">+ ${L('دفعة', 'Payment')}</button><button class="btn" onclick="A.vForm(null,'${c.id}')">+ ${L('سيارة', 'Vehicle')}</button><button class="btn" onclick="A.printDue('${c.id}')">${L('تقرير المستحقات', 'Amounts due')}</button><button class="btn" onclick="A.printFull('${c.id}')">${L('تقرير شامل', 'Full report')}</button><button class="btn" onclick="A.cForm('${c.id}')">${ic('edit')}</button><button class="btn red" onclick="A.cDel('${c.id}')">${ic('trash')}</button></div></div>
   <div class="stats">
-    <div class="card stat" style="--c:#2563eb"><div class="ic">🚗</div><div><div class="k">${L('السيارات', 'Vehicles')}</div><div class="v">${a.count}</div></div></div>
-    <div class="card stat" style="--c:#475569"><div class="ic">🧾</div><div><div class="k">${L('إجمالي المستحق', 'Total charges')}</div><div class="v">${money(a.cost)}</div></div></div>
-    <div class="card stat" style="--c:#059669"><div class="ic">✅</div><div><div class="k">${L('إجمالي المدفوع', 'Total paid')}</div><div class="v">${money(a.paid)}</div></div></div>
-    <div class="card stat" style="--c:#dc2626"><div class="ic">⚖️</div><div><div class="k">${L('الرصيد المتبقي', 'Balance')}</div><div class="v ${a.bal > 0.009 ? 'neg' : 'pos'}">${money(a.bal)}</div></div></div>
-    ${vs.some(v => advAmt(v) > 0) ? `<div class="card stat" style="--c:#ea580c"><div class="ic">💸</div><div><div class="k">${L('منها سلف من المكتب', 'Of which office advances')}</div><div class="v">${money(vs.reduce((s, v) => s + advOut(v), 0))}</div></div></div>` : ''}
+    <div class="card stat" style="--c:#2563eb"><div class="ic">${ic('car')}</div><div><div class="k">${L('السيارات', 'Vehicles')}</div><div class="v">${a.count}</div></div></div>
+    <div class="card stat" style="--c:#475569"><div class="ic">${ic('receipt')}</div><div><div class="k">${L('إجمالي المستحق', 'Total charges')}</div><div class="v">${money(a.cost)}</div></div></div>
+    <div class="card stat" style="--c:#059669"><div class="ic">${ic('check')}</div><div><div class="k">${L('إجمالي المدفوع', 'Total paid')}</div><div class="v">${money(a.paid)}</div></div></div>
+    <div class="card stat" style="--c:#dc2626"><div class="ic">${ic('scale')}</div><div><div class="k">${L('الرصيد المتبقي', 'Balance')}</div><div class="v ${a.bal > 0.009 ? 'neg' : 'pos'}">${money(a.bal)}</div></div></div>
+    ${vs.some(v => advAmt(v) > 0) ? `<div class="card stat" style="--c:#ea580c"><div class="ic">${ic('wallet')}</div><div><div class="k">${L('منها سلف من المكتب', 'Of which office advances')}</div><div class="v">${money(vs.reduce((s, v) => s + advOut(v), 0))}</div></div></div>` : ''}
   </div>
   <div class="card"><h3>${L('سيارات الزبون', 'Customer vehicles')}</h3>${vTable(vs)}</div>
   <div class="card"><h3>${L('سجل الدفعات', 'Payment history')}</h3>${payTable(ps, false)}</div>`;
@@ -1261,7 +1329,7 @@ function payTable(list, showCust) {
     <td>${v ? `<a href="#/vehicle/${v.id}">${esc(vt(v))}</a>` : `<span class="sub">${L('على الحساب', 'On account')}</span>`}</td>
     <td><b>${p.currency === 'LYD' ? lyd(p.amount) : money(p.amount)}</b>${p.currency === 'LYD' ? `<div class="sub">${L('صرف', 'rate')} ${esc(p.rate)}</div>` : ''}</td>
     <td class="pos">${money(p.amount_usd)}</td><td style="white-space:normal;max-width:240px">${esc(p.receipt_notes || '')}</td>
-    <td><button class="btn sm red" onclick="A.pDel('${p.id}')">🗑️</button></td></tr>`; }).join('')}</tbody></table></div>`;
+    <td><button class="btn sm red" onclick="A.pDel('${p.id}')">${ic('trash')}</button></td></tr>`; }).join('')}</tbody></table></div>`;
 }
 function vPayments() {
   const l = S.payments.filter(p => (!S.pf.cust || p.customer_id === S.pf.cust) && (!S.pf.cur || p.currency === S.pf.cur)).sort((a, b) => (b.date || '').localeCompare(a.date || ''));
@@ -1270,7 +1338,7 @@ function vPayments() {
   <div class="card"><div class="grid"><select onchange="A.pff('cust',this.value)">${custOpts(S.pf.cust, true)}</select>
     <select onchange="A.pff('cur',this.value)"><option value="">${L('كل العملات', 'All currencies')}</option><option value="USD" ${S.pf.cur === 'USD' ? 'selected' : ''}>USD</option><option value="LYD" ${S.pf.cur === 'LYD' ? 'selected' : ''}>LYD</option></select></div></div>
   <div class="stats">
-    <div class="card stat" style="--c:#2563eb"><div class="ic">🧾</div><div><div class="k">${L('عدد الدفعات', 'Payments')}</div><div class="v">${l.length}</div></div></div>
+    <div class="card stat" style="--c:#2563eb"><div class="ic">${ic('receipt')}</div><div><div class="k">${L('عدد الدفعات', 'Payments')}</div><div class="v">${l.length}</div></div></div>
     <div class="card stat" style="--c:#059669"><div class="ic">$</div><div><div class="k">${L('مقبوض بالدولار', 'Received in USD')}</div><div class="v">${money(usd)}</div></div></div>
     <div class="card stat" style="--c:#7c3aed"><div class="ic">د.ل</div><div><div class="k">${L('مقبوض بالدينار', 'Received in LYD')}</div><div class="v">${lyd(ly)}</div></div></div>
     <div class="card stat" style="--c:#f97316"><div class="ic">Σ</div><div><div class="k">${L('الإجمالي المعادل بالدولار', 'Total (USD equiv.)')}</div><div class="v">${money(l.reduce((s, p) => s + num(p.amount_usd), 0))}</div></div></div>
@@ -1295,12 +1363,12 @@ function vCollect() {
   const tot = list.reduce((s, x) => s + x.bal, 0), adv = list.reduce((s, x) => s + x.adv, 0), old = list.filter(x => x.age >= 30);
   const ageCls = d => d >= 30 ? 'old' : d >= 7 ? 'mid' : '';
   const ago = d => { const n = daysSince(d); return n === 0 ? L('اليوم', 'today') : L(`قبل ${n} يوم`, `${n}d ago`); };
-  return `<div class="top"><h1>📞 ${L('قائمة التحصيل', 'Collections')}</h1></div>
+  return `<div class="top"><h1>${L('قائمة التحصيل', 'Collections')}</h1></div>
   <div class="stats">
-    <div class="card stat" style="--c:#dc2626"><div class="ic">⚖️</div><div><div class="k">${L('إجمالي المطلوب من الزبائن', 'Total owed')}</div><div class="v">${money(tot)}</div></div></div>
-    <div class="card stat" style="--c:#2563eb"><div class="ic">👥</div><div><div class="k">${L('عدد الزبائن المدينين', 'Customers owing')}</div><div class="v">${list.length}</div></div></div>
-    <div class="card stat" style="--c:#ea580c"><div class="ic">💸</div><div><div class="k">${L('منها سلف المكتب', 'Of which advances')}</div><div class="v">${money(adv)}</div></div></div>
-    <div class="card stat" style="--c:#7f1d1d"><div class="ic">⏰</div><div><div class="k">${L('متأخر أكثر من 30 يوم', 'Over 30 days')} (${old.length})</div><div class="v">${money(old.reduce((s, x) => s + x.bal, 0))}</div></div></div>
+    <div class="card stat" style="--c:#dc2626"><div class="ic">${ic('scale')}</div><div><div class="k">${L('إجمالي المطلوب من الزبائن', 'Total owed')}</div><div class="v">${money(tot)}</div></div></div>
+    <div class="card stat" style="--c:#2563eb"><div class="ic">${ic('users')}</div><div><div class="k">${L('عدد الزبائن المدينين', 'Customers owing')}</div><div class="v">${list.length}</div></div></div>
+    <div class="card stat" style="--c:#ea580c"><div class="ic">${ic('wallet')}</div><div><div class="k">${L('منها سلف المكتب', 'Of which advances')}</div><div class="v">${money(adv)}</div></div></div>
+    <div class="card stat" style="--c:#7f1d1d"><div class="ic">${ic('clock')}</div><div><div class="k">${L('متأخر أكثر من 30 يوم', 'Over 30 days')} (${old.length})</div><div class="v">${money(old.reduce((s, x) => s + x.bal, 0))}</div></div></div>
   </div>
   <div class="card"><div class="row-b"><div class="sortb"><b>${L('الترتيب:', 'Sort:')}</b>
     ${[['age', L('الأقدم ديناً', 'Oldest debt')], ['amount', L('الأكبر مبلغاً', 'Largest amount')], ['remind', L('الأقدم تذكيراً', 'Least recently reminded')]].map(o => `<button class="tab ${S.csort === o[0] ? 'on' : ''}" onclick="A.csSet('${o[0]}')">${o[1]}</button>`).join('')}</div>
@@ -1309,15 +1377,15 @@ function vCollect() {
     ${list.map(x => `<tr>
       <td><a href="#/customer/${x.c.id}"><b>${esc(x.c.full_name)}</b></a><div class="sub"><span class="mono">${esc(x.c.phone || '')}</span>${x.c.city ? ' · ' + esc(x.c.city) : ''}</div></td>
       <td class="ocars">${x.open.slice(0, 3).map(v => `<a href="#/vehicle/${v.id}">${esc(vt(v))}</a> · <span dir="ltr">${money(vBal(v))}</span>`).join('<br>')}${x.open.length > 3 ? `<br>+${x.open.length - 3} ${L('أخرى', 'more')}` : ''}</td>
-      <td><b class="neg" dir="ltr">${money(x.bal)}</b>${x.adv > 0.009 ? `<div><span class="advtag">💸 ${L('سلفة', 'Adv.')} ${money(x.adv)}</span></div>` : ''}</td>
+      <td><b class="neg" dir="ltr">${money(x.bal)}</b>${x.adv > 0.009 ? `<div><span class="advtag">${L('سلفة', 'Adv.')} ${money(x.adv)}</span></div>` : ''}</td>
       <td><span class="age ${ageCls(x.age)}">${x.age} ${L('يوم', 'days')}</span></td>
       <td>${x.lp ? `${fdate(x.lp)}<div class="sub">${ago(x.lp)}</div>` : `<span class="sub">${L('ما دفعش بعد', 'No payments yet')}</span>`}</td>
       <td>${x.c.last_reminder ? `${fdate(x.c.last_reminder)}<div class="sub">${ago(x.c.last_reminder)}</div>` : `<span class="sub">—</span>`}</td>
-      <td><div class="acts" style="flex-wrap:nowrap"><button class="btn sm wa" onclick="A.wa('c','${x.c.id}')">💬 ${L('تذكير', 'Remind')}</button><button class="btn sm" onclick="A.pForm({customer_id:'${x.c.id}'})">+ ${L('دفعة', 'Payment')}</button><button class="btn sm" onclick="A.printDue('${x.c.id}')" title="${L('تقرير المستحقات', 'Amounts due')}">🧾</button></div></td>
+      <td><div class="acts" style="flex-wrap:nowrap"><button class="btn sm wa" onclick="A.wa('c','${x.c.id}')">${L('تذكير', 'Remind')}</button><button class="btn sm" onclick="A.pForm({customer_id:'${x.c.id}'})">+ ${L('دفعة', 'Payment')}</button><button class="btn sm" onclick="A.printDue('${x.c.id}')" title="${L('تقرير المستحقات', 'Amounts due')}">${ic('receipt')}</button></div></td>
     </tr>`).join('')}</tbody></table></div>` + `<div class="mcards">${list.map(x => `<div class="mc"><div class="mc-h"><a href="#/customer/${x.c.id}"><b>${esc(x.c.full_name)}</b></a><b class="neg" dir="ltr">${money(x.bal)}</b></div>
-      <div class="mc-f"><span class="age ${ageCls(x.age)}">${x.age} ${L('يوم', 'days')}</span>${x.adv > 0.009 ? `<span class="advtag">💸 ${money(x.adv)}</span>` : ''}<span>${L('آخر دفعة', 'Last paid')}: ${x.lp ? ago(x.lp) : '—'}</span><span>${L('آخر تذكير', 'Reminded')}: ${x.c.last_reminder ? ago(x.c.last_reminder) : '—'}</span></div>
-      <div class="mc-s" style="margin-top:6px">${x.open.slice(0, 3).map(v => `🚗 ${esc(vt(v))}: <bdi>${money(vBal(v))}</bdi>`).join('<br>')}</div>
-      <div class="mc-a"><button class="btn sm wa" onclick="A.wa('c','${x.c.id}')">💬 ${L('تذكير', 'Remind')}</button><button class="btn sm" onclick="A.pForm({customer_id:'${x.c.id}'})">+ ${L('دفعة', 'Payment')}</button><button class="btn sm" onclick="A.printDue('${x.c.id}')">🧾</button></div></div>`).join('')}</div>` : `<div class="empty">🎉 ${L('ما فيش ديون على أي زبون', 'No customer owes anything')}</div>`}</div>`;
+      <div class="mc-f"><span class="age ${ageCls(x.age)}">${x.age} ${L('يوم', 'days')}</span>${x.adv > 0.009 ? `<span class="advtag">${money(x.adv)}</span>` : ''}<span>${L('آخر دفعة', 'Last paid')}: ${x.lp ? ago(x.lp) : '—'}</span><span>${L('آخر تذكير', 'Reminded')}: ${x.c.last_reminder ? ago(x.c.last_reminder) : '—'}</span></div>
+      <div class="mc-s" style="margin-top:6px">${x.open.slice(0, 3).map(v => `${esc(vt(v))}: <bdi>${money(vBal(v))}</bdi>`).join('<br>')}</div>
+      <div class="mc-a"><button class="btn sm wa" onclick="A.wa('c','${x.c.id}')">${L('تذكير', 'Remind')}</button><button class="btn sm" onclick="A.pForm({customer_id:'${x.c.id}'})">+ ${L('دفعة', 'Payment')}</button><button class="btn sm" onclick="A.printDue('${x.c.id}')">${ic('receipt')}</button></div></div>`).join('')}</div>` : `<div class="empty">${L('ما فيش ديون على أي زبون', 'No customer owes anything')}</div>`}</div>`;
 }
 
 /* ---------------- المستخدمين ---------------- */
@@ -1325,9 +1393,9 @@ function vUsers() {
   const list = [...S.users].sort((a, b) => (a.name || a.id).localeCompare(b.name || b.id));
   const chips = u => PERMS.map(p => `<span class="perm ${u.perms && u.perms[p[0]] ? '' : 'off'}">${esc(L(p[1], p[2]))}</span>`).join('');
   const ago = d => d ? fdt(d) : L('ما دخلش بعد', 'Never');
-  const acts = u => `<div class="acts" style="flex-wrap:nowrap"><button class="btn sm" onclick="A.uForm('${esc(u.id)}')">✏️ ${L('تعديل', 'Edit')}</button><button class="btn sm" onclick="A.uReset('${esc(u.id)}')" title="${L('إرسال رابط تغيير كلمة السر', 'Send password reset')}">🔑</button><button class="btn sm" onclick="A.uToggle('${esc(u.id)}')">${u.active === false ? '▶️ ' + L('تفعيل', 'Enable') : '⏸️ ' + L('إيقاف', 'Disable')}</button><button class="btn sm red" onclick="A.uDel('${esc(u.id)}')">🗑️</button></div>`;
-  return `<div class="top"><h1>🔐 ${L('المستخدمين والصلاحيات', 'Users & permissions')}</h1><button class="btn pri" onclick="A.uForm()">+ ${L('مستخدم جديد', 'New user')}</button></div>
-  <div class="card"><div class="mc-h"><div><b>👑 ${esc(ADMIN_EMAIL)}</b><div class="sub">${L('المدير الرئيسي — كل الصلاحيات، وهو الوحيد اللي يدير المستخدمين', 'Main admin — all permissions, the only one who manages users')}</div></div><span class="ustate on">${L('مدير', 'Admin')}</span></div></div>
+  const acts = u => `<div class="acts" style="flex-wrap:nowrap"><button class="btn sm" onclick="A.uForm('${esc(u.id)}')">${L('تعديل', 'Edit')}</button><button class="btn sm" onclick="A.uReset('${esc(u.id)}')" title="${L('إرسال رابط تغيير كلمة السر', 'Send password reset')}">${ic('key')}</button><button class="btn sm" onclick="A.uToggle('${esc(u.id)}')">${u.active === false ? '▶️ ' + L('تفعيل', 'Enable') : '' + L('إيقاف', 'Disable')}</button><button class="btn sm red" onclick="A.uDel('${esc(u.id)}')">${ic('trash')}</button></div>`;
+  return `<div class="top"><h1>${L('المستخدمين والصلاحيات', 'Users & permissions')}</h1><button class="btn pri" onclick="A.uForm()">+ ${L('مستخدم جديد', 'New user')}</button></div>
+  <div class="card"><div class="mc-h"><div><b>${esc(ADMIN_EMAIL)}</b><div class="sub">${L('المدير الرئيسي — كل الصلاحيات، وهو الوحيد اللي يدير المستخدمين', 'Main admin — all permissions, the only one who manages users')}</div></div><span class="ustate on">${L('مدير', 'Admin')}</span></div></div>
   <div class="card">${list.length ? `<div class="tw dt"><table><thead><tr><th>${L('المستخدم', 'User')}</th><th>${L('الدور', 'Role')}</th><th>${L('الصلاحيات', 'Permissions')}</th><th>${L('الحالة', 'Status')}</th><th>${L('آخر دخول', 'Last login')}</th><th></th></tr></thead><tbody>
     ${list.map(u => `<tr><td><b>${esc(u.name || '—')}</b><div class="sub mono">${esc(u.id)}</div></td><td>${esc(roleName(u.role))}</td><td style="white-space:normal;max-width:340px">${chips(u)}</td><td><span class="ustate ${u.active === false ? 'off' : 'on'}">${u.active === false ? L('موقوف', 'Disabled') : L('فعّال', 'Active')}</span></td><td class="when">${ago(u.last_login)}</td><td>${acts(u)}</td></tr>`).join('')}</tbody></table></div>
     <div class="mcards">${list.map(u => `<div class="mc"><div class="mc-h"><div><b>${esc(u.name || '—')}</b><div class="mc-s mono">${esc(u.id)}</div></div><span class="ustate ${u.active === false ? 'off' : 'on'}">${u.active === false ? L('موقوف', 'Disabled') : esc(roleName(u.role))}</span></div><div style="margin-top:6px">${chips(u)}</div><div class="mc-s">${L('آخر دخول', 'Last login')}: ${ago(u.last_login)}</div><div class="mc-a">${acts(u)}</div></div>`).join('')}</div>`
@@ -1344,9 +1412,9 @@ function vExpenses() {
   const exLyd = list.filter(e => e.currency === 'LYD').reduce((s, e) => s + num(e.amount), 0), exUsd = list.filter(e => e.currency !== 'LYD').reduce((s, e) => s + num(e.amount), 0);
   return `<div class="top"><h1>${L('مصاريف المكتب', 'Office expenses')}</h1><div class="acts"><input type="month" value="${esc(m)}" onchange="A.emSet(this.value)" style="width:auto"><button class="btn pri" onclick="A.eForm()">+ ${L('مصروف جديد', 'New expense')}</button></div></div>
   <div class="stats">
-    <div class="card stat pf" style="--c:#f97316"><div class="ic">💰</div><div><div class="k">${L('الربح المحقق هذا الشهر', 'Profit collected this month')}</div><div class="v">${money(prof)}</div></div></div>
-    <div class="card stat" style="--c:#dc2626"><div class="ic">🧾</div><div><div class="k">${L('مصاريف الشهر', 'Expenses this month')}</div><div class="v">${money(ex)}</div></div></div>
-    <div class="card stat pf" style="--c:#16a34a"><div class="ic">📈</div><div><div class="k">${L('صافي الشهر', 'Net this month')}</div><div class="v ${net < 0 ? 'neg' : 'pos'}">${money(net)}</div></div></div>
+    <div class="card stat pf" style="--c:#f97316"><div class="ic">${ic('coins')}</div><div><div class="k">${L('الربح المحقق هذا الشهر', 'Profit collected this month')}</div><div class="v">${money(prof)}</div></div></div>
+    <div class="card stat" style="--c:#dc2626"><div class="ic">${ic('receipt')}</div><div><div class="k">${L('مصاريف الشهر', 'Expenses this month')}</div><div class="v">${money(ex)}</div></div></div>
+    <div class="card stat pf" style="--c:#16a34a"><div class="ic">${ic('trend')}</div><div><div class="k">${L('صافي الشهر', 'Net this month')}</div><div class="v ${net < 0 ? 'neg' : 'pos'}">${money(net)}</div></div></div>
     <div class="card stat pf" style="--c:#475569"><div class="ic">Σ</div><div><div class="k">${L('الصافي المحقق الكلي (من البداية)', 'Net realized all-time')}</div><div class="v ${allProf - allEx < 0 ? 'neg' : 'pos'}">${money(allProf - allEx)}</div></div></div>
   </div>
   <div class="stats">
@@ -1356,7 +1424,7 @@ function vExpenses() {
   <div class="hint pf" style="margin-top:-6px">${L('مصاريف الشهر بالدولار = الدولار + الدينار محوّل بسعر الصرف المسجّل مع كل مصروف. ', 'Monthly USD total = USD + LYD converted at each expense’s rate. ')}${L('الربح المحقق = ربح كل مرحلة (حق السيارة / الشحن) يتحسب في الشهر اللي خلّص فيه الزبون المرحلة.', 'Realized profit = each stage (car / shipping) counts in the month the customer finished paying it.')}</div>
   <div class="two">
     <div class="card"><h3>${L('مصاريف الشهر', 'This month')}</h3>${list.length ? `<div class="tw"><table><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('البند', 'Category')}</th><th>${L('المبلغ', 'Amount')}</th><th>${L('المعادل بالدولار', 'USD equiv.')}</th><th>${L('ملاحظات', 'Notes')}</th><th></th></tr></thead><tbody>
-      ${list.map(e => `<tr><td>${fdate(e.date)}</td><td><b>${esc(expCat(e.category))}</b></td><td><b>${e.currency === 'LYD' ? lyd(e.amount) : money(e.amount)}</b></td><td class="sub">${e.currency === 'LYD' ? '≈ ' + money(e.amount_usd) + ' @' + esc(e.rate) : '—'}</td><td style="white-space:normal;max-width:200px">${esc(e.notes || '')}</td><td><button class="btn sm red" onclick="A.eDel('${e.id}')">🗑️</button></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty">${L('لا توجد مصاريف في هذا الشهر', 'No expenses this month')}</div>`}</div>
+      ${list.map(e => `<tr><td>${fdate(e.date)}</td><td><b>${esc(expCat(e.category))}</b></td><td><b>${e.currency === 'LYD' ? lyd(e.amount) : money(e.amount)}</b></td><td class="sub">${e.currency === 'LYD' ? '≈ ' + money(e.amount_usd) + ' @' + esc(e.rate) : '—'}</td><td style="white-space:normal;max-width:200px">${esc(e.notes || '')}</td><td><button class="btn sm red" onclick="A.eDel('${e.id}')">${ic('trash')}</button></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty">${L('لا توجد مصاريف في هذا الشهر', 'No expenses this month')}</div>`}</div>
     <div class="card"><h3>${L('حسب البند', 'By category')}</h3>${byCat.length ? byCat.map(x => `<div class="sbar" style="grid-template-columns:130px 1fr 80px"><span>${esc(L(x[0][1], x[0][2]))}</span><div class="bar"><i style="width:${x[1] / ex * 100}%;background:#ea580c"></i></div><b dir="ltr">${money(x[1])}</b></div>`).join('') : `<div class="empty">—</div>`}</div>
   </div>`;
 }
@@ -1385,12 +1453,18 @@ function vSettings() {
     <label class="f"><span>${L('أيام تنبيه التأخير (بعد الشراء)', 'Late alert after (days)')}</span><input name="lateDays" type="number" min="1" value="${esc(s.lateDays)}"></label>
     <label class="f"><span>${L('أيام تنبيه السلفة المتأخرة', 'Overdue advance alert (days)')}</span><input name="advDays" type="number" min="1" value="${esc(s.advDays ?? 7)}"></label>
     <label class="f"><span>${L('سعر الصرف الافتراضي (دينار/دولار)', 'Default rate (LYD per USD)')}</span><input name="rate" type="number" step="0.0001" value="${esc(s.rate)}"></label>
+  </div>
+  <h3 style="margin:18px 0 6px">${L('قواعد الدفع الافتراضية', 'Default payment rules')}</h3><div class="hint" style="margin:0 0 10px">${L('تُستخدم كقيم أولية في كل دفعة جديدة، وتقدر تغيّرها في الدفعة نفسها.', 'Used as starting values for each new payment; you can still change them on the payment.')}</div><div class="grid">
+    <label class="f"><span>${L('عمولة الزبون %', 'Customer fee %')}</span><input name="fee_cust" type="number" step="0.01" min="0" dir="ltr" value="${esc(s.fee_cust ?? 1.5)}"></label>
+    <label class="f"><span>${L('خصم Copart (حوالة / MoneyGram / WU) %', 'Copart discount (wire / MoneyGram / WU) %')}</span><input name="disc_copart" type="number" step="0.01" min="0" dir="ltr" value="${esc(s.disc_copart ?? 3.5)}"></label>
+    <label class="f"><span>${L('رسوم PayPal %', 'PayPal fee %')}</span><input name="fee_paypal" type="number" step="0.01" min="0" dir="ltr" value="${esc(s.fee_paypal ?? 2.5)}"></label>
+    <label class="f"><span>${L('عائد البطاقة الأولي (دينار لكل دولار)', 'Starting card return (LYD per USD)')}</span><input name="card_back" type="number" step="0.001" dir="ltr" value="${esc(s.card_back ?? 0.08)}"></label>
   </div><label class="f" style="margin-top:12px"><span>${L('ملاحظة أسفل الفاتورة', 'Invoice footer note')}</span><textarea name="note" rows="2">${esc(s.note)}</textarea></label>
-  <div class="mfoot"><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form></div>
+  <div class="mfoot"><button class="btn pri">${L('حفظ', 'Save')}</button></div></form></div>
   <div class="card"><h3>${L('النظام', 'System')}</h3>
     <p>${L('وضع التشغيل', 'Mode')}: <b>${LOCAL ? L('تجريبي (محلي)', 'Demo (local)') : 'Firebase · ' + esc(firebaseConfig.projectId)}</b></p>
     <p>${L('رابط صفحة التتبع للزبائن', 'Customer tracking page')}: <a class="mono" href="#/track" target="_blank">${esc(location.origin + location.pathname)}#/track</a></p>
-    <div class="acts">${[S.vehicles, S.customers, S.payments, S.expenses || []].some(a => a.some(x => x.demo)) ? `<button class="btn red" onclick="A.unseed()">🧹 ${L('حذف البيانات التجريبية', 'Delete sample data')}</button>` : ''}<button class="btn" onclick="A.backup()">⬇️ ${L('تنزيل نسخة احتياطية (JSON)', 'Download backup (JSON)')}</button></div></div>`;
+    <div class="acts">${[S.vehicles, S.customers, S.payments, S.expenses || []].some(a => a.some(x => x.demo)) ? `<button class="btn red" onclick="A.unseed()">${L('حذف البيانات التجريبية', 'Delete sample data')}</button>` : ''}<button class="btn" onclick="A.backup()">${L('تنزيل نسخة احتياطية (JSON)', 'Download backup (JSON)')}</button></div></div>`;
 }
 
 /* ---------------- النماذج ---------------- */
@@ -1398,11 +1472,11 @@ function vFormHtml(v, cid) {
   const f = v.fin || {}, isNew = !v.id;
   const inp = (n, lab, val, attr = '') => `<label class="f"><span>${lab}</span><input name="${n}" value="${esc(val ?? '')}" ${attr}></label>`;
   const ncar = num(v.cars_per_container) || 4;
-  return `<div class="vfm"><div><h2>${isNew ? '🚗 ' + L('إضافة سيارة', 'Add vehicle') : '✏️ ' + L('تعديل السيارة', 'Edit vehicle')}</h2>${isNew ? '' : `<div class="vfm-sub">${esc(vt(v))} · <span class="mono">${esc(v.vin || '')}</span></div>`}</div><button type="button" class="mx" onclick="A.close()" aria-label="${L('إغلاق', 'Close')}">×</button></div>
+  return `<div class="vfm"><div><h2>${isNew ? '' + L('إضافة سيارة', 'Add vehicle') : '' + L('تعديل السيارة', 'Edit vehicle')}</h2>${isNew ? '' : `<div class="vfm-sub">${esc(vt(v))} · <span class="mono">${esc(v.vin || '')}</span></div>`}</div><button type="button" class="mx" onclick="A.close()" aria-label="${L('إغلاق', 'Close')}">×</button></div>
   <form id="vf" data-id="${v.id || ''}" onsubmit="A.vSave(event,'${v.id || ''}')">
-  <div class="sec"><i>🚗</i>${L('البيانات الأساسية', 'Basic info')}</div><div class="grid">
+  <div class="sec"><i>${ic('car')}</i>${L('البيانات الأساسية', 'Basic info')}</div><div class="grid">
     <label class="f"><span>${L('الزبون', 'Customer')} *</span><select name="customer_id" required>${custOpts(v.customer_id || cid)}</select></label>
-    <label class="f"><span>${L('رقم الهيكل VIN (17 خانة)', 'VIN (17 chars)')} *</span><div class="vinrow"><input name="vin" id="vinIn" value="${esc(v.vin || '')}" required maxlength="17" class="mono" dir="ltr" oninput="A.vinIn(this)"><button type="button" class="btn" onclick="A.vinDecode(true)" title="${L('جلب الشركة والموديل والسنة', 'Fetch make, model & year')}">🔎</button></div><div class="vmsg" id="vinMsg">${isNew ? L('اكتب رقم الهيكل وتتعبى الشركة والموديل والسنة تلقائياً', 'Type the VIN to auto-fill make, model & year') : ''}</div></label>
+    <label class="f"><span>${L('رقم الهيكل VIN (17 خانة)', 'VIN (17 chars)')} *</span><div class="vinrow"><input name="vin" id="vinIn" value="${esc(v.vin || '')}" required maxlength="17" class="mono" dir="ltr" oninput="A.vinIn(this)"><button type="button" class="btn" onclick="A.vinDecode(true)" title="${L('جلب الشركة والموديل والسنة', 'Fetch make, model & year')}">${ic('search')}</button></div><div class="vmsg" id="vinMsg">${isNew ? L('اكتب رقم الهيكل وتتعبى الشركة والموديل والسنة تلقائياً', 'Type the VIN to auto-fill make, model & year') : ''}</div></label>
     ${inp('lot_number', L('رقم اللوت', 'Lot number'), v.lot_number, 'dir="ltr"')}
     ${inp('make', L('الشركة المصنعة', 'Make') + ' *', v.make, 'required list="mk"')}
     ${inp('model', L('الموديل', 'Model') + ' *', v.model, 'required')}
@@ -1411,7 +1485,7 @@ function vFormHtml(v, cid) {
     ${inp('trim', L('الفئة (Trim)', 'Trim'), v.trim, 'placeholder="XLE / Limited / Sport..." dir="ltr"')}
     ${inp('engine', L('المحرك', 'Engine'), v.engine, 'placeholder="V6 3.5L" dir="ltr"')}
   </div><datalist id="mk">${['Toyota', 'Hyundai', 'Kia', 'Nissan', 'Honda', 'Ford', 'Chevrolet', 'Jeep', 'Dodge', 'Mercedes-Benz', 'BMW', 'Lexus', 'Audi', 'Volkswagen', 'Mazda', 'GMC', 'Tesla'].map(x => `<option>${x}</option>`).join('')}</datalist>
-  <div class="sec"><i>🚚</i>${L('المزاد والشحن إلى الخمس', 'Auction & shipping to Khoms')}</div>
+  <div class="sec"><i>${ic('truck')}</i>${L('المزاد والشحن إلى الخمس', 'Auction & shipping to Khoms')}</div>
   <div class="shipbox"><div class="shiprow">
     <label class="f"><span>${L('المزاد', 'Auction')}</span><select name="auction_name" onchange="A.yardFill()">${AUCTIONS.map(a => `<option ${v.auction_name === a ? 'selected' : ''}>${a}</option>`).join('')}</select></label>
     <label class="f yardin"><span>${L('الساحة (من قائمة الأسعار)', 'Yard (from price list)')}</span><input id="yardIn" list="yardDl" value="${esc(v.yard ? `${v.yard}, ${v.yard_state} · ${v.auction_name} → ${PSHORT[v.us_port] ? PSHORT[v.us_port][1] : v.us_port}` : '')}" placeholder="${L('اكتب المدينة أو الولاية… مثلاً Dallas', 'Type the city or state… e.g. Dallas')}" oninput="A.yardPick()" autocomplete="off" dir="ltr"><datalist id="yardDl"></datalist>
@@ -1428,13 +1502,13 @@ function vFormHtml(v, cid) {
     ${inp('booking_number', L('رقم الحجز', 'Booking #'), v.booking_number, 'dir="ltr"')}
     <label class="f"><span>${L('الحالة', 'Status')}</span><select name="status">${ST.map(s => `<option value="${s.k}" ${(v.status || 'WON_PENDING_PAYMENT') === s.k ? 'selected' : ''}>${esc(L(s.ar, s.en))}</option>`).join('')}</select></label>
   </div>
-  <div class="sec"><i>💵</i>${L('الحساب المالي (بالدولار)', 'Financials (USD)')}</div><div class="grid">
+  <div class="sec"><i>${ic('cash')}</i>${L('الحساب المالي (بالدولار)', 'Financials (USD)')}</div><div class="grid">
     ${FIN.map(x => inp('fin_' + x.k, L(x.ar, x.en), f[x.k] ?? '', 'type="number" step="0.01" min="0" oninput="A.calc()" dir="ltr" placeholder="0"')).join('')}
   </div>
-  ${can('profit') ? `<div class="grid pf" style="margin-top:12px">${inp('fin_shipping_cost_actual', '🔒 ' + L('تكلفتنا الفعلية للشحن (داخلي + بحري)', 'Our actual shipping cost (inland + ocean)'), (S.internal[v.id] ? S.internal[v.id].shipping_cost_actual : f.shipping_cost_actual) ?? '', 'type="number" step="0.01" min="0" dir="ltr" placeholder="0" oninput="A.calc()"')}<div class="hint" style="align-self:end">${L('داخلي فقط — لا يظهر للزبون. يُستخدم لحساب الربح.', 'Internal only, never shown to the customer. Used for profit.')}</div></div>` : ''}
-  <div class="vtots"><div class="totbox"><span>${L('الإجمالي على الزبون', 'Total charged')}</span><span id="vtot" dir="ltr">${money(totalCost(v))}</span></div>${can('profit') ? `<div class="profbox pf"><span>🔒 ${L('ربح المكتب المتوقع', 'Expected office profit')}</span><b id="vprof">—</b></div>` : ''}</div>
-  <div class="sec"><i>📝</i>${L('ملاحظات', 'Notes')}</div><label class="f"><span style="display:none">${L('ملاحظات', 'Notes')}</span><textarea name="notes" rows="2">${esc(v.notes || '')}</textarea></label>
-  <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form>`;
+  ${can('profit') ? `<div class="grid pf" style="margin-top:12px">${inp('fin_shipping_cost_actual', '' + L('تكلفتنا الفعلية للشحن (داخلي + بحري)', 'Our actual shipping cost (inland + ocean)'), (S.internal[v.id] ? S.internal[v.id].shipping_cost_actual : f.shipping_cost_actual) ?? '', 'type="number" step="0.01" min="0" dir="ltr" placeholder="0" oninput="A.calc()"')}<div class="hint" style="align-self:end">${L('داخلي فقط — لا يظهر للزبون. يُستخدم لحساب الربح.', 'Internal only, never shown to the customer. Used for profit.')}</div></div>` : ''}
+  <div class="vtots"><div class="totbox"><span>${L('الإجمالي على الزبون', 'Total charged')}</span><span id="vtot" dir="ltr">${money(totalCost(v))}</span></div>${can('profit') ? `<div class="profbox pf"><span>${L('ربح المكتب المتوقع', 'Expected office profit')}</span><b id="vprof">—</b></div>` : ''}</div>
+  <div class="sec"><i>${ic('note')}</i>${L('ملاحظات', 'Notes')}</div><label class="f"><span style="display:none">${L('ملاحظات', 'Notes')}</span><textarea name="notes" rows="2">${esc(v.notes || '')}</textarea></label>
+  <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">${L('حفظ', 'Save')}</button></div></form>`;
 }
 const vehOpts = (cid, sel) => `<option value="">— ${L('دفعة عامة على حساب الزبون', 'General (on account)')} —</option>` +
   S.vehicles.filter(v => v.customer_id === cid).map(v => `<option value="${v.id}" ${v.id === sel ? 'selected' : ''}>${esc(vt(v))} · ${esc(v.vin.slice(-6))} · ${L('متبقي', 'due')} ${money(vBal(v))}</option>`).join('');
@@ -1468,7 +1542,7 @@ function printDoc(title, body) {
   if (!w) return toast(L('اسمح بالنوافذ المنبثقة للطباعة', 'Please allow pop-ups to print'), 'err');
   const s = S.settings;
   w.document.write(`<!DOCTYPE html><html lang="${S.lang}" dir="${S.lang === 'ar' ? 'rtl' : 'ltr'}"><head><meta charset="utf-8"><title>${esc(title)}</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;800&display=swap" rel="stylesheet"><style>${PRINT_CSS}</style></head><body>
-  <div class="bar"><button onclick="window.print()">🖨️ ${L('طباعة / حفظ PDF', 'Print / Save PDF')}</button></div>
+  <div class="bar"><button onclick="window.print()">${L('طباعة / حفظ PDF', 'Print / Save PDF')}</button></div>
   <div class="hd"><div class="hb"><img src="${LOGO_DATA || new URL('logo.png', location.href).href}" alt="AXS"><div><h1>${esc(s.office)}</h1><div class="m">${esc(s.address || '')}${s.phone ? ' · <span class="mono">' + esc(s.phone) + '</span>' : ''}</div></div></div>${body.head}</div>${body.main}
   ${body.internal ? '' : `<div class="ft"><div>${esc(s.note || '')}</div><div class="sig">${L('التوقيع والختم', 'Signature & stamp')}</div></div>`}
   ${body.noAuto ? '' : '<script>window.onload=()=>setTimeout(()=>window.print(),500)<\/script>'}</body></html>`);
@@ -1482,12 +1556,12 @@ function renderLogin(err) {
   <form onsubmit="A.login(event)"><label class="f"><span>${L('البريد الإلكتروني', 'Email')}</span><input id="le" type="email" required dir="ltr" autocomplete="username"></label>
   <label class="f"><span>${L('كلمة المرور', 'Password')}</span><input id="lp" type="password" required dir="ltr" autocomplete="current-password"></label>
   ${err ? `<div class="err">${esc(err)}</div>` : ''}<button class="btn pri wide">${L('دخول', 'Sign in')}</button></form>
-  <a href="#/track" class="lnk">🔎 ${L('تتبع سيارتك برقم الهيكل', 'Track your car by VIN')}</a><div><button class="btn sm" onclick="A.lang()">${L('English', 'العربية')}</button></div></div></div>`;
+  <a href="#/track" class="lnk">${L('تتبع سيارتك برقم الهيكل', 'Track your car by VIN')}</a><div><button class="btn sm" onclick="A.lang()">${L('English', 'العربية')}</button></div></div></div>`;
 }
 
 function renderBlocked(email, exists) {
   applyDir();
-  $('#app').innerHTML = `<div class="login"><div class="card lcard"><div class="logo">🔒</div><h2 style="margin:0">${L('الحساب غير مفعّل', 'Account not active')}</h2>
+  $('#app').innerHTML = `<div class="login"><div class="card lcard"><div class="logo">${ic('lock')}</div><h2 style="margin:0">${L('الحساب غير مفعّل', 'Account not active')}</h2>
   <p class="mut" style="margin:0"><span class="mono">${esc(email)}</span><br>${exists ? L('حسابك موقوف حالياً.', 'Your account is disabled.') : L('هذا الحساب ما عندهش صلاحية دخول للمنظومة.', 'This account has no access to the system.')} ${L('تواصل مع المدير.', 'Please contact the admin.')}</p>
   <button class="btn pri wide" onclick="A.logout()">${L('تسجيل الخروج', 'Sign out')}</button></div></div>`;
 }
@@ -1501,7 +1575,7 @@ async function renderPublic() {
   $('#app').innerHTML = `<div class="pub"><div class="pub-h"><img class="plogo" src="logo-light.png" alt="AXS"><h1>${esc(s.office)}</h1><p>${L('تتبّع شحنة سيارتك برقم الهيكل (VIN)', 'Track your car shipment by VIN')}</p></div>
   <div class="card pub-s"><form onsubmit="event.preventDefault();A.pubSearch()"><input id="pv" class="mono big" placeholder="${L('أدخل رقم الهيكل - 17 خانة', 'Enter 17-character VIN')}" value="${esc(q)}" maxlength="17" oninput="this.value=this.value.toUpperCase()"><button class="btn pri">${L('تتبّع', 'Track')}</button></form></div>
   <div id="pres"></div>
-  <div class="pub-f">${s.phone ? `📞 <span class="mono">${esc(s.phone)}</span> · ` : ''}<a href="javascript:A.lang()">${L('English', 'العربية')}</a></div></div>`;
+  <div class="pub-f">${s.phone ? `<span class="mono">${esc(s.phone)}</span> · ` : ''}<a href="javascript:A.lang()">${L('English', 'العربية')}</a></div></div>`;
   if (q) A.pubSearch();
 }
 
@@ -1514,14 +1588,14 @@ const A = {
     const m0 = t.method || 'wire', ph = (PAY_METHODS.find(x => x.k === m0) || PAY_METHODS[0]).ph, cur = t.cur || 'USD';
     const items = t.items && t.items.length ? t.items : (tid ? [{ k: 'other', a: t.amount }] : [num(f.bid_price) ? { k: 'car', a: num(f.bid_price) } : null, num(f.auction_fees) ? { k: 'auction_fees', a: num(f.auction_fees) } : null].filter(Boolean));
     if (!items.length) items.push({ k: 'car', a: '' });
-    openModal(`<h2>💳 ${tid ? L('تعديل دفعة', 'Edit payment') : L('تسجيل دفعة / حوالة', 'Add payment / transfer')}</h2><div class="sub" style="margin:-8px 0 12px">${esc(vt(v))} · <span class="mono">${esc(v.vin)}</span></div>
+    openModal(`<h2>${tid ? L('تعديل دفعة', 'Edit payment') : L('تسجيل دفعة / حوالة', 'Add payment / transfer')}</h2><div class="sub" style="margin:-8px 0 12px">${esc(vt(v))} · <span class="mono">${esc(v.vin)}</span></div>
       <form id="trf" onsubmit="A.trSave(event,'${vid}','${tid || ''}')">
       <div class="sec" style="margin-top:0">1 · ${L('طريقة الدفع', 'Payment method')}</div>
       <div class="mchips">${PAY_METHODS.map(m => `<label class="mchip"><input type="radio" name="method" value="${m.k}" ${m.k === m0 ? 'checked' : ''} onchange="A.trM(this.value)"><span>${m.ic} ${esc(L(m.ar, m.en))}</span></label>`).join('')}</div>
       <div class="grid" style="margin-top:12px">
-        <label class="f" style="grid-column:1/-1"><span>👤 ${L('الاسم / الحساب المستخدم', 'Name / account used')} *</span><input name="src" id="trSrc" list="srcDl" required autocomplete="off" value="${esc(t.src || '')}" placeholder="${esc(L(...(SRC_EX[m0] || SRC_EX.other)))}" oninput="A.trSrc(this.value)" style="font-weight:700"><datalist id="srcDl">${srcList().map(x => `<option value="${esc(x.src)}">${esc(pmName(x.method))}</option>`).join('')}</datalist></label>
+        <label class="f" style="grid-column:1/-1"><span>${L('الاسم / الحساب المستخدم', 'Name / account used')} *</span><input name="src" id="trSrc" list="srcDl" required autocomplete="off" value="${esc(t.src || '')}" placeholder="${esc(L(...(SRC_EX[m0] || SRC_EX.other)))}" oninput="A.trSrc(this.value)" style="font-weight:700"><datalist id="srcDl">${srcList().map(x => `<option value="${esc(x.src)}">${esc(pmName(x.method))}</option>`).join('')}</datalist></label>
         <label class="f"><span>${L('مقابل', 'Paid for')}</span><select name="purpose" onchange="A.trPurpose(this.value,'${vid}')">${PAY_FOR.map(x => `<option value="${x.k}" ${(t.purpose || 'auction') === x.k ? 'selected' : ''}>${esc(L(x.ar, x.en))}</option>`).join('')}</select></label>
-        <label class="f"><span>${L('المدفوع إلى', 'Paid to')}</span><input name="payee" value="${esc(t.payee || (v.auction_name && (t.purpose || 'auction') === 'auction' ? v.auction_name : ''))}" placeholder="Copart / IAAI / AEC"></label>
+        <label class="f"><span>${L('المدفوع إلى', 'Paid to')}</span><input name="payee" value="${esc(t.payee || (v.auction_name && (t.purpose || 'auction') === 'auction' ? v.auction_name : ''))}" placeholder="Copart / IAAI / AEC" oninput="A.trCalc()"></label>
         <label class="f"><span>${L('تاريخ الدفع', 'Payment date')}</span><input name="date" type="date" value="${esc(t.date || today())}"></label>
         <label class="f"><span>${L('رقم المرجع / العملية', 'Reference / transaction no.')}</span><input name="ref" dir="ltr" class="mono" value="${esc(t.ref || '')}" placeholder="MTCN / SWIFT / PayPal ID"></label>
         <label class="f" style="grid-column:1/-1"><span>${L('تفاصيل طريقة الدفع', 'Method details')}</span><input name="details" id="trDet" value="${esc(t.details || '')}" placeholder="${esc(L(ph[0], ph[1]))}"></label>
@@ -1537,20 +1611,28 @@ const A = {
         <label class="f trcur"><span>${L('سعر الصرف (للدولار)', 'Rate (per 1 USD)')}</span><input name="rate" type="number" step="0.0001" min="0" dir="ltr" value="${esc(t.rate ?? (cur === 'LYD' ? S.settings.rate : ''))}" oninput="A.trCalc()"></label>
         <div class="f trcur" style="align-self:end"><div class="hint" id="trCurEq" style="margin:0 0 10px"></div></div>
       </div>
-      <div class="sec">4 · ${L('الرسوم', 'Fees')}</div>
+      <div class="sec">4 · ${L('عمولة الزبون والنتيجة', 'Customer fee and result')}</div>
       <div class="grid">
-        ${can('profit') ? FEE_PARTS.map(fp => `<label class="f pf"><span>🔒 ${esc(L(fp.ar, fp.en))}</span><input name="fee_${fp.k}" type="number" step="0.01" min="0" dir="ltr" value="${esc(cd[fp.k] ?? (fp.k === 'transfer' && cost !== '' && !Object.keys(cd).length ? cost : ''))}" oninput="A.trCalc()" placeholder="0"></label>`).join('') : ''}
-        <label class="f"><span>${L('المحمّل على الزبون (عمولة الحوالة)', 'Charged to customer (transfer fee)')}</span><input name="charged" type="number" step="0.01" min="0" dir="ltr" value="${esc(t.charged ?? '')}" oninput="A.trCalc()" placeholder="0"></label>
+        <label class="f"><span>${L('نسبة عمولة الزبون %', 'Customer fee %')}</span><input name="cust_pct" type="number" step="0.01" min="0" dir="ltr" value="${esc(t.cust_pct ?? PAYDEF().cust)}" oninput="A.trCalc(true)"></label>
+        <label class="f"><span>${L('المحمّل على الزبون (USD)', 'Charged to customer (USD)')}</span><input name="charged" type="number" step="0.01" min="0" dir="ltr" value="${esc(t.charged ?? '')}" ${tid ? 'data-manual="1"' : ''} oninput="this.dataset.manual='1';A.trCalc()" placeholder="0"></label>
       </div>
-      ${can('profit') ? `<div class="vtots pf"><div class="totbox"><span>${L('تكلفتنا الإجمالية', 'Our total cost')} · <b id="trCost" dir="ltr">$0</b></span><span>${L('ربحنا', 'Our margin')}: <span id="trMar" dir="ltr">$0</span></span></div><div class="profbox"><span>${L('نسبة الرسوم من المبلغ', 'Fee as % of amount')}</span><b id="trPct">—</b></div></div>` : ''}
+      ${can('profit') ? `<div class="pf"><div class="grid" style="margin-top:12px">
+        <label class="f"><span>${L('سعر الصرف اليوم (دينار للدولار)', "Today's rate (LYD per USD)")}</span><input name="fx_rate" type="number" step="0.0001" min="0" dir="ltr" value="${esc(cd.rate ?? S.settings.rate)}" oninput="A.trCalc()"></label>
+        <label class="f pmx pmx-card"><span>${L('عائد البطاقة (دينار لكل دولار)', 'Card return (LYD per USD)')}</span><input name="card_back" type="number" step="0.001" dir="ltr" value="${esc(cd.card_back ?? lastCardBack())}" oninput="A.trCalc()"></label>
+        <label class="f pmx pmx-paypal"><span>${L('رسوم PayPal %', 'PayPal fee %')}</span><input name="pp_pct" type="number" step="0.01" min="0" dir="ltr" value="${esc(cd.pp_pct ?? PAYDEF().paypal)}" oninput="A.trCalc()"></label>
+        <label class="f pmx pmx-hand"><span>${L('فرق الدينار المدفوع (دينار)', 'LYD difference paid (LYD)')}</span><input name="lyd_cost" type="number" step="0.01" min="0" dir="ltr" value="${esc(cd.lyd_cost ?? '')}" placeholder="0" oninput="A.trCalc()"></label>
+        <label class="f pmx pmx-hand"><span>${L('أجرة الوسيط (USD)', 'Agent fee (USD)')}</span><input name="agent_fee" type="number" step="0.01" min="0" dir="ltr" value="${esc(cd.agent_fee ?? '')}" placeholder="0" oninput="A.trCalc()"></label>
+        <label class="f pmx pmx-disc"><span>${L('خصم Copart %', 'Copart discount %')}</span><input name="disc_pct" type="number" step="0.01" min="0" dir="ltr" value="${esc(cd.disc_pct ?? PAYDEF().disc)}" oninput="A.trCalc()"></label>
+        <label class="f"><span>${L('تكاليف أخرى (USD)', 'Other costs (USD)')}</span><input name="other_cost" type="number" step="0.01" min="0" dir="ltr" value="${esc(cd.other_cost ?? (['transfer', 'bank', 'fx', 'other'].reduce((x, k) => x + num(cd[k]), 0) || ''))}" placeholder="0" oninput="A.trCalc()"></label>
+      </div><div class="trres" id="trRes"></div></div>` : ''}
       <div class="sec">5 · ${L('الحالة والإيصال', 'Status & receipt')}</div>
       <div class="grid">
         <label class="f"><span>${L('حالة الدفعة', 'Payment status')}</span><select name="status">${PAY_ST.map(x => `<option value="${x.k}" ${(t.status || 'sent') === x.k ? 'selected' : ''}>${esc(L(x.ar, x.en))}</option>`).join('')}</select></label>
         <label class="f"><span>${L('تاريخ تأكيد الاستلام', 'Confirmed on')}</span><input name="conf_date" type="date" value="${esc(t.conf_date || '')}"></label>
-        <label class="f" style="grid-column:span 2"><span>🧾 ${L('إيصال التحويل (صورة أو PDF)', 'Transfer receipt (image or PDF)')}${t.receipt ? ' — ' + esc(t.receipt.name) : ''}</span><input name="receipt" type="file" accept="application/pdf,image/*"></label>
+        <label class="f" style="grid-column:span 2"><span>${L('إيصال التحويل (صورة أو PDF)', 'Transfer receipt (image or PDF)')}${t.receipt ? ' — ' + esc(t.receipt.name) : ''}</span><input name="receipt" type="file" accept="application/pdf,image/*"></label>
       </div>
       <label class="f" style="margin-top:12px"><span>${L('ملاحظات', 'Notes')}</span><textarea name="notes" rows="2">${esc(t.notes || '')}</textarea></label>
-      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form>`);
+      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">${L('حفظ', 'Save')}</button></div></form>`);
     A.trCalc();
   },
   trPurpose(k, vid) {
@@ -1560,16 +1642,31 @@ const A = {
     if (!filled || confirm(L('تبديل البنود حسب نوع الدفعة؟', 'Replace the lines to match this payment type?'))) { box.innerHTML = (presets[k] || presets.other).map(trItemRow).join(''); A.trCalc(); }
     const pe = $('#trf').elements.payee; if (pe && !pe.value) pe.value = k === 'auction' ? (v && v.auction_name) || '' : k === 'shipping' || k === 'towing' ? 'AEC' : '';
   },
-  trM(k) { const m = PAY_METHODS.find(x => x.k === k); const el = $('#trDet'); if (m && el) el.placeholder = L(m.ph[0], m.ph[1]); const sr = $('#trSrc'); if (sr) sr.placeholder = L(...(SRC_EX[k] || SRC_EX.other)); },
+  trM(k) { setTimeout(() => A.trCalc()); const m = PAY_METHODS.find(x => x.k === k); const el = $('#trDet'); if (m && el) el.placeholder = L(m.ph[0], m.ph[1]); const sr = $('#trSrc'); if (sr) sr.placeholder = L(...(SRC_EX[k] || SRC_EX.other)); },
   trSrc(val) { const hit = srcList().find(x => x.src === val.trim()); if (!hit) return; const r = document.querySelector(`#trf input[name=method][value="${hit.method}"]`); if (r && !r.checked) { r.checked = true; A.trM(hit.method); } },
-  trCalc() {
+  trCalc(pctChanged) {
     const f = $('#trf'); if (!f) return; const E = f.elements;
-    const a = [...f.querySelectorAll('input[name=it_a]')].reduce((s2, i) => s2 + num(i.value), 0), ch = num(E.charged.value);
-    const co = FEE_PARTS.reduce((s2, fp) => s2 + (E['fee_' + fp.k] ? num(E['fee_' + fp.k].value) : 0), 0);
+    const a = [...f.querySelectorAll('input[name=it_a]')].reduce((s2, i) => s2 + num(i.value), 0);
+    if (pctChanged) delete E.charged.dataset.manual;
+    if (!E.charged.dataset.manual) E.charged.value = a ? r2(a * num(E.cust_pct.value) / 100) : '';
+    const ch = num(E.charged.value), m = (f.querySelector('input[name=method]:checked') || {}).value, payee = E.payee.value;
     $('#trAmt').textContent = money(a);
+    f.querySelectorAll('.pmx').forEach(el => { const on = (el.classList.contains('pmx-card') && m === 'card') || (el.classList.contains('pmx-paypal') && m === 'paypal') || (el.classList.contains('pmx-hand') && HAND_METHODS.includes(m)) || (el.classList.contains('pmx-disc') && DISC_METHODS.includes(m) && /copart/i.test(payee)); el.style.display = on ? '' : 'none'; });
+    if ($('#trRes')) {
+      const g = k => E[k] ? E[k].value : '', r = payResult(m, payee, a, ch, { rate: g('fx_rate'), card_back: g('card_back'), pp_pct: g('pp_pct'), lyd_cost: g('lyd_cost'), agent_fee: g('agent_fee'), other_cost: g('other_cost'), disc_pct: g('disc_pct') });
+      const row = (k, v, cls = '') => `<div class="rr ${cls}"><span>${k}</span><b dir="ltr">${v}</b></div>`;
+      $('#trRes').innerHTML = row(L('المحمّل على الزبون', 'Charged to customer'), '+' + money(ch))
+        + (r.cardGain ? row(L('عائد البطاقة', 'Card return'), '+' + money(r2(r.cardGain)), 'g') : '')
+        + (r.disc ? row(L('خصم Copart', 'Copart discount'), '+' + money(r2(r.disc)), 'g') : '')
+        + (r.ppCost ? row(L('رسوم PayPal', 'PayPal fee'), '-' + money(r2(r.ppCost)), 'c') : '')
+        + (r.lydCost ? row(L('فرق الدينار', 'LYD difference') + ` (${num(g('lyd_cost'))} LYD)`, '-' + money(r2(r.lydCost)), 'c') : '')
+        + (r.agent ? row(L('أجرة الوسيط', 'Agent fee'), '-' + money(r2(r.agent)), 'c') : '')
+        + (r.other ? row(L('تكاليف أخرى', 'Other costs'), '-' + money(r2(r.other)), 'c') : '')
+        + `<div class="rr tot ${r.net >= 0 ? 'pos' : 'neg'}"><span>${r.net >= 0 ? L('ربحنا من هذه الدفعة', 'Our profit on this payment') : L('خسارة على هذه الدفعة', 'Loss on this payment')}</span><b dir="ltr">${money(r2(r.net))}</b></div>`
+        + (a ? `<div class="hint" style="margin-top:4px">${L('النتيجة كنسبة من المبلغ', 'Result as % of amount')}: <b dir="ltr">${(r.net / a * 100).toFixed(2)}%</b></div>` : '');
+    }
     const cur = E.cur.value; f.querySelectorAll('.trcur').forEach(el => el.style.display = cur === 'USD' ? 'none' : '');
     if (cur !== 'USD') { const ca = num(E.cur_amount.value), rt = num(E.rate.value), eq = rt > 0 ? ca / rt : 0; $('#trCurEq').innerHTML = rt > 0 && ca ? `= <b dir="ltr">${money(eq)}</b>${a ? ` · ${L('الفرق عن البنود', 'difference vs lines')}: <b dir="ltr">${money(eq - a)}</b>` : ''}` : ''; }
-    if ($('#trMar')) { $('#trCost').textContent = money(co); $('#trMar').textContent = money(ch - co); $('#trPct').textContent = a > 0 ? (co / a * 100).toFixed(2) + '% ' + L('تكلفة', 'cost') + ' · ' + (ch / a * 100).toFixed(2) + '% ' + L('محمّل', 'charged') : '—'; }
   },
   async trSave(e, vid, tid) {
     e.preventDefault(); const v = S.vehicles.find(x => x.id === vid); if (!v) return;
@@ -1581,7 +1678,7 @@ const A = {
     const cur = g('cur') || 'USD';
     if (cur !== 'USD' && !(num(g('rate')) > 0 && num(g('cur_amount')) > 0)) return toast(L('أدخل المبلغ بالعملة وسعر الصرف', 'Enter the amount in that currency and the rate'), 'err');
     const old = (v.transfers || []).find(x => x.id === tid) || {};
-    const t = { id: tid || ('t' + Date.now().toString(36)), purpose: g('purpose'), payee: g('payee'), method: g('method'), src: g('src'), details: g('details'), ref: g('ref'), date: g('date') || today(), items, amount, cur, cur_amount: cur === 'USD' ? amount : r2(num(g('cur_amount'))), rate: cur === 'USD' ? 1 : num(g('rate')), charged: r2(num(g('charged'))), status: g('status') || 'sent', conf_date: g('conf_date'), notes: g('notes'), receipt: old.receipt || null, at: now(), by: S.user?.email || '' };
+    const t = { id: tid || ('t' + Date.now().toString(36)), cust_pct: num(g('cust_pct')), purpose: g('purpose'), payee: g('payee'), method: g('method'), src: g('src'), details: g('details'), ref: g('ref'), date: g('date') || today(), items, amount, cur, cur_amount: cur === 'USD' ? amount : r2(num(g('cur_amount'))), rate: cur === 'USD' ? 1 : num(g('rate')), charged: r2(num(g('charged'))), status: g('status') || 'sent', conf_date: g('conf_date'), notes: g('notes'), receipt: old.receipt || null, at: now(), by: S.user?.email || '' };
     const file = fm.elements.receipt && fm.elements.receipt.files[0];
     try {
       if (file) {
@@ -1600,9 +1697,15 @@ const A = {
       const charged = r2(list.reduce((a, x) => a + num(x.charged), 0)), fin = { ...(v.fin || {}), transfer_commission: charged };
       await DB.update('vehicles', vid, { transfers: list, fin, total_cost: r2(FIN.reduce((s2, x) => s2 + num(fin[x.k]), 0)) });
       if (can('profit')) {
-        const det = {}; FEE_PARTS.forEach(fp => { const val = g('fee_' + fp.k); if (val !== '') det[fp.k] = r2(num(val)); });
+        const det = { method: t.method, rate: num(g('fx_rate')) || num(S.settings.rate), at: now() };
+        if (t.method === 'card') det.card_back = num(g('card_back'));
+        if (t.method === 'paypal') det.pp_pct = num(g('pp_pct'));
+        if (HAND_METHODS.includes(t.method)) { det.lyd_cost = r2(num(g('lyd_cost'))); det.agent_fee = r2(num(g('agent_fee'))); }
+        if (DISC_METHODS.includes(t.method) && /copart/i.test(t.payee)) det.disc_pct = num(g('disc_pct'));
+        if (g('other_cost') !== '') det.other_cost = r2(num(g('other_cost')));
+        const res = payResult(t.method, t.payee, t.amount, t.charged, det);
         const tc = { ...tCostMap(v) }, tcd = { ...tCostD(v) };
-        if (Object.keys(det).length) { tc[t.id] = r2(Object.values(det).reduce((a, b) => a + b, 0)); tcd[t.id] = det; } else { delete tc[t.id]; delete tcd[t.id]; }
+        tc[t.id] = r2(res.cost - res.gain); tcd[t.id] = det;
         await DB.merge('vinternal', vid, { tcost: tc, tcostd: tcd });
       }
       logAct('veh_edit', `${vt(v)} · ${v.vin} · ${pfName(t.purpose)}: ${PAY_METHODS.find(x => x.k === t.method)?.en || t.method} (${t.src}) ${money(t.amount)}${cur !== 'USD' ? ` = ${t.cur_amount} ${cur}` : ''}`, 'v:' + vid);
@@ -1788,7 +1891,7 @@ const A = {
   async vinDecode(force) {
     const f = $('#vf'), vin = (f.vin.value || '').trim(), m = $('#vinMsg');
     if (!/^[A-HJ-NPR-Z0-9]{17}$/.test(vin)) { m.className = 'vmsg bad'; m.textContent = L('رقم الهيكل غير صحيح (17 خانة بدون I و O و Q)', 'Invalid VIN (17 chars, no I/O/Q)'); return; }
-    if (S.vehicles.some(v => v.vin === vin && v.id !== (f.dataset.id || ''))) { m.className = 'vmsg bad'; m.textContent = '⚠️ ' + L('رقم الهيكل هذا مسجّل لسيارة أخرى', 'This VIN is already registered'); return; }
+    if (S.vehicles.some(v => v.vin === vin && v.id !== (f.dataset.id || ''))) { m.className = 'vmsg bad'; m.textContent = '' + L('رقم الهيكل هذا مسجّل لسيارة أخرى', 'This VIN is already registered'); return; }
     m.className = 'vmsg'; m.textContent = L('جاري جلب بيانات السيارة...', 'Looking up vehicle...');
     try {
       const r = await fetch(`https://vpic.nhtsa.dot.gov/api/vehicles/DecodeVinValues/${vin}?format=json`);
@@ -1807,7 +1910,7 @@ const A = {
       else if (engine && /hybrid/i.test((d.ElectrificationLevel || '') + fuel)) engine += ' Hybrid';
       if (trim && (force || !f.trim.value)) f.trim.value = trim;
       if (engine && (force || !f.engine.value)) f.engine.value = engine;
-      m.className = 'vmsg ok'; m.textContent = `✅ ${year} ${make} ${model} ${trim} ${engine ? '· ' + engine : ''}`.replace(/\s+/g, ' ');
+      m.className = 'vmsg ok'; m.textContent = `${year} ${make} ${model} ${trim} ${engine ? '· ' + engine : ''}`.replace(/\s+/g, ' ');
     } catch (e) { m.className = 'vmsg bad'; m.textContent = L('تعذّر الاتصال — عبّي البيانات يدوياً', 'Lookup failed — fill in manually'); }
   },
 
@@ -1829,7 +1932,7 @@ const A = {
         if (!Object.keys(up).length) continue;
         await DB.update('vehicles', v.id, up); await syncTracking({ ...v, ...up });
       }
-      logAct('bulk', `${vs.length} ${L('سيارة', 'cars')}${st ? ' → ' + stName(st) : ''}${ct ? ' · 📦 ' + ct : ''}${bk ? ' · ' + bk : ''}: ${vs.map(v => v.vin.slice(-6)).join(', ')}`);
+      logAct('bulk', `${vs.length} ${L('سيارة', 'cars')}${st ? ' → ' + stName(st) : ''}${ct ? ' · ' + ct : ''}${bk ? ' · ' + bk : ''}: ${vs.map(v => v.vin.slice(-6)).join(', ')}`);
       S.sel.clear(); A.ff(); toast(L('تم تحديث السيارات', 'Vehicles updated'));
     } catch (x) { toast(x.message, 'err'); }
   },
@@ -1859,11 +1962,11 @@ const A = {
     S.waT = T; S.waCid = c.id || '';
     const phones = [c.phone, c.alternate_phone].filter(Boolean);
     if (!phones.length) return toast(L('ما فيش رقم هاتف لهذا الزبون', 'This customer has no phone number'), 'err');
-    openModal(`<h2>💬 ${L('رسالة واتساب', 'WhatsApp message')} — ${esc(c.full_name || '')}</h2>
+    openModal(`<h2>${L('رسالة واتساب', 'WhatsApp message')} — ${esc(c.full_name || '')}</h2>
       <div class="grid"><label class="f"><span>${L('نوع الرسالة', 'Template')}</span><select onchange="$('#waTxt').value=S.waT[this.value][1]">${T.map((t, i) => `<option value="${i}">${esc(t[0])}</option>`).join('')}</select></label>
       <label class="f"><span>${L('الرقم', 'Number')}</span><select id="waPh">${phones.map(p => `<option value="${esc(p)}">${esc(p)}</option>`).join('')}</select></label></div>
       <label class="f" style="margin-top:12px"><span>${L('نص الرسالة (تقدر تعدّله)', 'Message (editable)')}</span><textarea id="waTxt" rows="10">${esc(T[0][1])}</textarea></label>
-      <div class="mfoot"><button class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn wa" onclick="A.waSend()">💬 ${L('فتح واتساب', 'Open WhatsApp')}</button></div>`, 'sm');
+      <div class="mfoot"><button class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn wa" onclick="A.waSend()">${L('فتح واتساب', 'Open WhatsApp')}</button></div>`, 'sm');
   },
   waSend() {
     const p = normPhone($('#waPh').value); if (p.length < 8) return toast(L('رقم الهاتف غير صحيح', 'Invalid phone number'), 'err');
@@ -1887,7 +1990,7 @@ const A = {
       <div class="hint" style="margin:-4px 0 8px">${L('كل المستخدمين يقدروا يشوفوا السيارات والزبائن والدفعات والتحصيل، ويبعتوا واتساب ويطبعوا الفواتير.', 'All users can view vehicles, customers, payments and collections, send WhatsApp and print invoices.')}</div>
       <div class="pgrid">${PERMS.map(p => `<label class="pchk"><input type="checkbox" name="p_${p[0]}" ${pr[p[0]] ? 'checked' : ''} onchange="A.uCustom()"><div><b>${esc(L(p[1], p[2]))}</b><span>${esc(L(p[3], p[4]))}</span></div></label>`).join('')}</div>
       ${id ? `<label class="pchk" style="margin-top:10px"><input type="checkbox" name="active" ${u.active === false ? '' : 'checked'}><div><b>${L('الحساب فعّال', 'Account active')}</b><span>${L('لو شلت العلامة، المستخدم ما يقدرش يدخل', 'Uncheck to block sign-in')}</span></div></label>` : ''}
-      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form>`, 'sm');
+      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">${L('حفظ', 'Save')}</button></div></form>`, 'sm');
   },
   uRole(r) { if (!ROLES[r]) return; const f = $('#uf'); PERMS.forEach(p => f['p_' + p[0]].checked = ROLES[r][2].includes(p[0])); },
   uCustom() {
@@ -1935,18 +2038,18 @@ const A = {
     try { await DB.del('users', id); logAct('user_del', `${u?.name || ''} · ${id}`); toast(L('تم حذف المستخدم. لو تبي تمسح حسابه نهائياً: Firebase > Authentication > Users', 'User removed. To delete the login itself: Firebase > Authentication > Users')); } catch (x) { toast(x.message, 'err'); }
   },
   more() {
-    const it = [['ports', '🗺️', L('خريطة الموانئ وأسعار الشحن', 'Port map & shipping prices')], ['payments', '💵', L('الدفعات', 'Payments')], ['expenses', '🧾', L('المصاريف', 'Expenses')], ['logs', '🕘', L('سجل العمليات', 'Activity log')], ['settings', '⚙️', L('الإعدادات', 'Settings')], ['users', '🔐', L('المستخدمين والصلاحيات', 'Users & permissions')]].filter(x => !ROUTE_PERM[x[0]] || can(ROUTE_PERM[x[0]]));
+    const it = [['ports', ic('map'), L('خريطة الموانئ وأسعار الشحن', 'Port map & shipping prices')], ['profit', ic('trend'), L('الأرباح', 'Profit')], ['payments', ic('cash'), L('الدفعات', 'Payments')], ['expenses', ic('receipt'), L('المصاريف', 'Expenses')], ['logs', ic('clock'), L('سجل العمليات', 'Activity log')], ['settings', ic('settings'), L('الإعدادات', 'Settings')], ['users', ic('lock'), L('المستخدمين والصلاحيات', 'Users & permissions')]].filter(x => !ROUTE_PERM[x[0]] || can(ROUTE_PERM[x[0]]));
     openModal(`<div class="sheet-list">${it.map(x => `<a href="#/${x[0]}" onclick="A.close()"><span class="ic">${x[1]}</span>${x[2]}</a>`).join('')}
-      <a href="#/track" target="_blank" onclick="A.close()"><span class="ic">🔎</span>${L('صفحة التتبع للزبائن', 'Customer tracking page')}</a>
-      <button onclick="A.close();A.lang()"><span class="ic">🌐</span>${L('English', 'العربية')}</button>
-      ${LOCAL ? '' : `<button onclick="A.close();A.logout()"><span class="ic">🚪</span>${L('تسجيل الخروج', 'Sign out')}<span class="sub" style="margin-inline-start:auto">${esc(S.user?.email || '')}</span></button>`}</div>`, 'sm');
+      <a href="#/track" target="_blank" onclick="A.close()"><span class="ic">${ic('search')}</span>${L('صفحة التتبع للزبائن', 'Customer tracking page')}</a>
+      <button onclick="A.close();A.lang()"><span class="ic">${ic('globe')}</span>${L('English', 'العربية')}</button>
+      ${LOCAL ? '' : `<button onclick="A.close();A.logout()"><span class="ic">${ic('logout')}</span>${L('تسجيل الخروج', 'Sign out')}<span class="sub" style="margin-inline-start:auto">${esc(S.user?.email || '')}</span></button>`}</div>`, 'sm');
   },
   quick() {
     openModal(`<h2>${L('إضافة جديد', 'Add new')}</h2><div class="sheet-list">
-      <button onclick="A.close();A.vForm()"><span class="ic">🚗</span>${L('سيارة جديدة', 'New vehicle')}</button>
-      <button onclick="A.close();A.pForm()"><span class="ic">💵</span>${L('تسجيل دفعة', 'Record payment')}</button>
-      <button onclick="A.close();A.cForm()"><span class="ic">👤</span>${L('زبون جديد', 'New customer')}</button>
-      <button onclick="A.close();A.eForm()"><span class="ic">🧾</span>${L('مصروف', 'Expense')}</button></div>`, 'sm');
+      <button onclick="A.close();A.vForm()"><span class="ic">${ic('car')}</span>${L('سيارة جديدة', 'New vehicle')}</button>
+      <button onclick="A.close();A.pForm()"><span class="ic">${ic('cash')}</span>${L('تسجيل دفعة', 'Record payment')}</button>
+      <button onclick="A.close();A.cForm()"><span class="ic">${ic('user')}</span>${L('زبون جديد', 'New customer')}</button>
+      <button onclick="A.close();A.eForm()"><span class="ic">${ic('receipt')}</span>${L('مصروف', 'Expense')}</button></div>`, 'sm');
   },
   eForm() {
     openModal(`<h2>${L('مصروف جديد', 'New expense')}</h2><form id="ef" onsubmit="A.eSave(event)"><div class="grid">
@@ -1956,7 +2059,7 @@ const A = {
       <label class="f" id="eRate" style="${S.lastExpCur === 'USD' ? 'display:none' : ''}"><span>${L('سعر الصرف', 'Rate (LYD/USD)')}</span><input name="rate" type="number" step="0.0001" min="0.0001" value="${esc(S.settings.rate)}" dir="ltr"></label>
       <label class="f"><span>${L('التاريخ', 'Date')}</span><input name="date" type="date" value="${today()}"></label></div>
       <label class="f" style="margin-top:12px"><span>${L('ملاحظات', 'Notes')}</span><input name="notes"></label>
-      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form>`, 'sm');
+      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">${L('حفظ', 'Save')}</button></div></form>`, 'sm');
   },
   async eSave(e) {
     e.preventDefault(); const fd = new FormData(e.target), cur = fd.get('currency'), amount = r2(num(fd.get('amount'))), rate = num(fd.get('rate'));
@@ -2006,7 +2109,7 @@ const A = {
       <label class="f"><span>${L('هاتف بديل', 'Alternate phone')}</span><input name="alternate_phone" dir="ltr" value="${esc(c.alternate_phone || '')}"></label>
       <label class="f"><span>${L('المدينة', 'City')}</span><input name="city" value="${esc(c.city || '')}"></label></div>
       <label class="f" style="margin-top:12px"><span>${L('ملاحظات', 'Notes')}</span><textarea name="notes" rows="2">${esc(c.notes || '')}</textarea></label>
-      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ', 'Save')}</button></div></form>`, 'sm');
+      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">${L('حفظ', 'Save')}</button></div></form>`, 'sm');
   },
   async cSave(e, id) {
     e.preventDefault(); const fd = new FormData(e.target), d = {};
@@ -2038,7 +2141,7 @@ const A = {
       <label class="f"><span>${L('التاريخ', 'Date')}</span><input name="date" type="date" value="${today()}"></label></div>
       <label class="f" style="margin-top:12px"><span>${L('ملاحظات / رقم الإيصال', 'Notes / receipt no.')}</span><textarea name="receipt_notes" rows="2"></textarea></label>
       <div class="totbox"><span>${L('يُسجَّل بالدولار', 'Recorded in USD')}</span><span id="pusd" dir="ltr">$0</span></div>
-      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">💾 ${L('حفظ الدفعة', 'Save payment')}</button></div></form>`, 'sm');
+      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">${L('حفظ الدفعة', 'Save payment')}</button></div></form>`, 'sm');
   },
   vehOpts: cid => vehOpts(cid),
   pCalc() {
@@ -2058,7 +2161,7 @@ const A = {
   /* الإعدادات */
   async sSave(e) {
     e.preventDefault(); const fd = new FormData(e.target);
-    const d = { office: fd.get('office'), phone: fd.get('phone'), address: fd.get('address'), lateDays: num(fd.get('lateDays')) || 2, advDays: num(fd.get('advDays')) || 7, rate: num(fd.get('rate')) || 1, note: fd.get('note') };
+    const d = { office: fd.get('office'), phone: fd.get('phone'), address: fd.get('address'), lateDays: num(fd.get('lateDays')) || 2, advDays: num(fd.get('advDays')) || 7, rate: num(fd.get('rate')) || 1, note: fd.get('note'), fee_cust: num(fd.get('fee_cust')), disc_copart: num(fd.get('disc_copart')), fee_paypal: num(fd.get('fee_paypal')), card_back: num(fd.get('card_back')) };
     try { await DB.merge('settings', 'main', d); S.settings = { ...S.settings, ...d }; logAct('settings', ''); render(); toast(L('تم حفظ الإعدادات', 'Settings saved')); } catch (x) { toast(x.message, 'err'); }
   },
   backup() {
@@ -2081,7 +2184,7 @@ const A = {
     const h = v.status_history || [], ci = stIdx(v.status);
     const stRows = ST.map((s2, j) => { const e = [...h].reverse().find(x => x.status === s2.k); const nx = e && h[h.indexOf(e) + 1];
       const days = e ? daysSince(e.at) - (nx ? daysSince(nx.at) : 0) : null;
-      return `<tr><td>${j < ci ? '✅' : j === ci ? '🔵' : '⚪'} ${esc(L(s2.ar, s2.en))}</td><td>${e && j <= ci ? fdate(e.at) : '—'}</td><td>${e && j <= ci ? days + ' ' + L('يوم', 'days') + (j === ci ? ' ' + L('(حالياً)', '(current)') : '') : '—'}</td></tr>`; }).join('');
+      return `<tr><td>${j < ci ? '✓' : j === ci ? '●' : '○'} ${esc(L(s2.ar, s2.en))}</td><td>${e && j <= ci ? fdate(e.at) : '—'}</td><td>${e && j <= ci ? days + ' ' + L('يوم', 'days') + (j === ci ? ' ' + L('(حالياً)', '(current)') : '') : '—'}</td></tr>`; }).join('');
     const kv = [[L('الزبون', 'Customer'), esc(c.full_name || '')], [L('السيارة', 'Vehicle'), esc(vt(v)) + (v.color ? ' - ' + esc(v.color) : '') + (vSpec(v) ? '<br><small>' + esc(vSpec(v)) + '</small>' : '')], ['VIN', `<span class="mono">${esc(v.vin)}</span>`], [L('رقم اللوت', 'Lot #'), `<span class="mono">${esc(v.lot_number || '—')}</span>`], [L('المزاد', 'Auction'), esc((v.auction_name || '') + (v.auction_location ? ' - ' + v.auction_location : ''))], [L('تاريخ الشراء', 'Purchase date'), fdate(v.purchase_date)], [L('رقم الحاوية', 'Container'), `<span class="mono">${esc(v.container_number || '—')}</span>`], [L('رقم الحجز', 'Booking'), `<span class="mono">${esc(v.booking_number || '—')}</span>`]];
     printDoc(L('تقرير سيارة', 'Vehicle report') + ' ' + v.vin.slice(-6), {
       head: repHead(L('تقرير وضع السيارة', 'Vehicle Status Report'), `<span class="mono">${esc(v.vin)}</span>`),
@@ -2105,7 +2208,7 @@ const A = {
       head: repHead(L('تقرير المستحقات', 'Amounts Due Report'), esc(c.full_name)),
       main: custKv(c) + sumBox([[L('سيارات غير مسددة', 'Unpaid vehicles'), open.length + ' / ' + vs.length, '#2563eb'], [L('إجمالي المستحق', 'Total charges'), money(a.cost), '#475569'], [L('إجمالي المدفوع', 'Total paid'), money(a.paid), '#059669', 'grn'], [L('المطلوب منه', 'Amount owed'), money(a.bal), '#dc2626', a.bal > 0.009 ? 'red' : 'grn']]) +
         `<h3>${L('السيارات اللي عليها مبالغ', 'Vehicles with balances')}</h3><table><thead><tr><th>${L('السيارة', 'Vehicle')}</th><th>VIN</th><th>${L('الحالة', 'Status')}</th><th>${L('تاريخ الشراء', 'Purchased')}</th><th class="num">${L('الإجمالي', 'Total')}</th><th class="num">${L('المدفوع', 'Paid')}</th><th class="num">${L('المتبقي', 'Due')}</th></tr></thead><tbody>
-        ${open.map(v => `<tr><td>${esc(vt(v))}${advOut(v) > 0.009 ? ` <span class="tag">${L('سلفة', 'advance')}</span>` : ''}</td><td class="mono">${esc(v.vin)}</td><td>${esc(stName(v.status))}</td><td>${fdate(v.purchase_date)}<br><small>${daysSince(v.purchase_date)} ${L('يوم', 'days')}</small></td><td class="num">${money(totalCost(v))}</td><td class="num">${money(vPaid(v.id))}</td><td class="num red">${money(vBal(v))}</td></tr>`).join('') || `<tr><td colspan="7">${L('لا توجد مبالغ متبقية ✅', 'Nothing outstanding ✅')}</td></tr>`}
+        ${open.map(v => `<tr><td>${esc(vt(v))}${advOut(v) > 0.009 ? ` <span class="tag">${L('سلفة', 'advance')}</span>` : ''}</td><td class="mono">${esc(v.vin)}</td><td>${esc(stName(v.status))}</td><td>${fdate(v.purchase_date)}<br><small>${daysSince(v.purchase_date)} ${L('يوم', 'days')}</small></td><td class="num">${money(totalCost(v))}</td><td class="num">${money(vPaid(v.id))}</td><td class="num red">${money(vBal(v))}</td></tr>`).join('') || `<tr><td colspan="7">${L('لا توجد مبالغ متبقية ', 'Nothing outstanding ')}</td></tr>`}
         ${open.length ? `<tr class="tot"><td colspan="6">${L('مجموع متبقي السيارات', 'Vehicles subtotal')}</td><td class="num">${money(openSum)}</td></tr>` : ''}</tbody></table>
         <table><tbody>${onAcc > 0.009 ? `<tr><td>${L('دفعات على الحساب (غير مخصصة لسيارة)', 'Unallocated payments on account')}</td><td class="num grn">- ${money(onAcc)}</td></tr>` : ''}
         ${adv > 0.009 ? `<tr><td>${L('منها مبالغ دفعها المكتب للمزاد (سلف)', 'Of which office advances')}</td><td class="num">${money(adv)}</td></tr>` : ''}
@@ -2125,12 +2228,12 @@ const A = {
     printDoc(L('تقرير شامل', 'Full report') + ' - ' + c.full_name, {
       internal: true,
       head: repHead(L('تقرير شامل عن الزبون', 'Customer Full Report'), esc(c.full_name)),
-      main: `<div class="int">🔒 ${L('تقرير داخلي للمكتب — فيه الأرباح، لا يُسلَّم للزبون', 'Internal office report — includes profit, do not hand to customer')}</div>` + custKv(c) +
+      main: `<div class="int">${L('تقرير داخلي للمكتب — فيه الأرباح، لا يُسلَّم للزبون', 'Internal office report — includes profit, do not hand to customer')}</div>` + custKv(c) +
         sumBox([[L('السيارات المشتراة', 'Vehicles bought') + ` (${dl} ${L('مسلّمة', 'delivered')})`, vs.length, '#2563eb'], [L('قيمة السيارات في المزاد', 'Total bid value'), money(sumF('bid_price')), '#475569'], [L('إجمالي ما عليه', 'Total charged'), money(a.cost), '#475569'], [L('أرباحنا منه', 'Our profit'), money(prof), '#f97316', 'grn']]) +
         sumBox([[L('إجمالي ما دفعه', 'Total paid'), money(a.paid), '#059669', 'grn'], [L('المتبقي عليه', 'Still owed'), money(a.bal), '#dc2626', a.bal > 0.009 ? 'red' : 'grn'], [L('سلف المكتب المتبقية', 'Advances outstanding'), money(vs.reduce((s2, v) => s2 + advOut(v), 0)), '#ea580c'], [L('أول تعامل', 'First deal'), fdate(c.created_at), '#94a3b8']]) +
-        `<h3>${L('تفصيل الأرباح', 'Profit breakdown')}</h3><table><tbody><tr><td>${L('عمولات المكتب', 'Office commissions')}</td><td class="num">${money(com)}</td></tr><tr><td>${L('عمولات الحوالات', 'Transfer commissions')}</td><td class="num">${money(trc)}</td></tr><tr><td>${L('هامش ربح الشحن', 'Shipping margin')}</td><td class="num">${money(shm)}</td></tr><tr class="t"><td>${L('إجمالي الربح', 'Total profit')}</td><td class="num">${money(prof)}</td></tr><tr><td>💰 ${L('منه محقق (الزبون خلّص المرحلة)', 'of which collected')}</td><td class="num grn">${money(rlz)}</td></tr><tr><td>⏳ ${L('منه منتظر (الزبون ما خلّصش)', 'of which pending')}</td><td class="num">${money(pnd)}</td></tr></tbody></table>
+        `<h3>${L('تفصيل الأرباح', 'Profit breakdown')}</h3><table><tbody><tr><td>${L('عمولات المكتب', 'Office commissions')}</td><td class="num">${money(com)}</td></tr><tr><td>${L('عمولات الحوالات', 'Transfer commissions')}</td><td class="num">${money(trc)}</td></tr><tr><td>${L('هامش ربح الشحن', 'Shipping margin')}</td><td class="num">${money(shm)}</td></tr><tr class="t"><td>${L('إجمالي الربح', 'Total profit')}</td><td class="num">${money(prof)}</td></tr><tr><td>${L('منه محقق (الزبون خلّص المرحلة)', 'of which collected')}</td><td class="num grn">${money(rlz)}</td></tr><tr><td>${L('منه منتظر (الزبون ما خلّصش)', 'of which pending')}</td><td class="num">${money(pnd)}</td></tr></tbody></table>
         <h3>${L('كل السيارات', 'All vehicles')}</h3><table><thead><tr><th>${L('السيارة', 'Vehicle')}</th><th>${L('الشراء', 'Bought')}</th><th>${L('الحالة', 'Status')}</th><th class="num">${L('سعر المزاد', 'Bid')}</th><th class="num">${L('الإجمالي', 'Total')}</th><th class="num">${L('المدفوع', 'Paid')}</th><th class="num">${L('المتبقي', 'Due')}</th><th class="num">${L('ربحنا', 'Profit')}</th></tr></thead><tbody>
-        ${vs.map(v => `<tr><td>${esc(vt(v))}<br><small class="mono">${esc(v.vin)}</small></td><td>${fdate(v.purchase_date)}</td><td>${esc(stName(v.status))}</td><td class="num">${money((v.fin || {}).bid_price)}</td><td class="num">${money(totalCost(v))}</td><td class="num">${money(vPaid(v.id))}</td><td class="num ${vBal(v) > 0.009 ? 'red' : ''}">${money(vBal(v))}</td><td class="num grn">${money(profit(v))}${pending(v) > 0.009 ? `<br><small>⏳ ${money(pending(v))}</small>` : ''}</td></tr>`).join('') || `<tr><td colspan="8">—</td></tr>`}
+        ${vs.map(v => `<tr><td>${esc(vt(v))}<br><small class="mono">${esc(v.vin)}</small></td><td>${fdate(v.purchase_date)}</td><td>${esc(stName(v.status))}</td><td class="num">${money((v.fin || {}).bid_price)}</td><td class="num">${money(totalCost(v))}</td><td class="num">${money(vPaid(v.id))}</td><td class="num ${vBal(v) > 0.009 ? 'red' : ''}">${money(vBal(v))}</td><td class="num grn">${money(profit(v))}${pending(v) > 0.009 ? `<br><small>${money(pending(v))}</small>` : ''}</td></tr>`).join('') || `<tr><td colspan="8">—</td></tr>`}
         ${vs.length ? `<tr class="tot"><td colspan="3">${L('المجموع', 'Total')}</td><td class="num">${money(sumF('bid_price'))}</td><td class="num">${money(a.cost)}</td><td class="num">${money(vs.reduce((s2, v) => s2 + vPaid(v.id), 0))}</td><td class="num">${money(vs.reduce((s2, v) => s2 + vBal(v), 0))}</td><td class="num">${money(prof)}</td></tr>` : ''}</tbody></table>
         <h3>${L('كل الدفعات', 'All payments')} — ${L('بالدولار', 'USD')}: <span dir="ltr">${money(usd)}</span> · ${L('بالدينار', 'LYD')}: ${lyd(ly)}</h3><table>${payHead()}<tbody>${payRows(ps)}</tbody></table>`
     });
@@ -2142,16 +2245,16 @@ const A = {
     const vin = $('#pv').value.trim().toUpperCase(), out = $('#pres'); if (!vin) return;
     out.innerHTML = `<div class="card empty">${L('جاري البحث...', 'Searching...')}</div>`;
     let d = null; try { d = await DB.get('tracking', vin); } catch (e) { }
-    if (!d) { out.innerHTML = `<div class="card empty">❌ ${L('لم يتم العثور على سيارة بهذا الرقم. تأكد من رقم الهيكل (17 خانة) أو تواصل مع المكتب.', 'No vehicle found with this VIN. Check the 17-character VIN or contact the office.')}</div>`; return; }
+    if (!d) { out.innerHTML = `<div class="card empty">${L('لم يتم العثور على سيارة بهذا الرقم. تأكد من رقم الهيكل (17 خانة) أو تواصل مع المكتب.', 'No vehicle found with this VIN. Check the 17-character VIN or contact the office.')}</div>`; return; }
     const imgs = (d.images || []).map((x, i) => ({ ...x, i })); S.lbList = imgs.map(x => x.src); S.pubTrk = d;
-    const oi = d.office_invoice, oinv = oi ? `<div class="card"><div class="row-b"><h3 style="margin:0">💼 ${L('فاتورة المكتب', 'Office invoice')} <span class="sub mono">${esc(oi.no)}</span></h3><button class="btn pri" onclick="A.pubInv()">🖨️ ${L('عرض / طباعة الفاتورة', 'View / print invoice')}</button></div>
+    const oi = d.office_invoice, oinv = oi ? `<div class="card"><div class="row-b"><h3 style="margin:0">${L('فاتورة المكتب', 'Office invoice')} <span class="sub mono">${esc(oi.no)}</span></h3><button class="btn pri" onclick="A.pubInv()">${L('عرض / طباعة الفاتورة', 'View / print invoice')}</button></div>
       <div class="ytiles" style="margin-top:12px"><div class="ytile"><span>${L('الإجمالي', 'Total')}</span><b>${money(oi.tot)}</b></div><div class="ytile"><span>${L('المدفوع', 'Paid')}</span><b>${money(oi.paid)}</b></div><div class="ytile ${num(oi.bal) > 0.009 ? 'tot' : ''}" ${num(oi.bal) > 0.009 ? '' : 'style="background:#ecfdf5;border-color:#a7f3d0"'}><span>${num(oi.bal) > 0.009 ? L('المتبقي', 'Balance due') : L('الحالة', 'Status')}</span><b ${num(oi.bal) > 0.009 ? '' : 'style="color:#047857;direction:inherit"'}>${num(oi.bal) > 0.009 ? money(oi.bal) : L('خالص ✓', 'Paid in full ✓')}</b></div></div>
       <div class="hint">${L('آخر تحديث', 'Last updated')}: ${fdate(oi.updated_at)}</div></div>` : '';
-    const inv = d.invoice ? `<div class="card"><h3>🧾 ${L('فاتورة المزاد', 'Auction invoice')}</h3><div class="invf"><div class="ic">${/pdf/.test(d.invoice.type) ? '📄' : '🖼️'}</div><div class="nm"><b>${esc(d.invoice.name)}</b><small><span dir="ltr">${fsize(d.invoice.size)}</span> · ${fdate(d.invoice.at)}</small></div><div class="acts"><button class="btn pri" onclick="A.invOpen('${esc(d.vin)}')">👁️ ${L('عرض الفاتورة', 'View invoice')}</button><button class="btn" onclick="A.invDl('${esc(d.vin)}')">⬇️ ${L('تنزيل', 'Download')}</button></div></div></div>` : '';
-    out.innerHTML = `<div class="card"><div class="row-b"><div><h2 style="margin:0">🚗 ${esc(vt(d))}</h2><div class="sub mono">VIN: ${esc(d.vin)}</div></div>${badge(d.status)}</div>
+    const inv = d.invoice ? `<div class="card"><h3>${L('فاتورة المزاد', 'Auction invoice')}</h3><div class="invf"><div class="ic">${/pdf/.test(d.invoice.type) ? ic('file') : ''}</div><div class="nm"><b>${esc(d.invoice.name)}</b><small><span dir="ltr">${fsize(d.invoice.size)}</span> · ${fdate(d.invoice.at)}</small></div><div class="acts"><button class="btn pri" onclick="A.invOpen('${esc(d.vin)}')">${L('عرض الفاتورة', 'View invoice')}</button><button class="btn" onclick="A.invDl('${esc(d.vin)}')">${L('تنزيل', 'Download')}</button></div></div></div>` : '';
+    out.innerHTML = `<div class="card"><div class="row-b"><div><h2 style="margin:0">${esc(vt(d))}</h2><div class="sub mono">VIN: ${esc(d.vin)}</div></div>${badge(d.status)}</div>
       ${pipeline(d.status, d.status_history)}
       <div class="info" style="margin-top:14px">${d.trim ? `<div><span>${L('الفئة', 'Trim')}</span><b>${esc(d.trim)}</b></div>` : ''}${d.engine ? `<div><span>${L('المحرك', 'Engine')}</span><b>${esc(d.engine)}</b></div>` : ''}${d.color ? `<div><span>${L('اللون', 'Color')}</span><b>${esc(d.color)}</b></div>` : ''}${d.container_number ? `<div><span>${L('رقم الحاوية', 'Container #')}</span><b class="mono">${esc(d.container_number)}</b></div>` : ''}<div><span>${L('آخر تحديث', 'Last update')}</span><b>${fdate(d.updated_at)}</b></div></div></div>
-      ${oinv}${inv}<div class="card"><h3>📷 ${L('صور السيارة', 'Photos')}</h3>${galGrid(imgs, false)}</div>`;
+      ${oinv}${inv}<div class="card"><h3>${L('صور السيارة', 'Photos')}</h3>${galGrid(imgs, false)}</div>`;
     try { history.replaceState(null, '', location.pathname + '?vin=' + encodeURIComponent(vin)); } catch (e) { }
   },
 
@@ -2180,17 +2283,17 @@ Object.assign(A, {
     const groups = {}; wait.forEach(v => { const k = v.us_port || 'NONE'; (groups[k] = groups[k] || []).push(v); });
     const order = PO.concat(['NONE']).filter(k => groups[k] && (!port || k === port));
     const ready = v => stIdx(v.status) >= stIdx('AT_US_WAREHOUSE');
-    const car = v => `<a class="sgc ${v.id === me ? 'me' : ''}" href="#/vehicle/${v.id}" onclick="A.close()"><div><b>${esc(vt(v))}</b> <span class="sub mono">${esc((v.vin || '').slice(-6))}</span><div class="sub">👤 ${esc(custName(v.customer_id))}${v.yard ? ' · 📍 ' + esc(v.yard) : ''}${v.container_number ? ' · 📦 ' + esc(v.container_number) : ''}</div></div>${badge(v.status)}</a>`;
+    const car = v => `<a class="sgc ${v.id === me ? 'me' : ''}" href="#/vehicle/${v.id}" onclick="A.close()"><div><b>${esc(vt(v))}</b> <span class="sub mono">${esc((v.vin || '').slice(-6))}</span><div class="sub">${esc(custName(v.customer_id))}${v.yard ? ' · ' + esc(v.yard) : ''}${v.container_number ? ' · ' + esc(v.container_number) : ''}</div></div>${badge(v.status)}</a>`;
     const box = k => {
       const list = groups[k].sort((a, b) => (stIdx(b.status) - stIdx(a.status)) || (a.yard_state || '').localeCompare(b.yard_state || ''));
       const n = list.length, rd = list.filter(ready).length, full = Math.floor(n / 4), rest = n % 4;
       const states = [...new Set(list.map(v => v.yard_state || ''))].sort();
-      return `<div class="sgp" style="--pc:${PCLR[k] || PCLR.NONE}"><div class="sgp-h"><div><b>${k === 'NONE' ? '⚠️ ' + L('بدون ميناء — افتح السيارة واختار الساحة', 'No port — open the car and pick its yard') : '🚢 ' + esc(pName(k))}</b>
+      return `<div class="sgp" style="--pc:${PCLR[k] || PCLR.NONE}"><div class="sgp-h"><div><b>${k === 'NONE' ? '' + L('بدون ميناء — افتح السيارة واختار الساحة', 'No port — open the car and pick its yard') : '' + esc(pName(k))}</b>
         <div class="sgp-n">${n} ${L('سيارة', 'cars')} · ${rd} ${L('في المستودع', 'at warehouse')}${k !== 'NONE' ? ` · ${full ? `<span class="sgfull">${full} ${L('حاوية كاملة', full > 1 ? 'full containers' : 'full container')}</span> ` : ''}${rest ? `<span class="sgfull no">${L(`ناقص ${4 - rest} لحاوية ${full ? 'ثانية' : 'كاملة'}`, `${4 - rest} short of ${full ? 'another' : 'a full'} container`)}</span>` : ''}` : ''}</div></div>
-        ${k !== 'NONE' && can('edit') ? `<button class="btn sm pri" onclick="A.shipSelect('${k}')">☑️ ${L('حددهم لرقم الحاوية', 'Select for container #')}</button>` : ''}</div>
+        ${k !== 'NONE' && can('edit') ? `<button class="btn sm pri" onclick="A.shipSelect('${k}')">${L('حددهم لرقم الحاوية', 'Select for container #')}</button>` : ''}</div>
         ${states.map(st => { const g = list.filter(v => (v.yard_state || '') === st); return `${states.length > 1 || st ? `<div class="sgst">${st ? esc(window.AWS_PORTS ? pmState(st) : st) + ' (' + esc(st) + ')' : L('ولاية غير محددة', 'State not set')} — ${g.length}</div>` : ''}${g.map(car).join('')}`; }).join('')}</div>`;
     };
-    openModal(`<h2>📦 ${L('سيارات تنشحن مع بعض', 'Cars that can ship together')}</h2>
+    openModal(`<h2>${L('سيارات تنشحن مع بعض', 'Cars that can ship together')}</h2>
       <div class="hint" style="margin-top:-6px">${L('السيارات اللي تمشي لنفس ميناء التصدير تقدر تنشحن في نفس الحاوية، حتى لو من ولايات مختلفة (مثلاً تكساس وكولورادو كلهم لهيوستن). القائمة فيها السيارات اللي لسه ما انشحنتش بس.', 'Cars going to the same US port can share a container, even from different states (e.g. TX and CO both go to Houston). Only cars not yet shipped are listed.')}</div>
       ${port ? `<div style="margin-top:8px"><button class="btn sm" onclick="A.shipGroups()">${L('عرض كل الموانئ', 'Show all ports')}</button></div>` : ''}
       ${order.length ? order.map(box).join('') : `<div class="empty">${L('ما فيش سيارات تستنى الشحن', 'No cars waiting to ship')}</div>`}
@@ -2212,21 +2315,21 @@ Object.assign(A, {
       .filter(o => t === 'done' ? o.r > 0.009 || o.r < -0.009 : o.p > 0.009 || o.p < -0.009)
       .sort((a, b) => t === 'done' ? (b.d || '').localeCompare(a.d || '') : b.p - a.p);
     const tot = rows.reduce((a, o) => a + (t === 'done' ? o.r : o.p), 0);
-    const st = (ok, need, has) => ok ? `<span class="pch">✓</span>` : has ? `<span class="pch w">⏳ ${money(need)}</span>` : '—';
-    openModal(`<h2>${t === 'done' ? '💰 ' + L('الربح المحقق — من كل سيارة', 'Realized profit — per car') : '⏳ ' + L('الربح المنتظر — من كل سيارة', 'Pending profit — per car')}</h2>
-      <div class="tabs"><button class="tab ${t === 'done' ? 'on' : ''}" onclick="A.profList('done')">💰 ${L('محقق', 'Realized')}</button><button class="tab ${t === 'wait' ? 'on' : ''}" onclick="A.profList('wait')">⏳ ${L('منتظر', 'Pending')}</button></div>
+    const st = (ok, need, has) => ok ? `<span class="pch">✓</span>` : has ? `<span class="pch w">${money(need)}</span>` : '—';
+    openModal(`<h2>${t === 'done' ? '' + L('الربح المحقق — من كل سيارة', 'Realized profit — per car') : '' + L('الربح المنتظر — من كل سيارة', 'Pending profit — per car')}</h2>
+      <div class="tabs"><button class="tab ${t === 'done' ? 'on' : ''}" onclick="A.profList('done')">${L('محقق', 'Realized')}</button><button class="tab ${t === 'wait' ? 'on' : ''}" onclick="A.profList('wait')">${L('منتظر', 'Pending')}</button></div>
       ${rows.length ? `<div class="tw"><table class="plt"><thead><tr><th>${L('السيارة', 'Car')}</th><th>${L('الزبون', 'Customer')}</th><th>${L('حق السيارة', 'Car stage')}</th><th>${L('الشحن', 'Shipping')}</th><th>${t === 'done' ? L('تاريخ التحقق', 'Collected on') : L('المتبقي على الزبون', 'Customer owes')}</th><th>${t === 'done' ? L('الربح المحقق', 'Realized') : L('الربح المنتظر', 'Pending')}</th></tr></thead><tbody>
         ${rows.map(o => `<tr class="click" onclick="A.close();location.hash='#/vehicle/${o.v.id}'"><td><b>${esc(vt(o.v))}</b><div class="sub mono">${esc((o.v.vin || '').slice(-6))}</div></td><td>${esc(custName(o.v.customer_id))}</td>
           <td class="num">${money(o.x.p1)} ${st(o.x.r1, o.x.need1, true)}</td><td class="num">${o.x.t2 > 0 || Math.abs(o.x.p2) > 0.009 ? money(o.x.p2) + ' ' + st(o.x.r2, o.x.need2, o.x.t2 > 0) : '—'}</td>
           <td>${t === 'done' ? fdate(o.d) : `<span class="neg">${money(Math.max(0, vBal(o.v)))}</span>`}</td><td class="num"><b class="${t === 'done' ? 'pos' : ''}">${money(t === 'done' ? o.r : o.p)}</b></td></tr>`).join('')}</tbody>
         <tfoot><tr><td colspan="5">${L('المجموع', 'Total')} — ${rows.length} ${L('سيارة', 'cars')}</td><td class="num">${money(tot)}</td></tr></tfoot></table></div>`
-        : `<div class="empty">${t === 'done' ? L('ما فيش ربح محقق بعد', 'No realized profit yet') : L('ما فيش ربح منتظر 🎉', 'Nothing pending 🎉')}</div>`}
-      <div class="hint">${L('✓ = المرحلة تحققت · ⏳ = كم ناقص الزبون يدفع عشان تتحقق. اضغط على أي سيارة تفتحها.', '✓ = stage collected · ⏳ = how much the customer still needs to pay. Click a car to open it.')}</div>
+        : `<div class="empty">${t === 'done' ? L('ما فيش ربح محقق بعد', 'No realized profit yet') : L('ما فيش ربح منتظر ', 'Nothing pending ')}</div>`}
+      <div class="hint">${L('✓ = المرحلة تحققت · = كم ناقص الزبون يدفع عشان تتحقق. اضغط على أي سيارة تفتحها.', '✓ = stage collected · = how much the customer still needs to pay. Click a car to open it.')}</div>
       <div class="mfoot"><button class="btn" onclick="A.close()">${L('إغلاق', 'Close')}</button></div>`);
   }
 });
 Object.entries(NEED).forEach(([k, p]) => { const f = A[k]; if (typeof f !== 'function') return; A[k] = function (...a) { if (!can(p)) { toast(L('ما عندكش صلاحية لهذي العملية', 'You don’t have permission for this'), 'err'); return; } return f.apply(this, a); }; });
-window.A = A; window.$ = $; window.trItemRow = trItemRow;
+window.A = A; window.$ = $; window.trItemRow = trItemRow; window.S = S; window.render = render;
 
 /* ---------------- التشغيل ---------------- */
 let unsubs = [];
@@ -2268,7 +2371,7 @@ function setupPWA() {
   applyDir(); parseRoute();
   $('#app').innerHTML = `<div class="login"><img class="boot-logo" src="logo-light.png" alt="AXS"></div>`;
   try { await DB.init(); }
-  catch (e) { $('#app').innerHTML = `<div class="login"><div class="card lcard"><h2>⚠️</h2><p>${L('تعذّر الاتصال بـ Firebase. تحقق من الإنترنت ومن إعدادات المشروع.', 'Could not connect to Firebase. Check your connection and config.')}</p><div class="err">${esc(e.message)}</div></div></div>`; return; }
+  catch (e) { $('#app').innerHTML = `<div class="login"><div class="card lcard"><h2>${ic('alert')}</h2><p>${L('تعذّر الاتصال بـ Firebase. تحقق من الإنترنت ومن إعدادات المشروع.', 'Could not connect to Firebase. Check your connection and config.')}</p><div class="err">${esc(e.message)}</div></div></div>`; return; }
   if (isPublic()) { renderPublic(); }
   DB.onAuth(async u => {
     S.user = u;
