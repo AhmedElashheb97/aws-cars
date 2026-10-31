@@ -450,6 +450,7 @@ tr.sel{background:#fff7ed}
 .profd{margin:8px 0 4px;padding:10px 12px;border:1px dashed #bbf7d0;border-radius:12px;background:#f0fdf4;font-size:13px}.profd>div:not(.hint){display:flex;justify-content:space-between;gap:10px;padding:3px 0}.profd small{color:#64748b;font-weight:400}.profd .neg{color:#dc2626}.profd .hint{margin-top:6px}
 .exmove{display:grid;gap:6px;margin:10px 0 12px;padding-bottom:12px;border-bottom:1px dashed #fcd9a8}.exmove .f{margin:0}#moveInfo b{font-weight:700}select.flash{outline:3px solid #f97316;outline-offset:2px;transition:outline .2s}
 .wirebox{margin-top:12px;padding:12px;border:1px dashed #fecaca;border-radius:12px;background:#fff7f7}.wirebox>b{display:block;margin-bottom:8px;font-size:13.5px}.wirebox .grid{margin:0}#wireCalc{margin-top:6px}
+.rcv{margin-top:10px;background:#fff;border:1px solid #fed7aa;border-radius:10px;padding:10px 12px}.rcv-h{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;padding-bottom:6px;border-bottom:1px solid #fde4c8;margin-bottom:4px}.rcv-h b{font-size:18px}.rc-r{display:flex;justify-content:space-between;gap:10px;padding:3px 0}.rc-r small{color:#94a3b8;margin-inline-start:4px}.rc-r.ok b{color:#16a34a}.rc-r.bad b{color:#dc2626}.rc-r.mute{color:#94a3b8}.rc-s{margin-top:8px;font-size:12px;font-weight:700;color:#64748b}
 </style>
 </head>
 <body>
@@ -655,11 +656,11 @@ const statusSince = v => { const h = v.status_history || []; return h.length ? h
 const extrasSum = v => (v.extras || []).reduce((a, x) => a + num(x.a), 0);
 const totalCost = v => FIN.reduce((s, f) => s + num((v.fin || {})[f.k]), 0) + extrasSum(v);
 const shipPortOf = v => v.ship_port || v.us_port || '';
-/* مرحلتين: 1) عند الشراء: السيارة + رسوم المزاد + عمولة المكتب + مصاريف أخرى + عمولة الحوالة عليها
-   2) عند الوصول: السحب + البحري + المصاريف الإضافية + عمولة الحوالة عليها. الدفعات تغطي المرحلة 1 أولاً */
+/* مرحلتين: 1) عند الشراء: السيارة + رسوم المزاد + عمولة المكتب + مصاريف أخرى
+   2) عند الوصول: السحب + البحري + المصاريف الإضافية + عمولة الحوالة كاملة. الدفعات تغطي المرحلة 1 أولاً */
 function stages(v) {
   const f = v.fin || {}, base1 = num(f.bid_price) + num(f.auction_fees), base2 = num(f.inland_shipping) + num(f.ocean_shipping) + extrasSum(v);
-  const fee = num(f.transfer_commission), fee1 = base1 + base2 > 0 ? r2(fee * base1 / (base1 + base2)) : fee, fee2 = r2(fee - fee1);
+  const fee = num(f.transfer_commission), fee1 = 0, fee2 = fee;
   const i1 = [[L('سعر الشراء في المزاد', 'Bid price'), num(f.bid_price)], [L('رسوم المزاد', 'Auction fees'), num(f.auction_fees)], [L('عمولة المكتب', 'Office commission'), num(f.office_commission)], [L('عمولة الحوالة', 'Transfer fee'), fee1], [L('مصاريف أخرى', 'Other fees'), num(f.other_fees)]].filter(x => x[1]);
   const i2 = [[L('الشحن الداخلي (السحب)', 'Towing'), num(f.inland_shipping)], [L('الشحن البحري', 'Ocean freight'), num(f.ocean_shipping)], ...(v.extras || []).map(x => [x.d || L('مصروف إضافي', 'Extra charge'), num(x.a)]), [L('عمولة الحوالة', 'Transfer fee'), fee2]].filter(x => x[1]);
   const t1 = r2(i1.reduce((a, x) => a + x[1], 0)), t2 = r2(i2.reduce((a, x) => a + x[1], 0)), paid = r2(vPaid(v.id));
@@ -695,9 +696,37 @@ function profitSplit(v) {
   const paid = vPaid(v.id), r1 = paid >= t1 - 0.009, r2 = t2 > 0 && paid >= t1 + t2 - 0.009;
   return { t1, t2, p1, p2, r1, r2, d1: r1 ? (d1 || today()) : '', d2: r2 ? (d2 || today()) : '', need1: Math.max(0, t1 - paid), need2: Math.max(0, t1 + t2 - paid) };
 }
-const realized = v => { const x = profitSplit(v); return (x.r1 ? x.p1 : 0) + (x.r2 ? x.p2 : 0); };
+/* المكسب الفعلي المستلم: المكاسب فقط (عمولة المكتب بعد دفع المرحلة 1، عمولة الحوالة وفرق الشحن بعد دفع المرحلة 2،
+   عوائد البطاقة وخصم Copart من الدفعات المسجلة). التكاليف (السالب) لا تُخصم إلا لما تصل السيارة ويُدفع المبلغ كامل. */
+const arrived = v => stIdx(v.status) >= stIdx('ARRIVED_LOCAL_PORT');
+function received(v) {
+  const f = v.fin || {}, x = profitSplit(v), cd = tCostD(v), got = [], wait = [], cost = [], sm = shipMargin(v);
+  const g = (ok, ar, en, a, d, why) => { if (!(a > 0.004)) return; if (ok) got.push({ t: L(ar, en), a, d }); else wait.push({ t: L(ar, en), a, why }); };
+  g(x.r1, 'عمولة المكتب', 'Office commission', num(f.office_commission), x.d1, L('بعد دفع المرحلة 1', 'after stage 1 is paid') + (x.need1 > 0.009 ? ' · ' + L('ناقص', 'needs') + ' ' + money(x.need1) : ''));
+  g(x.r2, 'عمولة الحوالة', 'Transfer fee', num(f.transfer_commission), x.d2, L('بعد الدفع الكامل', 'after full payment') + (x.t2 > 0 && x.need2 > 0.009 ? ' · ' + L('ناقص', 'needs') + ' ' + money(x.need2) : ''));
+  g(x.r2, 'فرق الشحن (السحب + البحري)', 'Shipping margin (towing + ocean)', sm, x.d2, L('بعد الدفع الكامل', 'after full payment'));
+  (v.transfers || []).filter(t => t.status !== 'pending').forEach(t => {
+    const r = payResult(t.method, t.payee, t.amount, t.charged, cd[t.id] || {}), lab = `${pmName(t.method)}${t.src ? ' · ' + t.src : ''} · ${money(t.amount)}`, d = t.date || (t.at || '').slice(0, 10);
+    if (r.cardGain > 0.004) got.push({ t: L('عائد البطاقة', 'Card return') + ' — ' + lab, a: r.cardGain, d });
+    if (r.disc > 0.004) got.push({ t: L('خصم Copart', 'Copart discount') + ' — ' + lab, a: r.disc, d });
+    if (r.cost > 0.004) cost.push({ t: L('تكلفة دفعة', 'Payment cost') + ' — ' + lab, a: r.cost, d });
+  });
+  const we = wireEst(v); if (we > 0.004) cost.push({ t: L('حوالة الشحن المتوقعة (لم تُدفع بعد)', 'Expected shipping wire (not paid yet)'), a: we });
+  if (sm < -0.004) cost.push({ t: L('الشحن الفعلي أعلى من المحمّل على الزبون', 'Actual shipping above what the customer was charged'), a: -sm });
+  const done = arrived(v) && vBal(v) <= 0.009, gs = got.reduce((a, o) => a + o.a, 0), cs = cost.reduce((a, o) => a + o.a, 0);
+  return { got, wait, cost, done, gs, cs, dd: x.d2 || today(), total: gs - (done ? cs : 0) };
+}
+const realized = v => received(v).total;
+function recvHtml(v) {
+  const o = received(v), row = (x, sign, cls) => `<div class="rc-r ${cls}"><span>${esc(x.t)}${x.d ? ` <small>${fdate(x.d)}</small>` : ''}${x.why ? ` <small>${esc(x.why)}</small>` : ''}</span><b dir="ltr">${sign}${money(r2(x.a))}</b></div>`;
+  return `<div class="rcv"><div class="rcv-h"><span>${L('المكسب الفعلي المستلم', 'Actual profit received')}</span><b dir="ltr" class="${o.total >= 0 ? 'pos' : 'neg'}">${money(r2(o.total))}</b></div>
+    ${o.got.map(x => row(x, '+', 'ok')).join('') || `<div class="rc-r mute"><span>${L('لم نستلم أي مكسب بعد', 'Nothing received yet')}</span></div>`}
+    ${o.wait.length ? `<div class="rc-s">${L('مكاسب لم تُستلم بعد', 'Not received yet')}</div>${o.wait.map(x => row(x, '', 'mute')).join('')}` : ''}
+    ${o.cost.length ? `<div class="rc-s">${L('التكاليف', 'Costs')} — ${o.done ? L('خُصمت (السيارة وصلت والمبلغ مدفوع كامل)', 'deducted (car arrived and fully paid)') : L('لا تُخصم حتى تصل السيارة ويُدفع المبلغ كامل', 'not deducted until the car arrives and is fully paid')}</div>${o.cost.map(x => row(x, '-', o.done ? 'bad' : 'mute')).join('')}` : ''}
+  </div>`;
+}
 const pending = v => profit(v) - realized(v);
-const realizedIn = (v, m) => { const x = profitSplit(v); return (x.r1 && x.d1.startsWith(m) ? x.p1 : 0) + (x.r2 && x.d2.startsWith(m) ? x.p2 : 0); };
+const realizedIn = (v, m) => { const o = received(v); return o.got.filter(g => (g.d || '').startsWith(m)).reduce((a, g) => a + g.a, 0) - (o.done && o.dd.startsWith(m) ? o.cs : 0); };
 const vBal = v => totalCost(v) - vPaid(v.id);
 const cAgg = id => S.agg.c[id] || { cost: 0, paid: 0, bal: 0, count: 0, active: 0 };
 const advAmt = v => v.auction_paid_by === 'office' ? num((v.fin || {}).bid_price) + num((v.fin || {}).auction_fees) : 0;
@@ -1110,7 +1139,7 @@ function vVehicle() {
       <tr><td>${L('المدفوع', 'Paid')}</td><td class="pos">${money(paid)}</td></tr>
       <tr class="t"><td>${L('المتبقي على الزبون', 'Balance due')}</td><td class="${bal > 0.009 ? 'neg' : 'pos'}">${money(bal)}</td></tr></tbody></table>
       ${advAmt(v) > 0 ? `<div class="internal" style="border-color:#fed7aa;background:#fff7ed">${L('سلفة المكتب (ثمن السيارة + رسوم المزاد)', 'Office advance (bid + auction fees)')}: <b>${money(advAmt(v))}</b> · ${L('المتبقي منها على الزبون', 'Still owed')}: <b class="${advOut(v) > 0.009 ? 'neg' : 'pos'}">${money(advOut(v))}</b>${advOut(v) > 0.009 ? ` · ${daysSince(v.auction_paid_date || v.purchase_date)} ${L('يوم', 'days')}` : ''}</div>` : ''}
-      <div class="internal pf">${L('داخلي (لا يظهر في الفاتورة)', 'Internal (not on invoice)')}: ${L('تكلفة الشحن الفعلية', 'Actual shipping cost')} <b>${act > 0 ? money(act) : '—'}</b> · ${L('ربح المكتب من هذه السيارة', 'Office profit on this car')} <b class="pos">${money(profit(v))}</b>${(() => { const x = profitSplit(v); const row = (n, lab, p, r, d, need) => `<div class="stg ${r ? 'ok' : ''}"><span>${n}. ${lab}</span><b dir="ltr">${money(p)}</b><em>${r ? '✓ ' + L('تحقق', 'collected') + ' ' + fdate(d) : '' + (need > 0.009 ? L('ناقص', 'needs') + ' ' + money(need) : L('ما فيش شحن مسجل', 'no shipping yet'))}</em></div>`; return `<div class="stgs">${row(1, L('حق السيارة (عمولة المكتب + حوالة السيارة)', 'Car (office + car transfer commission)'), x.p1, x.r1, x.d1, x.need1)}${row(2, L('الشحن (حوالة الشحن + فرق الشحن)', 'Shipping (shipping transfer + margin)'), x.p2, x.r2, x.d2, x.t2 > 0 ? x.need2 : 0)}<div class="stg tot"><span>${L('المحقق من هذه السيارة', 'Realized on this car')}</span><b dir="ltr">${money(realized(v))}</b><em>${L('منتظر', 'pending')} ${money(pending(v))}</em></div></div>`; })()}</div></div>
+      <div class="internal pf">${L('داخلي (لا يظهر في الفاتورة)', 'Internal (not on invoice)')}: ${L('تكلفة الشحن الفعلية', 'Actual shipping cost')} <b>${act > 0 ? money(act) : '—'}</b> · ${L('الربح المتوقع لهذه السيارة', 'Expected profit on this car')} <b>${money(r2(profit(v)))}</b>${recvHtml(v)}</div></div>
     <div class="card"><div class="row-b"><h3>${L('الدفعات', 'Payments')}</h3><button class="btn sm pri" onclick="A.pForm({customer_id:'${v.customer_id}',vehicle_id:'${v.id}'})">+ ${L('دفعة', 'Payment')}</button></div>${payTable(pays, false)}</div>
   </div>`;
 }
