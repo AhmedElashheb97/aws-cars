@@ -51,7 +51,7 @@
         match /logs/{id}      { allow read: if can('logs'); allow create: if active(); }
         match /settings/{id}  { allow get: if true; allow list: if active(); allow write: if can('settings'); }
         match /tracking/{vin} { allow get: if true; allow list: if active(); allow write: if can('edit') || can('delete'); }
-        match /treasury/{id}  { allow read, create, update: if can('treasury'); allow delete: if can('treasury') && can('delete'); }
+        match /treasury/{id}  { allow read, create, update: if active(); allow delete: if can('delete'); }
         match /receipts/{id}  { allow get: if can('edit') || can('profit'); allow create, update: if can('edit'); allow delete: if can('edit') || can('delete'); }
       }
     }
@@ -785,24 +785,23 @@ const PERMS = [
   ['delete', 'الحذف', 'Delete', 'حذف السيارات والزبائن والدفعات والمصاريف', 'Delete vehicles, customers, payments, expenses'],
   ['profit', 'مشاهدة الأرباح', 'View profit', 'الأرباح وتكلفة الشحن الفعلية والتقرير الشامل', 'Profit, actual shipping cost, full report'],
   ['expenses', 'المصاريف', 'Expenses', 'صفحة مصاريف المكتب وتسجيلها', 'Office expenses page'],
-  ['treasury', 'الخزينة', 'Treasury', 'مشاهدة الخزينة وتسجيل حركاتها', 'View the treasury and record its entries'],
   ['logs', 'سجل العمليات', 'Activity log', 'مشاهدة مين سوّى شنو', 'See who did what'],
   ['settings', 'الإعدادات', 'Settings', 'تعديل بيانات الشركة والإعدادات', 'Edit company info & settings']
 ];
 const ROLES = {
-  manager: ['مدير', 'Manager', ['edit', 'payments', 'delete', 'profit', 'expenses', 'treasury', 'logs', 'settings']],
+  manager: ['مدير', 'Manager', ['edit', 'payments', 'delete', 'profit', 'expenses', 'logs', 'settings']],
   employee: ['موظف', 'Employee', ['edit', 'payments']],
-  accountant: ['محاسب', 'Accountant', ['payments', 'expenses', 'treasury', 'profit', 'logs']],
+  accountant: ['محاسب', 'Accountant', ['payments', 'expenses', 'profit', 'logs']],
   viewer: ['مشاهدة فقط', 'View only', []]
 };
 const roleName = r => r === 'admin' ? L('المدير الرئيسي', 'Main admin') : ROLES[r] ? L(ROLES[r][0], ROLES[r][1]) : L('مخصص', 'Custom');
 const isAdminEmail = e => String(e || '').trim().toLowerCase() === ADMIN_EMAIL.toLowerCase();
 const isAdmin = () => (LOCAL && S.user?.email === 'demo@local') || isAdminEmail(S.user?.email);
 const can = p => p === 'admin' ? isAdmin() : (isAdmin() || !!(S.me && S.me.perms && S.me.perms[p]));
-const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', users: 'admin', profit: 'profit', treasury: 'treasury' };
+const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', users: 'admin', profit: 'profit' };
 const NEED = {
   profList: 'profit', shipSelect: 'edit', vForm: 'edit', vSave: 'edit', trForm: 'edit', trSave: 'edit', trDel: 'edit', rcOpen: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
-  pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses', tbForm: 'treasury', tbSave: 'treasury', tbDel: 'treasury',
+  pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses', tbDel: 'delete',
   printFull: 'profit', sSave: 'settings', unseed: 'admin', backup: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
 };
 function applyPerms(root) {
@@ -2648,7 +2647,7 @@ function startWatch() {
   DB.get('settings', 'main').then(d => { if (d) { S.settings = { ...S.settings, ...d }; render(); } }).catch(() => { });
   ['customers', 'vehicles', 'payments'].concat(can('expenses') ? ['expenses'] : []).forEach(c => unsubs.push(DB.watch(c, arr => { if (c === 'vehicles') arr.forEach(foldShipTr); S[c] = arr; S.loaded[c] = true; recompute(); render(); queueInvSync(); migrateInternal(); })));
   if (can('profit')) unsubs.push(DB.watch('vinternal', arr => { S.internal = Object.fromEntries(arr.map(x => [x.id, x])); S.loaded.vinternal = true; recompute(); render(); migrateInternal(); }));
-  if (can('treasury')) unsubs.push(DB.watch('treasury', arr => { S.treasury = arr; S.loaded.treasury = true; if (S.route === 'treasury') render(); }));
+  unsubs.push(DB.watch('treasury', arr => { S.treasury = arr; S.loaded.treasury = true; if (S.route === 'treasury') render(); }));
   if (can('logs')) unsubs.push(DB.watch('logs', arr => { S.logs = arr; if (S.route === 'logs') render(); }, { order: 'at', limit: 300 }));
   if (isAdmin()) unsubs.push(DB.watch('users', arr => { S.users = arr; if (S.route === 'users') render(); }));
 }
