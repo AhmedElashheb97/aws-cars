@@ -447,6 +447,7 @@ tr.sel{background:#fff7ed}
 .exbox{border:1px dashed #fdba74;background:#fffbf5;border-radius:14px;padding:12px 14px;margin:0 0 14px}
 .exbox-h{display:flex;flex-direction:column;gap:2px;margin-bottom:8px}
 .exbox #exList:empty{display:none}
+.profd{margin:8px 0 4px;padding:10px 12px;border:1px dashed #bbf7d0;border-radius:12px;background:#f0fdf4;font-size:13px}.profd>div:not(.hint){display:flex;justify-content:space-between;gap:10px;padding:3px 0}.profd small{color:#64748b;font-weight:400}.profd .neg{color:#dc2626}.profd .hint{margin-top:6px}
 </style>
 </head>
 <body>
@@ -586,7 +587,9 @@ const psBadge = k => { const m = PAY_ST.find(x => x.k === k) || PAY_ST[1]; retur
 const FEE_PARTS = [{ k: 'transfer', ar: 'رسوم التحويل', en: 'Transfer fee' }, { k: 'bank', ar: 'رسوم البنك / البطاقة', en: 'Bank / card charges' }, { k: 'fx', ar: 'فرق سعر الصرف', en: 'Exchange-rate difference' }, { k: 'other', ar: 'أخرى', en: 'Other' }];
 const tCostD = v => (S.internal[v.id] || {}).tcostd || {};
 /* قواعد تكلفة الدفع حسب الطريقة — الافتراضيات من الإعدادات وتتعدّل لكل دفعة */
-const PAYDEF = () => ({ cust: num(S.settings.fee_cust ?? 1.5), paypal: num(S.settings.fee_paypal ?? 2.5), disc: num(S.settings.disc_copart ?? 3.5), card: num(S.settings.card_back ?? 0.08) });
+const PAYDEF = () => ({ cust: num(S.settings.fee_cust ?? 1.5), paypal: num(S.settings.fee_paypal ?? 2.5), disc: num(S.settings.disc_copart ?? 3.5), card: num(S.settings.card_back ?? 0.08), wire: num(S.settings.wire_lyd ?? 0.12), agent: num(S.settings.agent_k ?? 10) });
+/* تكلفة حوالة متوقعة لمبلغ لم يُدفع بعد: فرق الدينار + عمولة الوكيل لكل 1000$ */
+const wireCost = a => { a = Math.max(0, num(a)); const P = PAYDEF(), R = num(S.settings.rate) || 1; return a * P.wire / R + a * P.agent / 1000; };
 const HAND_METHODS = ['wire', 'moneygram', 'wu', 'agent', 'zelle', 'cash', 'other'];
 const DISC_METHODS = ['wire', 'moneygram', 'wu', 'agent'];
 const lastCardBack = () => { let best = null; Object.values(S.internal || {}).forEach(iv => Object.values(iv.tcostd || {}).forEach(d => { if (d && d.card_back != null && (!best || (d.at || '') > (best.at || ''))) best = d; })); return best ? best.card_back : PAYDEF().card; };
@@ -661,12 +664,17 @@ function stages(v) {
 const shipPays = v => (v.transfers || []).filter(t => ['shipping', 'towing'].includes(t.purpose));
 const shipPaid = v => shipPays(v).reduce((a, t) => a + num(t.amount), 0);
 const actCost = v => { const p = shipPaid(v); if (p > 0) return p; const iv = S.internal[v.id], e = num(iv ? iv.shipping_cost_actual : (v.fin || {}).shipping_cost_actual); return e > 0 ? e + extrasSum(v) : 0; };
+/* ما سندفعه للشحن (بالحوالة): التكلفة الفعلية المتوقعة + المصاريف الإضافية. الجزء غير المدفوع له تكلفة حوالة متوقعة */
+const shipPlan = v => { const f = v.fin || {}, iv = S.internal[v.id], e = num(iv ? iv.shipping_cost_actual : f.shipping_cost_actual); return (e > 0 ? e : num(f.inland_shipping) + num(f.ocean_shipping)) + extrasSum(v); };
+const shipUnpaid = v => Math.max(0, shipPlan(v) - shipPaid(v));
+const wireEst = v => wireCost(shipUnpaid(v));
 /* الربح نهائي فقط بعد تسجيل دفعة الشحن (غير معلّقة) */
 const profitFinal = v => shipPays(v).some(t => t.purpose === 'shipping' && t.status !== 'pending');
-const trResult = v => num((v.fin || {}).transfer_commission) - tCost(v);
+const trResult = v => num((v.fin || {}).transfer_commission) - tCostAll(v);
 const tCostMap = v => (S.internal[v.id] || {}).tcost || {};
 const tCost = v => Object.values(tCostMap(v)).reduce((a, b) => a + num(b), 0);
-const profit = v => { const f = v.fin || {}; const act = actCost(v); return num(f.office_commission) + num(f.transfer_commission) - tCost(v) + (act > 0 ? num(f.inland_shipping) + num(f.ocean_shipping) - act : 0); };
+const tCostAll = v => tCost(v) + wireEst(v);
+const profit = v => { const f = v.fin || {}; return num(f.office_commission) + num(f.transfer_commission) - tCostAll(v) + shipMargin(v); };
 const vPaid = id => S.agg.v[id] || 0;
 /* الربح على مرحلتين: 1) حق السيارة (عمولة المكتب + عمولة حوالة السيارة)  2) الشحن (عمولة حوالة الشحن + فرق الشحن)
    ربح كل مرحلة يتحسب "محقق" بس لما دفعات الزبون تغطي المرحلة كاملة. الدفعات تغطي حق السيارة أولاً ثم الشحن. */
@@ -676,7 +684,7 @@ function profitSplit(v) {
   const shTc = tr.filter(t => SHIP_PURP.includes(t.purpose)).reduce((a, t) => a + num(cm[t.id]), 0), carTc = tCost(v) - shTc;
   const t1 = st.t1, t2 = st.t2;
   const p1 = num(f.office_commission) + st.fee1 - carTc;
-  const p2 = st.fee2 - shTc + (act > 0 ? st.base2 - act : 0);
+  const p2 = st.fee2 - shTc - wireEst(v) + (act > 0 ? st.base2 - act : 0);
   const pays = S.payments.filter(x => x.vehicle_id === v.id).sort((a, b) => (a.date || '').localeCompare(b.date || ''));
   let cum = 0, d1 = '', d2 = '';
   for (const x of pays) { cum += num(x.amount_usd); if (!d1 && cum >= t1 - 0.009) d1 = x.date || ''; if (!d2 && t2 > 0 && cum >= t1 + t2 - 0.009) d2 = x.date || ''; }
@@ -1533,6 +1541,8 @@ function vSettings() {
     <label class="f"><span>${L('خصم Copart (حوالة / MoneyGram / WU) %', 'Copart discount (wire / MoneyGram / WU) %')}</span><input name="disc_copart" type="number" step="0.01" min="0" dir="ltr" value="${esc(s.disc_copart ?? 3.5)}"></label>
     <label class="f"><span>${L('رسوم PayPal %', 'PayPal fee %')}</span><input name="fee_paypal" type="number" step="0.01" min="0" dir="ltr" value="${esc(s.fee_paypal ?? 2.5)}"></label>
     <label class="f"><span>${L('عائد البطاقة الأولي (دينار لكل دولار)', 'Starting card return (LYD per USD)')}</span><input name="card_back" type="number" step="0.001" dir="ltr" value="${esc(s.card_back ?? 0.08)}"></label>
+    <label class="f"><span>${L('فرق الحوالة المتوقع (دينار لكل دولار)', 'Expected wire difference (LYD per USD)')}</span><input name="wire_lyd" type="number" step="0.001" min="0" dir="ltr" value="${esc(s.wire_lyd ?? 0.12)}"></label>
+    <label class="f"><span>${L('عمولة الوكيل المتوقعة ($ لكل 1000$)', 'Expected agent fee ($ per $1,000)')}</span><input name="agent_k" type="number" step="0.01" min="0" dir="ltr" value="${esc(s.agent_k ?? 10)}"></label>
   </div><label class="f" style="margin-top:12px"><span>${L('ملاحظة أسفل الفاتورة', 'Invoice footer note')}</span><textarea name="note" rows="2">${esc(s.note)}</textarea></label>
   <div class="mfoot"><button class="btn pri">${L('حفظ', 'Save')}</button></div></form></div>
   <div class="card"><h3>${L('النظام', 'System')}</h3>
@@ -1596,7 +1606,7 @@ function vFormHtml(v, cid) {
   <div class="hint" id="feeHint" style="margin-top:6px"></div>
 
   ${can('profit') ? `<div class="grid pf" style="margin-top:12px">${inp('fin_shipping_cost_actual', L('تكلفتنا الفعلية للشحن (داخلي + بحري، بدون المصاريف الإضافية)', 'Our actual shipping cost (inland + ocean, without extra charges)'), (S.internal[v.id] ? S.internal[v.id].shipping_cost_actual : f.shipping_cost_actual) ?? '', 'type="number" step="0.01" min="0" dir="ltr" placeholder="0" oninput="A.calc()"')}<div class="hint" style="align-self:end">${L('داخلي فقط — لا يظهر للزبون. يُستخدم لحساب الربح.', 'Internal only, never shown to the customer. Used for profit.')}</div></div>` : ''}
-  <div class="vtots"><div class="totbox"><span>${L('الإجمالي على الزبون', 'Total charged')}</span><span id="vtot" dir="ltr">${money(totalCost(v))}</span></div>${can('profit') ? `<div class="profbox pf"><span>${L('ربح المكتب المتوقع', 'Expected office profit')}</span><b id="vprof">—</b></div>` : ''}</div>
+  <div class="vtots"><div class="totbox"><span>${L('الإجمالي على الزبون', 'Total charged')}</span><span id="vtot" dir="ltr">${money(totalCost(v))}</span></div>${can('profit') ? `<div class="profbox pf"><span>${L('ربح المكتب المتوقع', 'Expected office profit')}</span><b id="vprof">—</b></div>` : ''}</div>${can('profit') ? `<div class="profd pf" id="vprofd"></div>` : ''}
   <div class="sec"><i>${ic('note')}</i>${L('ملاحظات', 'Notes')}</div><label class="f"><span style="display:none">${L('ملاحظات', 'Notes')}</span><textarea name="notes" rows="2">${esc(v.notes || '')}</textarea></label>
   <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">${L('حفظ', 'Save')}</button></div></form>`;
 }
@@ -1934,7 +1944,18 @@ const A = {
     if (tc && !tc.dataset.manual) tc.value = sug || '';
     const fh = $('#feeHint'); if (fh) fh.innerHTML = `${L('عمولة الحوالة', 'Transfer fee')} = ${pct}% × (${L('السيارة + الرسوم + السحب + البحري + الإضافي', 'car + fees + towing + ocean + extras')} ${money(r2(base))}) = <b dir="ltr">${money(sug)}</b>${tc && tc.dataset.manual && Math.abs(num(tc.value) - sug) > 0.009 ? ` · <a href="javascript:void(0)" onclick="const t=$('#vf').elements.fin_transfer_commission;delete t.dataset.manual;A.calc()">${L('استخدم هذا المبلغ', 'Use this amount')}</a>` : ''}`;
     $('#vtot').textContent = money(FIN.reduce((s, x) => s + num(new FormData(vf).get('fin_' + x.k)), 0) + ex);
-    const pe = $('#vprof'); if (pe) { const act = g('fin_shipping_cost_actual'); const vv = S.vehicles.find(x => x.id === $('#vf').dataset.id); pe.textContent = money(g('fin_office_commission') + num(vf.elements.fin_transfer_commission.value) - (vv ? tCost(vv) : 0) + (act > 0 ? g('fin_inland_shipping') + g('fin_ocean_shipping') - act : 0)); }
+    const pe = $('#vprof'); if (pe) {
+      const act = g('fin_shipping_cost_actual'), vv = S.vehicles.find(x => x.id === $('#vf').dataset.id), paidC = vv ? tCost(vv) : 0;
+      const com = g('fin_office_commission'), fee = num(vf.elements.fin_transfer_commission.value), mar = act > 0 ? g('fin_inland_shipping') + g('fin_ocean_shipping') - act : 0;
+      const plan = (act > 0 ? act : g('fin_inland_shipping') + g('fin_ocean_shipping')) + ex, unp = Math.max(0, plan - (vv ? shipPaid(vv) : 0)), w = wireCost(unp), P = PAYDEF();
+      pe.textContent = money(r2(com + fee - paidC - w + mar));
+      const pd = $('#vprofd'); if (pd) { const ln = (k, a, c = '') => `<div><span>${k}</span><b dir="ltr" class="${c}">${a < -0.004 ? '-' + money(-a) : money(a)}</b></div>`;
+        pd.innerHTML = ln(L('عمولة المكتب', 'Office commission'), com) + ln(L('عمولة الحوالة', 'Transfer fee'), fee)
+          + (Math.abs(paidC) > 0.004 ? ln(L('دفعات مسجّلة (عوائد − تكاليف)', 'Recorded payments (returns − costs)'), -paidC, paidC > 0 ? 'neg' : '') : '')
+          + (unp > 0.009 ? ln(`${L('حوالة الشحن المتوقعة', 'Expected shipping wire cost')} <small dir="ltr">(${money(r2(unp))} × ${P.wire} LYD / ${num(S.settings.rate) || 1} + $${P.agent} / $1000)</small>`, -r2(w), 'neg') : '')
+          + (act > 0 ? ln(L('فرق الشحن (المحمّل − الفعلي)', 'Shipping margin (charged − actual)'), r2(mar)) : '')
+          + `<div class="hint">${L('المصاريف الإضافية لا تُحسب ربح. تكلفة الحوالة المتوقعة تُستبدل بالقيمة الحقيقية لما تسجّل دفعة الشحن في "كيف دفعنا".', 'Extra charges are not profit. The expected wire cost is replaced by the real one once you record the shipping payment in "How we paid".')}</div>`; }
+    }
   },
   carsSet(n) { const f = $('#vf'); if (!f) return; f.elements.cars_per_container.value = n; document.querySelectorAll('#carsSeg button').forEach(b => b.classList.toggle('on', +b.textContent === n)); A.yardPick(true); },
   async vSave(e, id) {
@@ -2276,7 +2297,7 @@ const A = {
   /* الإعدادات */
   async sSave(e) {
     e.preventDefault(); const fd = new FormData(e.target);
-    const d = { office: fd.get('office'), phone: fd.get('phone'), address: fd.get('address'), lateDays: num(fd.get('lateDays')) || 2, advDays: num(fd.get('advDays')) || 7, rate: num(fd.get('rate')) || 1, note: fd.get('note'), fee_cust: num(fd.get('fee_cust')), disc_copart: num(fd.get('disc_copart')), fee_paypal: num(fd.get('fee_paypal')), card_back: num(fd.get('card_back')) };
+    const d = { office: fd.get('office'), phone: fd.get('phone'), address: fd.get('address'), lateDays: num(fd.get('lateDays')) || 2, advDays: num(fd.get('advDays')) || 7, rate: num(fd.get('rate')) || 1, note: fd.get('note'), fee_cust: num(fd.get('fee_cust')), disc_copart: num(fd.get('disc_copart')), fee_paypal: num(fd.get('fee_paypal')), card_back: num(fd.get('card_back')), wire_lyd: num(fd.get('wire_lyd')), agent_k: num(fd.get('agent_k')) };
     try { await DB.merge('settings', 'main', d); S.settings = { ...S.settings, ...d }; logAct('settings', ''); render(); toast(L('تم حفظ الإعدادات', 'Settings saved')); } catch (x) { toast(x.message, 'err'); }
   },
   backup() {
@@ -2336,7 +2357,7 @@ const A = {
     const vs = S.vehicles.filter(v => v.customer_id === cid).sort((x, y) => (x.purchase_date || '').localeCompare(y.purchase_date || ''));
     const ps = S.payments.filter(p => p.customer_id === cid).sort((x, y) => (x.date || '').localeCompare(y.date || ''));
     const sumF = k => vs.reduce((s2, v) => s2 + num((v.fin || {})[k]), 0);
-    const com = sumF('office_commission'), trc = sumF('transfer_commission') - vs.reduce((s2, v) => s2 + tCost(v), 0), shm = vs.reduce((s2, v) => s2 + shipMargin(v), 0), prof = com + trc + shm;
+    const com = sumF('office_commission'), trc = sumF('transfer_commission') - vs.reduce((s2, v) => s2 + tCostAll(v), 0), shm = vs.reduce((s2, v) => s2 + shipMargin(v), 0), prof = com + trc + shm;
     const rlz = vs.reduce((s2, v) => s2 + realized(v), 0), pnd = prof - rlz;
     const usd = ps.filter(p => p.currency !== 'LYD').reduce((s2, p) => s2 + num(p.amount), 0), ly = ps.filter(p => p.currency === 'LYD').reduce((s2, p) => s2 + num(p.amount), 0);
     const dl = vs.filter(v => v.status === 'DELIVERED').length;
