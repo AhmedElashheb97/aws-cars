@@ -453,6 +453,12 @@ tr.sel{background:#fff7ed}
 .wirebox{margin-top:12px;padding:12px;border:1px dashed #fecaca;border-radius:12px;background:#fff7f7}.wirebox>b{display:block;margin-bottom:8px;font-size:13.5px}.wirebox .grid{margin:0}#wireCalc{margin-top:6px}
 .rcv{margin-top:10px;background:#fff;border:1px solid #fed7aa;border-radius:10px;padding:10px 12px}.rcv-h{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;padding-bottom:6px;border-bottom:1px solid #fde4c8;margin-bottom:4px}.rcv-h b{font-size:18px}.rc-r{display:flex;justify-content:space-between;gap:10px;padding:3px 0}.rc-r small{color:#94a3b8;margin-inline-start:4px}.rc-r.ok b{color:#16a34a}.rc-r.bad b{color:#dc2626}.rc-r.mute{color:#94a3b8}.rc-s{margin-top:8px;font-size:12px;font-weight:700;color:#64748b}
 .tbxs{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;margin-bottom:14px}.tbx{padding:12px 14px;cursor:pointer;border:1px solid var(--line)}.tbx.on{border-color:var(--pri);box-shadow:0 0 0 2px #fed7aa}.tbx-n{font-weight:700;font-size:13px;color:var(--mut);display:flex;gap:6px;align-items:center;margin-bottom:4px}.tbx-v{font-size:17px;font-weight:800}.tbsum{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;margin:8px 0 10px;color:var(--mut)}
+.invopts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.invopts .pchk span{direction:ltr;unicode-bidi:isolate;font-weight:700}
+.invprev{border:1px solid var(--line);border-radius:12px;padding:6px 12px;background:var(--soft)}
+.invprev div{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.invprev div.t{border:0;font-weight:800;font-size:15px}
+@media(max-width:860px){.invopts{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -2478,10 +2484,44 @@ const A = {
   },
 
   /* الطباعة */
+  /* الفاتورة: نافذة تختار فيها البنود اللي تظهر منفصلة، والباقي يتجمع في سطر واحد */
   printInv(id) {
     const v = S.vehicles.find(x => x.id === id); if (!v) return;
+    const items = invSnap(v).items || [], pref = (() => { try { return JSON.parse(localStorage.getItem('cop_invpref') || '{}'); } catch (e) { return {}; } })();
+    const lab = x => x.k === 'extra' ? (x.t || L('مصروف إضافي', 'Extra charge')) : invItemLabel(x.k);
+    const on = x => pref.hide ? !pref.hide.includes(x.k) : true;
+    openModal(`<h2>🧾 ${L('خيارات الفاتورة', 'Invoice options')}</h2>
+      <div class="hint" style="margin-top:-6px">${L('علّم البنود اللي تبيها تظهر منفصلة. اللي تشيل علامته يتجمع في سطر واحد، والإجمالي ما يتغيرش.', 'Tick the lines to show separately. Unticked lines are combined into one line; the total stays the same.')}</div>
+      <div class="acts" style="margin:10px 0"><button type="button" class="btn sm" onclick="A.invPreset('all')">${L('كل التفاصيل', 'All details')}</button><button type="button" class="btn sm" onclick="A.invPreset('office_commission')">${L('إجمالي السيارة + عمولة المكتب', 'Car total + office commission')}</button><button type="button" class="btn sm" onclick="A.invPreset('none')">${L('الإجمالي فقط', 'Total only')}</button></div>
+      <form id="invf" onsubmit="event.preventDefault();A.printInvGo('${v.id}')">
+        <div class="invopts">${items.map((x, i) => `<label class="pchk"><input type="checkbox" name="it" value="${i}" data-k="${esc(x.k)}" ${on(x) ? 'checked' : ''} onchange="A.invPrev('${v.id}')"><div><b>${esc(lab(x))}</b><span dir="ltr">${money(x.a)}</span></div></label>`).join('') || `<div class="empty">—</div>`}</div>
+        <label class="f" style="margin-top:12px"><span>${L('اسم السطر المجمّع', 'Combined line name')}</span><input name="glab" value="${esc(pref.glab || L('إجمالي السيارة', 'Car total'))}" oninput="A.invPrev('${v.id}')"></label>
+        <div class="grid" style="margin-top:10px"><label class="pchk"><input type="checkbox" name="pays" ${pref.pays === false ? '' : 'checked'}><div><b>${L('جدول الدفعات', 'Payments table')}</b></div></label><label class="pchk"><input type="checkbox" name="img" ${pref.img === false ? '' : 'checked'}><div><b>${L('صورة السيارة', 'Car photo')}</b></div></label></div>
+        <div class="sec">${L('شكل البنود في الفاتورة', 'Invoice lines preview')}</div><div id="invPrev" class="invprev"></div>
+        <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">🖨️ ${L('طباعة الفاتورة', 'Print invoice')}</button></div></form>`, 'sm');
+    A.invPrev(v.id);
+  },
+  invPreset(k) { document.querySelectorAll('#invf input[name=it]').forEach(c => c.checked = k === 'all' ? true : c.dataset.k === k); const id = ($('#invf').getAttribute('onsubmit').match(/'([^']+)'/) || [])[1]; A.invPrev(id); },
+  invItems(v) {
+    const f = $('#invf'), items = invSnap(v).items || [], keep = [...f.querySelectorAll('input[name=it]')].map(c => c.checked);
+    const grouped = items.filter((x, i) => !keep[i]), shown = items.filter((x, i) => keep[i]);
+    const out = []; if (grouped.length) out.push({ k: 'group', t: (f.glab.value || '').trim() || L('إجمالي السيارة', 'Car total'), a: r2(grouped.reduce((a, x) => a + num(x.a), 0)) });
+    return out.concat(shown);
+  },
+  invPrev(id) {
+    const v = S.vehicles.find(x => x.id === id), el = $('#invPrev'); if (!v || !el) return;
+    const its = A.invItems(v);
+    el.innerHTML = its.map(x => `<div><span>${esc(x.k === 'group' || x.k === 'extra' ? x.t : invItemLabel(x.k))}</span><b dir="ltr">${money(x.a)}</b></div>`).join('') + `<div class="t"><span>${L('الإجمالي', 'Total')}</span><b dir="ltr">${money(totalCost(v))}</b></div>`;
+  },
+  printInvGo(id) {
+    const v = S.vehicles.find(x => x.id === id); if (!v) return; const f = $('#invf');
     const c = S.customers.find(x => x.id === v.customer_id) || {}, imgs = (S.trk[v.vin] || {}).images || [];
-    invoicePrint({ ...invSnap(v), phone: c.phone || '', img: (imgs.find(x => x.stage === 'auction') || imgs[0] || {}).src || '' }, true);
+    const items = A.invItems(v), full = invSnap(v).items || [];
+    const pref = { hide: full.filter((x, i) => !f.querySelectorAll('input[name=it]')[i].checked).map(x => x.k), glab: f.glab.value, pays: f.pays.checked, img: f.img.checked };
+    try { localStorage.setItem('cop_invpref', JSON.stringify(pref)); } catch (e) { }
+    const d = { ...invSnap(v), items: items.map(x => x.k === 'group' ? { k: 'extra', t: x.t, a: x.a } : x), phone: c.phone || '', img: f.img.checked ? (imgs.find(x => x.stage === 'auction') || imgs[0] || {}).src || '' : '' };
+    if (!f.pays.checked) d.pays = [];
+    A.close(); invoicePrint(d, true);
   },
   printVeh(id) {
     const v = S.vehicles.find(x => x.id === id); if (!v) return;
