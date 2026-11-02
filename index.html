@@ -2485,15 +2485,24 @@ const A = {
 
   /* الطباعة */
   /* الفاتورة: نافذة تختار فيها البنود اللي تظهر منفصلة، والباقي يتجمع في سطر واحد */
-  printInv(id) {
+  invFull(v, mergeTr) {
+    const its = invSnap(v).items || [], f = v.fin || {};
+    if (mergeTr) return its;
+    return its.flatMap(x => x.k === 'bid_tr' ? [{ k: 'bid_price', a: r2(num(f.bid_price)) }, { k: 'transfer_commission', a: r2(num(f.transfer_commission)) }].filter(y => y.a) : [x]);
+  },
+  invMerge(id, on) { try { const p = JSON.parse(localStorage.getItem('cop_invpref') || '{}'); p.mergeTr = on; localStorage.setItem('cop_invpref', JSON.stringify(p)); } catch (e) { } A.printInv(id, on); },
+  printInv(id, mergeArg) {
     const v = S.vehicles.find(x => x.id === id); if (!v) return;
-    const items = invSnap(v).items || [], pref = (() => { try { return JSON.parse(localStorage.getItem('cop_invpref') || '{}'); } catch (e) { return {}; } })();
+    const pref = (() => { try { return JSON.parse(localStorage.getItem('cop_invpref') || '{}'); } catch (e) { return {}; } })();
+    const mergeTr = mergeArg != null ? mergeArg : pref.mergeTr !== false, hasTr = num((v.fin || {}).transfer_commission) > 0;
+    const items = A.invFull(v, mergeTr);
     const lab = x => x.k === 'extra' ? (x.t || L('مصروف إضافي', 'Extra charge')) : invItemLabel(x.k);
     const on = x => pref.hide ? !pref.hide.includes(x.k) : true;
     openModal(`<h2>🧾 ${L('خيارات الفاتورة', 'Invoice options')}</h2>
       <div class="hint" style="margin-top:-6px">${L('علّم البنود اللي تبيها تظهر منفصلة. اللي تشيل علامته يتجمع في سطر واحد، والإجمالي ما يتغيرش.', 'Tick the lines to show separately. Unticked lines are combined into one line; the total stays the same.')}</div>
       <div class="acts" style="margin:10px 0"><button type="button" class="btn sm" onclick="A.invPreset('all')">${L('كل التفاصيل', 'All details')}</button><button type="button" class="btn sm" onclick="A.invPreset('office_commission')">${L('إجمالي السيارة + عمولة المكتب', 'Car total + office commission')}</button><button type="button" class="btn sm" onclick="A.invPreset('none')">${L('الإجمالي فقط', 'Total only')}</button></div>
-      <form id="invf" onsubmit="event.preventDefault();A.printInvGo('${v.id}')">
+      <form id="invf" data-merge="${mergeTr ? 1 : 0}" onsubmit="event.preventDefault();A.printInvGo('${v.id}')">
+        ${hasTr ? `<label class="pchk" style="margin-bottom:10px"><input type="checkbox" ${mergeTr ? 'checked' : ''} onchange="A.invMerge('${v.id}',this.checked)"><div><b>${L('دمج عمولة الحوالة مع سعر الشراء', 'Merge transfer commission into the purchase price')}</b><span>${mergeTr ? L('تطلع سطر واحد: "سعر الشراء والتحويل"', 'Shown as one line: "Purchase & transfer"') : L('سعر الشراء وعمولة الحوالة كل واحد في سطر', 'Purchase price and transfer commission on separate lines')}</span></div></label>` : ''}
         <div class="invopts">${items.map((x, i) => `<label class="pchk"><input type="checkbox" name="it" value="${i}" data-k="${esc(x.k)}" ${on(x) ? 'checked' : ''} onchange="A.invPrev('${v.id}')"><div><b>${esc(lab(x))}</b><span dir="ltr">${money(x.a)}</span></div></label>`).join('') || `<div class="empty">—</div>`}</div>
         <label class="f" style="margin-top:12px"><span>${L('اسم السطر المجمّع', 'Combined line name')}</span><input name="glab" value="${esc(pref.glab || L('إجمالي السيارة', 'Car total'))}" oninput="A.invPrev('${v.id}')"></label>
         <div class="grid" style="margin-top:10px"><label class="pchk"><input type="checkbox" name="pays" ${pref.pays === false ? '' : 'checked'}><div><b>${L('جدول الدفعات', 'Payments table')}</b></div></label><label class="pchk"><input type="checkbox" name="img" ${pref.img === false ? '' : 'checked'}><div><b>${L('صورة السيارة', 'Car photo')}</b></div></label></div>
@@ -2503,7 +2512,7 @@ const A = {
   },
   invPreset(k) { document.querySelectorAll('#invf input[name=it]').forEach(c => c.checked = k === 'all' ? true : c.dataset.k === k); const id = ($('#invf').getAttribute('onsubmit').match(/'([^']+)'/) || [])[1]; A.invPrev(id); },
   invItems(v) {
-    const f = $('#invf'), items = invSnap(v).items || [], keep = [...f.querySelectorAll('input[name=it]')].map(c => c.checked);
+    const f = $('#invf'), items = A.invFull(v, f.dataset.merge === '1'), keep = [...f.querySelectorAll('input[name=it]')].map(c => c.checked);
     const grouped = items.filter((x, i) => !keep[i]), shown = items.filter((x, i) => keep[i]);
     const out = []; if (grouped.length) out.push({ k: 'group', t: (f.glab.value || '').trim() || L('إجمالي السيارة', 'Car total'), a: r2(grouped.reduce((a, x) => a + num(x.a), 0)) });
     return out.concat(shown);
@@ -2516,8 +2525,8 @@ const A = {
   printInvGo(id) {
     const v = S.vehicles.find(x => x.id === id); if (!v) return; const f = $('#invf');
     const c = S.customers.find(x => x.id === v.customer_id) || {}, imgs = (S.trk[v.vin] || {}).images || [];
-    const items = A.invItems(v), full = invSnap(v).items || [];
-    const pref = { hide: full.filter((x, i) => !f.querySelectorAll('input[name=it]')[i].checked).map(x => x.k), glab: f.glab.value, pays: f.pays.checked, img: f.img.checked };
+    const items = A.invItems(v), full = A.invFull(v, f.dataset.merge === '1');
+    const pref = { hide: full.filter((x, i) => !f.querySelectorAll('input[name=it]')[i].checked).map(x => x.k), glab: f.glab.value, pays: f.pays.checked, img: f.img.checked, mergeTr: f.dataset.merge === '1' };
     try { localStorage.setItem('cop_invpref', JSON.stringify(pref)); } catch (e) { }
     const d = { ...invSnap(v), items: items.map(x => x.k === 'group' ? { k: 'extra', t: x.t, a: x.a } : x), phone: c.phone || '', img: f.img.checked ? (imgs.find(x => x.stage === 'auction') || imgs[0] || {}).src || '' : '' };
     if (!f.pays.checked) d.pays = [];
