@@ -13,24 +13,35 @@ Every change Claude makes appears in the Activity log as **Claude API**.
 3. Click **Generate new private key** > **Generate key**. A `.json` file downloads.
    Keep it private: it gives full access to the database.
 
-### 2. Vercel environment variables
+### 2. Vercel environment variable (one time)
 In vercel.com > the **aws-cars** project > **Settings** > **Environment Variables**, add for *Production*:
 
 | Name | Value |
 |---|---|
 | `FIREBASE_SERVICE_ACCOUNT` | the whole content of the `.json` file from step 1 (open it in a text editor, copy all) |
-| `MCP_SECRET` | a long random password, at least 16 characters, letters and numbers only |
 
-Then **Deployments** > the latest one > **Redeploy**, so the variables take effect.
+Then **Deployments** > the latest one > **Redeploy**.
 
-### 3. Add the connector in Claude
+### 3. Firestore rule (one time)
+In Firestore > Rules, add this line next to the other `match` lines, then **Publish**:
+```
+match /apikeys/{id}   { allow read, write: if isAdmin(); }
+```
+
+### 4. Create a key in the app
+The main admin opens **Settings** > **Claude connector (API)**:
+- **Test connection** checks that the server and Firebase key are set up.
+- **New key**: pick a name and the access (full or read only). Copy the link; it is shown only once.
+- **Turn off** or delete a key at any time; any connection using it stops.
+
+### 5. Add the connector in Claude
 1. In Claude: **Settings** > **Connectors** > **Add custom connector**.
-2. Name: `AWS cars`
-3. URL: `https://aws-cars.vercel.app/api/mcp/<MCP_SECRET>`, with your `MCP_SECRET` value at the end.
-4. Save, then enable it in a chat from the tools menu.
+2. Name: `AWS cars`. URL: the link from the app.
+3. Save, then turn it on in a chat from the tools menu.
 
-The secret in the URL is the password. Anyone with the full URL can change the data, so don't share it.
-To cut access, change `MCP_SECRET` in Vercel and redeploy.
+The link is the password. Anyone with it can reach the data, so don't share it.
+Changes made through a key appear in the Activity log as **Claude API · key name**.
+Optional: `MCP_SECRET` in Vercel works as an extra full-access key (`/api/mcp/<MCP_SECRET>`).
 
 ## What Claude can do
 
