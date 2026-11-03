@@ -1,0 +1,9 @@
+{
+  "name": "aws-cars",
+  "private": true,
+  "description": "AWS cars office app. index.html is the app; api/ holds the connector for Claude.",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "firebase-admin": "12.7.0"
+  }
+}
