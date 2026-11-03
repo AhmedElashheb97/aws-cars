@@ -52,6 +52,7 @@
         match /settings/{id}  { allow get: if true; allow list: if active(); allow write: if can('settings'); }
         match /tracking/{vin} { allow get: if true; allow list: if active(); allow write: if can('edit') || can('delete'); }
         match /treasury/{id}  { allow read, create, update: if active(); allow delete: if can('delete'); }
+        match /apikeys/{id}   { allow read, write: if isAdmin(); }
         match /receipts/{id}  { allow get: if can('edit') || can('profit'); allow create, update: if can('edit'); allow delete: if can('edit') || can('delete'); }
       }
     }
@@ -629,7 +630,7 @@ const S = {
   settings: { office: 'AWS لاستيراد السيارات', phone: '', address: '', lateDays: 2, advDays: 7, rate: 7, note: 'شكراً لثقتكم في AWS لاستيراد السيارات' },
   lang: localStorage.getItem('cop_lang') || 'ar', route: 'dashboard', param: null,
   f: { q: '', status: '', auction: '', cust: '' }, cq: '', pf: { cust: '', cur: '' },
-  trk: {}, galTab: 'all', expenses: [], treasury: [], tf: { m: '', box: '', kind: '' }, logs: [], sel: new Set(), em: new Date().toISOString().slice(0, 7), lf: { user: '', act: '' }, csort: 'age', users: [], internal: {}, me: null, agg: { v: {}, c: {} }, after: null
+  trk: {}, galTab: 'all', expenses: [], treasury: [], tf: { m: '', box: '', kind: '' }, logs: [], sel: new Set(), em: new Date().toISOString().slice(0, 7), lf: { user: '', act: '' }, csort: 'age', users: [], apikeys: [], internal: {}, me: null, agg: { v: {}, c: {} }, after: null
 };
 
 /* ---------------- أدوات ---------------- */
@@ -808,7 +809,7 @@ const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', u
 const NEED = {
   profList: 'profit', shipSelect: 'edit', vForm: 'edit', vSave: 'edit', trForm: 'edit', trSave: 'edit', trDel: 'edit', rcOpen: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
   pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses', tbDel: 'delete',
-  printFull: 'profit', sSave: 'settings', unseed: 'admin', backup: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
+  printFull: 'profit', sSave: 'settings', unseed: 'admin', backup: 'admin', akNew: 'admin', akSave: 'admin', akToggle: 'admin', akDel: 'admin', akTest: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
 };
 function applyPerms(root) {
   document.body.classList.toggle('noprofit', !can('profit'));
@@ -1642,7 +1643,21 @@ function vSettings() {
   <div class="card"><h3>${L('النظام', 'System')}</h3>
     <p>${L('وضع التشغيل', 'Mode')}: <b>${LOCAL ? L('تجريبي (محلي)', 'Demo (local)') : 'Firebase · ' + esc(firebaseConfig.projectId)}</b></p>
     <p>${L('رابط صفحة التتبع للزبائن', 'Customer tracking page')}: <a class="mono" href="#/track" target="_blank">${esc(location.origin + location.pathname)}#/track</a></p>
-    <div class="acts">${[S.vehicles, S.customers, S.payments, S.expenses || []].some(a => a.some(x => x.demo)) ? `<button class="btn red" onclick="A.unseed()">${L('حذف البيانات التجريبية', 'Delete sample data')}</button>` : ''}<button class="btn" onclick="A.backup()">${L('تنزيل نسخة احتياطية (JSON)', 'Download backup (JSON)')}</button></div></div>`;
+    <div class="acts">${[S.vehicles, S.customers, S.payments, S.expenses || []].some(a => a.some(x => x.demo)) ? `<button class="btn red" onclick="A.unseed()">${L('حذف البيانات التجريبية', 'Delete sample data')}</button>` : ''}<button class="btn" onclick="A.backup()">${L('تنزيل نسخة احتياطية (JSON)', 'Download backup (JSON)')}</button></div></div>
+  ${isAdmin() ? akCard() : ''}`;
+}
+/* ---------------- ربط Claude (مفاتيح API) ---------------- */
+const akUrl = k => location.origin + '/api/mcp/' + k;
+function akCard() {
+  const ks = (S.apikeys || []).slice().sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+  return `<div class="card"><div class="row-b"><h3 style="margin:0">${L('ربط Claude (API)', 'Claude connector (API)')}</h3><div class="acts"><button class="btn" onclick="A.akTest()">${L('فحص الاتصال', 'Test connection')}</button><button class="btn pri" onclick="A.akNew()">+ ${L('مفتاح جديد', 'New key')}</button></div></div>
+    <div class="hint">${L('كل مفتاح يعطيك رابط تضيفه في Claude من Settings > Connectors > Add custom connector. Claude يقدر بعدها يقرأ ويعدّل بيانات المنظومة، وكل تعديل يظهر في سجل العمليات باسم المفتاح. أوقف أي مفتاح في أي وقت.', 'Each key gives you a link to add in Claude under Settings > Connectors > Add custom connector. Claude can then read and change the system, and every change shows in the activity log with the key name. Turn off any key at any time.')}</div>
+    <div id="akStatus"></div>
+    ${ks.length ? `<div class="tw"><table class="trt"><thead><tr><th>${L('الاسم', 'Name')}</th><th>${L('الصلاحية', 'Access')}</th><th>${L('المفتاح', 'Key')}</th><th>${L('أُنشئ', 'Created')}</th><th>${L('آخر استخدام', 'Last used')}</th><th>${L('الحالة', 'Status')}</th><th></th></tr></thead><tbody>
+      ${ks.map(k => `<tr><td><b>${esc(k.name)}</b></td><td>${k.access === 'read' ? L('قراءة فقط', 'Read only') : L('كاملة', 'Full')}</td><td class="mono sub">${esc(k.prefix || '')}…</td><td class="sub">${fdate((k.created_at || '').slice(0, 10))}</td><td class="sub">${k.last_used ? fdate(k.last_used.slice(0, 10)) : '—'}</td>
+        <td>${k.active === false ? `<span class="badge" style="--c:#64748b">${L('موقوف', 'Off')}</span>` : `<span class="badge" style="--c:#16a34a">${L('شغّال', 'On')}</span>`}</td>
+        <td style="white-space:nowrap"><button class="btn sm" onclick="A.akToggle('${k.id}')">${k.active === false ? L('تشغيل', 'Turn on') : L('إيقاف', 'Turn off')}</button> <button class="btn sm red" onclick="A.akDel('${k.id}')">${ic('trash')}</button></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty">${L('ما فيش مفاتيح بعد', 'No keys yet')}</div>`}
+  </div>`;
 }
 
 /* ---------------- النماذج ---------------- */
@@ -2380,6 +2395,46 @@ const A = {
     await DB.del('expenses', id); if (x) logAct('exp_del', `${expCat(x.category)} · ${x.currency === 'LYD' ? lyd(x.amount) : money(x.amount)} · ${fdate(x.date)}`); toast(L('تم الحذف', 'Deleted'));
   },
 
+  /* مفاتيح ربط Claude */
+  akNew() {
+    openModal(`<h2>${L('مفتاح ربط جديد', 'New connector key')}</h2><form onsubmit="A.akSave(event)"><div class="grid">
+      <label class="f"><span>${L('الاسم', 'Name')} *</span><input name="name" required value="Claude" placeholder="${L('مثلاً: Claude معيد', 'e.g. Claude Moayed')}"></label>
+      <label class="f"><span>${L('الصلاحية', 'Access')}</span><select name="access"><option value="full">${L('كاملة: قراءة وإضافة وتعديل وحذف', 'Full: read, add, edit and delete')}</option><option value="read">${L('قراءة فقط', 'Read only')}</option></select></label></div>
+      <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">${L('إنشاء', 'Create')}</button></div></form>`, 'sm');
+  },
+  async akSave(e) {
+    e.preventDefault(); const fd = new FormData(e.target), name = (fd.get('name') || '').toString().trim() || 'Claude', access = fd.get('access') === 'read' ? 'read' : 'full';
+    const raw = new Uint8Array(24); crypto.getRandomValues(raw); const key = 'aws_' + [...raw].map(b => b.toString(16).padStart(2, '0')).join('');
+    const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key)))].map(b => b.toString(16).padStart(2, '0')).join('');
+    try {
+      await DB.merge('apikeys', hash, { name, access, prefix: key.slice(0, 10), active: true, created_at: now(), created_by: S.user?.email || '' });
+      logAct('settings', `${L('مفتاح ربط Claude جديد', 'New Claude connector key')}: ${name} (${access})`);
+    } catch (x) { return toast(L('تعذّر الحفظ — أضف قاعدة apikeys في Firestore.', 'Could not save. Add the apikeys rule in Firestore.') + ' ' + x.message, 'err'); }
+    const url = akUrl(key);
+    openModal(`<h2>${L('المفتاح جاهز', 'Your key is ready')}</h2>
+      <div class="ywarn">${L('انسخ الرابط الآن — ما يظهرش مرة ثانية. أي حد عنده الرابط يقدر يدخل للبيانات، فما تشاركهش.', 'Copy the link now. It will not be shown again. Anyone with this link can reach the data, so do not share it.')}</div>
+      <label class="f" style="margin-top:10px"><span>${L('رابط الربط', 'Connector link')}</span><input id="akUrl" readonly dir="ltr" class="mono" value="${esc(url)}" onclick="this.select()"></label>
+      <div class="acts" style="margin-top:8px"><button type="button" class="btn pri" onclick="A.akCopy()">${L('نسخ الرابط', 'Copy link')}</button></div>
+      <div class="sec">${L('في Claude', 'In Claude')}</div>
+      <ol style="margin:0;padding-inline-start:20px;line-height:1.9"><li>Settings > Connectors > <b>Add custom connector</b></li><li>${L('الاسم', 'Name')}: <b>AWS cars</b></li><li>${L('الصق الرابط في URL واحفظ', 'Paste the link as the URL and save')}</li><li>${L('فعّله في المحادثة من قائمة الأدوات', 'Turn it on in a chat from the tools menu')}</li></ol>
+      <div class="mfoot"><button class="btn" onclick="A.close()">${L('تم', 'Done')}</button></div>`, 'sm');
+  },
+  akCopy() { const i = $('#akUrl'); if (!i) return; i.select(); (navigator.clipboard ? navigator.clipboard.writeText(i.value) : Promise.reject()).then(() => toast(L('تم النسخ', 'Copied')), () => document.execCommand('copy')); },
+  async akToggle(id) { const k = (S.apikeys || []).find(x => x.id === id); if (!k) return; await DB.merge('apikeys', id, { active: k.active === false }); logAct('settings', `${L('مفتاح ربط Claude', 'Claude connector key')}: ${k.name} → ${k.active === false ? 'on' : 'off'}`); },
+  async akDel(id) { const k = (S.apikeys || []).find(x => x.id === id); if (!k || !confirm(L(`حذف المفتاح "${k.name}"؟ أي ربط يستخدمه يتوقف.`, `Delete key "${k.name}"? Any connection using it stops working.`))) return; await DB.del('apikeys', id); logAct('settings', `${L('حذف مفتاح ربط Claude', 'Deleted Claude connector key')}: ${k.name}`); },
+  async akTest() {
+    const el = $('#akStatus'); if (!el) return; el.innerHTML = `<div class="hint">${L('جاري الفحص...', 'Checking...')}</div>`;
+    let msg, ok = false;
+    try {
+      const r = await fetch('/api/mcp/test-connection-0000000', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"jsonrpc":"2.0","id":1,"method":"ping"}' });
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 404 && j.error === 'Not found') { ok = true; msg = L('الخادم شغّال ومربوط بقاعدة البيانات. أنشئ مفتاح وأضف رابطه في Claude.', 'The server is running and connected to the database. Create a key and add its link in Claude.'); }
+      else if (j.error === 'not_configured') msg = L('الخادم موجود لكن ناقصه مفتاح Firebase: أضف FIREBASE_SERVICE_ACCOUNT في Vercel ثم Redeploy.', 'The server is there but has no Firebase key yet: add FIREBASE_SERVICE_ACCOUNT in Vercel, then redeploy.');
+      else if (j.error === 'server_error') msg = L('الخادم ما قدرش يدخل لقاعدة البيانات: ', 'The server could not reach the database: ') + esc(j.message || '');
+      else msg = L('خادم الربط مش موجود في هذا الموقع بعد (لازم يندمج التحديث في Vercel).', 'The connector server is not on this site yet (the update needs to be deployed on Vercel).');
+    } catch (x) { msg = L('خادم الربط مش موجود في هذا الموقع بعد.', 'The connector server is not on this site yet.'); }
+    el.innerHTML = `<div class="${ok ? 'yhint' : 'ywarn'}" style="margin:8px 0">${msg}</div>`;
+  },
   copyLink(vin) {
     const u = trackUrl(vin);
     (navigator.clipboard ? navigator.clipboard.writeText(u) : Promise.reject()).then(() => toast(L('تم نسخ رابط التتبع', 'Tracking link copied')), () => prompt(L('انسخ الرابط:', 'Copy link:'), u));
@@ -2706,6 +2761,7 @@ function startWatch() {
   unsubs.push(DB.watch('treasury', arr => { S.treasury = arr; S.loaded.treasury = true; if (S.route === 'treasury') render(); }));
   if (can('logs')) unsubs.push(DB.watch('logs', arr => { S.logs = arr; if (S.route === 'logs') render(); }, { order: 'at', limit: 300 }));
   if (isAdmin()) unsubs.push(DB.watch('users', arr => { S.users = arr; if (S.route === 'users') render(); }));
+  if (isAdmin()) unsubs.push(DB.watch('apikeys', arr => { S.apikeys = arr; if (S.route === 'settings') render(); }));
 }
 let migrated = false;
 async function migrateInternal() {
