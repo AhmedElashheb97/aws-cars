@@ -25,11 +25,13 @@ Then **Deployments** > the latest one > **Redeploy**.
 ### 3. Firestore rule (one time)
 In Firestore > Rules, add this line next to the other `match` lines, then **Publish**:
 ```
-match /apikeys/{id}   { allow read, write: if isAdmin(); }
+match /apikeys/{id}   { allow read, delete: if isAdmin() || (active() && resource.data.owner == em()); allow create: if active() && request.resource.data.owner == em(); allow update: if isAdmin() || (active() && resource.data.owner == em() && only(['active'])); }
 ```
 
 ### 4. Create a key in the app
-The main admin opens **Settings** > **Claude connector (API)**:
+Any user opens the **Claude connector** page in the menu. Each user sees and manages their own keys; the main admin sees everyone's.
+A key works with its owner's permissions in the app, checked on every call. If the owner loses a permission or is turned off, the key loses it too.
+Users without the "edit" permission can only create read-only keys.
 - **Test connection** checks that the server and Firebase key are set up.
 - **New key**: pick a name and the access (full or read only). Copy the link; it is shown only once.
 - **Turn off** or delete a key at any time; any connection using it stops.

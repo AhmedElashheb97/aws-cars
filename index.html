@@ -52,7 +52,7 @@
         match /settings/{id}  { allow get: if true; allow list: if active(); allow write: if can('settings'); }
         match /tracking/{vin} { allow get: if true; allow list: if active(); allow write: if can('edit') || can('delete'); }
         match /treasury/{id}  { allow read, create, update: if active(); allow delete: if can('delete'); }
-        match /apikeys/{id}   { allow read, write: if isAdmin(); }
+        match /apikeys/{id}   { allow read, delete: if isAdmin() || (active() && resource.data.owner == em()); allow create: if active() && request.resource.data.owner == em(); allow update: if isAdmin() || (active() && resource.data.owner == em() && only(['active'])); }
         match /receipts/{id}  { allow get: if can('edit') || can('profit'); allow create, update: if can('edit'); allow delete: if can('edit') || can('delete'); }
       }
     }
@@ -516,10 +516,10 @@ const DB = (() => {
     logout() { if (!LOCAL) return fb.au.signOut(fb.auth); },
     watch(c, cb, opt) {
       if (LOCAL) {
-        const f = arr => { if (opt) arr = arr.sort((a, b) => String(b[opt.order] || '').localeCompare(String(a[opt.order] || ''))).slice(0, opt.limit); cb(arr); };
+        const f = arr => { if (opt && opt.where) arr = arr.filter(x => x[opt.where[0]] === opt.where[1]); if (opt && opt.order) arr = arr.sort((a, b) => String(b[opt.order] || '').localeCompare(String(a[opt.order] || ''))).slice(0, opt.limit); cb(arr); };
         (watchers[c] = watchers[c] || []).push(f); f(toArr(load(c))); return () => { watchers[c] = (watchers[c] || []).filter(x => x !== f); };
       }
-      const ref = opt ? fb.fs.query(fb.fs.collection(fb.db, c), fb.fs.orderBy(opt.order, 'desc'), fb.fs.limit(opt.limit)) : fb.fs.collection(fb.db, c);
+      const ref = opt && opt.where ? fb.fs.query(fb.fs.collection(fb.db, c), fb.fs.where(opt.where[0], '==', opt.where[1])) : opt ? fb.fs.query(fb.fs.collection(fb.db, c), fb.fs.orderBy(opt.order, 'desc'), fb.fs.limit(opt.limit)) : fb.fs.collection(fb.db, c);
       return fb.fs.onSnapshot(ref, s => cb(s.docs.map(d => ({ id: d.id, ...d.data() }))), e => toast(e.message, 'err'));
     },
     async add(c, data) {
@@ -809,7 +809,7 @@ const ROUTE_PERM = { expenses: 'expenses', logs: 'logs', settings: 'settings', u
 const NEED = {
   profList: 'profit', shipSelect: 'edit', vForm: 'edit', vSave: 'edit', trForm: 'edit', trSave: 'edit', trDel: 'edit', rcOpen: 'edit', invUp: 'edit', invDel: 'edit', setStatus: 'edit', bulkApply: 'edit', selT: 'edit', selAll: 'edit', imgUrl: 'edit', imgFiles: 'edit', imgDel: 'edit', cForm: 'edit', cSave: 'edit',
   pForm: 'payments', pSave: 'payments', vDel: 'delete', cDel: 'delete', pDel: 'delete', eDel: 'delete', eForm: 'expenses', eSave: 'expenses', tbDel: 'delete',
-  printFull: 'profit', sSave: 'settings', unseed: 'admin', backup: 'admin', akNew: 'admin', akSave: 'admin', akToggle: 'admin', akDel: 'admin', akTest: 'admin', uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
+  printFull: 'profit', sSave: 'settings', unseed: 'admin', backup: 'admin',  uForm: 'admin', uSave: 'admin', uDel: 'admin', uReset: 'admin', uToggle: 'admin'
 };
 function applyPerms(root) {
   document.body.classList.toggle('noprofit', !can('profit'));
@@ -998,12 +998,12 @@ function parseRoute() {
 function shell(body) {
   const act = { vehicle: 'vehicles', customer: 'customers' }[S.route] || S.route;
   const late = lateList().length;
-  let nav = [['dashboard', ic('chart'), L('لوحة التحكم', 'Dashboard'), late], ['vehicles', ic('car'), L('السيارات', 'Vehicles')], ['customers', ic('users'), L('الزبائن', 'Customers')], ['payments', ic('cash'), L('الدفعات', 'Payments')], ['collect', ic('phone'), L('التحصيل', 'Collections'), collectList().filter(x => x.age >= 30).length], ['ports', ic('map'), L('خريطة الموانئ', 'Port map')], ['profit', ic('trend'), L('الأرباح', 'Profit')], ['expenses', ic('receipt'), L('المصاريف', 'Expenses')], ['treasury', ic('wallet'), L('الخزينة', 'Treasury')], ['logs', ic('clock'), L('سجل العمليات', 'Activity log')], ['settings', ic('settings'), L('الإعدادات', 'Settings')]];
+  let nav = [['dashboard', ic('chart'), L('لوحة التحكم', 'Dashboard'), late], ['vehicles', ic('car'), L('السيارات', 'Vehicles')], ['customers', ic('users'), L('الزبائن', 'Customers')], ['payments', ic('cash'), L('الدفعات', 'Payments')], ['collect', ic('phone'), L('التحصيل', 'Collections'), collectList().filter(x => x.age >= 30).length], ['ports', ic('map'), L('خريطة الموانئ', 'Port map')], ['profit', ic('trend'), L('الأرباح', 'Profit')], ['expenses', ic('receipt'), L('المصاريف', 'Expenses')], ['treasury', ic('wallet'), L('الخزينة', 'Treasury')], ['connector', ic('key'), L('ربط Claude', 'Claude connector')], ['logs', ic('clock'), L('سجل العمليات', 'Activity log')], ['settings', ic('settings'), L('الإعدادات', 'Settings')]];
   const okR = r => !ROUTE_PERM[r] || can(ROUTE_PERM[r]);
   if (isAdmin()) nav.push(['users', ic('lock'), L('المستخدمين', 'Users')]);
   for (let k = nav.length - 1; k >= 0; k--) if (!okR(nav[k][0])) nav.splice(k, 1);
   const bn = [['dashboard', ic('home'), L('الرئيسية', 'Home'), late], ['vehicles', ic('car'), L('السيارات', 'Vehicles')], ['customers', ic('users'), L('الزبائن', 'Customers')], ['collect', ic('phone'), L('التحصيل', 'Collect'), nav[4][3]]];
-  const inMore = ['ports', 'profit', 'payments', 'expenses', 'treasury', 'logs', 'settings', 'users'].includes(act);
+  const inMore = ['ports', 'profit', 'payments', 'expenses', 'treasury', 'connector', 'logs', 'settings', 'users'].includes(act);
   return `<header class="mtop"><img class="mlogo" src="logo-light.png" alt="AXS"><b style="font-size:14px">${esc(S.settings.office)}</b><button onclick="A.lang()">${L('EN', 'ع')}</button></header>
   <nav class="bnav">${bn.map(n => `<a href="#/${n[0]}" class="${act === n[0] ? 'on' : ''}"><i>${n[1]}</i>${n[2]}${n[3] ? `<span class="dotc">${n[3]}</span>` : ''}</a>`).join('')}
     <a href="javascript:A.more()" class="${inMore ? 'on' : ''}"><i>${ic('menu')}</i>${L('المزيد', 'More')}</a></nav>
@@ -1026,7 +1026,7 @@ function render() {
   if (!S.user) return;
   const ae = document.activeElement, fid = ae && ae.id;
   let sel = null; try { if (fid && ae.selectionStart != null) sel = [ae.selectionStart, ae.selectionEnd]; } catch (e) { }
-  let V = { vehicles: vVehicles, vehicle: vVehicle, customers: vCustomers, customer: vCustomer, payments: vPayments, collect: vCollect, expenses: vExpenses, logs: vLogs, settings: vSettings, users: vUsers, ports: vPorts, profit: vProfit, treasury: vTreasury }[S.route] || vDashboard;
+  let V = { vehicles: vVehicles, vehicle: vVehicle, customers: vCustomers, customer: vCustomer, payments: vPayments, collect: vCollect, expenses: vExpenses, logs: vLogs, settings: vSettings, users: vUsers, ports: vPorts, profit: vProfit, treasury: vTreasury, connector: vConnector }[S.route] || vDashboard;
   if (ROUTE_PERM[S.route] && !can(ROUTE_PERM[S.route])) V = () => `<div class="card empty">${L('ما عندكش صلاحية لهذي الصفحة', 'You don’t have access to this page')}</div>`;
   $('#app').innerHTML = shell(V());
   applyPerms();
@@ -1644,17 +1644,19 @@ function vSettings() {
     <p>${L('وضع التشغيل', 'Mode')}: <b>${LOCAL ? L('تجريبي (محلي)', 'Demo (local)') : 'Firebase · ' + esc(firebaseConfig.projectId)}</b></p>
     <p>${L('رابط صفحة التتبع للزبائن', 'Customer tracking page')}: <a class="mono" href="#/track" target="_blank">${esc(location.origin + location.pathname)}#/track</a></p>
     <div class="acts">${[S.vehicles, S.customers, S.payments, S.expenses || []].some(a => a.some(x => x.demo)) ? `<button class="btn red" onclick="A.unseed()">${L('حذف البيانات التجريبية', 'Delete sample data')}</button>` : ''}<button class="btn" onclick="A.backup()">${L('تنزيل نسخة احتياطية (JSON)', 'Download backup (JSON)')}</button></div></div>
-  ${isAdmin() ? akCard() : ''}`;
+`;
 }
 /* ---------------- ربط Claude (مفاتيح API) ---------------- */
 const akUrl = k => location.origin + '/api/mcp/' + k;
+const myEmail = () => String(S.user?.email || '').trim().toLowerCase();
+function vConnector() { return `<div class="top"><h1>${L('ربط Claude', 'Claude connector')}</h1></div>${akCard()}`; }
 function akCard() {
   const ks = (S.apikeys || []).slice().sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
   return `<div class="card"><div class="row-b"><h3 style="margin:0">${L('ربط Claude (API)', 'Claude connector (API)')}</h3><div class="acts"><button class="btn" onclick="A.akTest()">${L('فحص الاتصال', 'Test connection')}</button><button class="btn pri" onclick="A.akNew()">+ ${L('مفتاح جديد', 'New key')}</button></div></div>
-    <div class="hint">${L('كل مفتاح يعطيك رابط تضيفه في Claude من Settings > Connectors > Add custom connector. Claude يقدر بعدها يقرأ ويعدّل بيانات المنظومة، وكل تعديل يظهر في سجل العمليات باسم المفتاح. أوقف أي مفتاح في أي وقت.', 'Each key gives you a link to add in Claude under Settings > Connectors > Add custom connector. Claude can then read and change the system, and every change shows in the activity log with the key name. Turn off any key at any time.')}</div>
+    <div class="hint">${L('كل مفتاح يعطيك رابط تضيفه في Claude من Settings > Connectors > Add custom connector. Claude يقدر بعدها يقرأ ويعدّل بيانات المنظومة، وكل تعديل يظهر في سجل العمليات باسم المفتاح. أوقف أي مفتاح في أي وقت.', 'Each key gives you a link to add in Claude under Settings > Connectors > Add custom connector. Claude can then read and change the system, and every change shows in the activity log with the key name. Turn off any key at any time.')} ${L('المفتاح يشتغل بنفس صلاحياتك في المنظومة: اللي ما تقدرش تسويه هنا، Claude ما يقدرش يسويه بمفتاحك.', 'A key works with your own permissions: whatever you cannot do in the app, Claude cannot do with your key either.')}</div>
     <div id="akStatus"></div>
-    ${ks.length ? `<div class="tw"><table class="trt"><thead><tr><th>${L('الاسم', 'Name')}</th><th>${L('الصلاحية', 'Access')}</th><th>${L('المفتاح', 'Key')}</th><th>${L('أُنشئ', 'Created')}</th><th>${L('آخر استخدام', 'Last used')}</th><th>${L('الحالة', 'Status')}</th><th></th></tr></thead><tbody>
-      ${ks.map(k => `<tr><td><b>${esc(k.name)}</b></td><td>${k.access === 'read' ? L('قراءة فقط', 'Read only') : L('كاملة', 'Full')}</td><td class="mono sub">${esc(k.prefix || '')}…</td><td class="sub">${fdate((k.created_at || '').slice(0, 10))}</td><td class="sub">${k.last_used ? fdate(k.last_used.slice(0, 10)) : '—'}</td>
+    ${ks.length ? `<div class="tw"><table class="trt"><thead><tr><th>${L('الاسم', 'Name')}</th><th>${L('الصلاحية', 'Access')}</th><th>${L('المفتاح', 'Key')}</th>${isAdmin() ? `<th>${L('صاحب المفتاح', 'Owner')}</th>` : ''}<th>${L('أُنشئ', 'Created')}</th><th>${L('آخر استخدام', 'Last used')}</th><th>${L('الحالة', 'Status')}</th><th></th></tr></thead><tbody>
+      ${ks.map(k => `<tr><td><b>${esc(k.name)}</b></td><td>${k.access === 'read' ? L('قراءة فقط', 'Read only') : L('كاملة', 'Full')}</td><td class="mono sub">${esc(k.prefix || '')}…</td>${isAdmin() ? `<td class="sub">${esc(k.owner || k.created_by || '')}</td>` : ''}<td class="sub">${fdate((k.created_at || '').slice(0, 10))}</td><td class="sub">${k.last_used ? fdate(k.last_used.slice(0, 10)) : '—'}</td>
         <td>${k.active === false ? `<span class="badge" style="--c:#64748b">${L('موقوف', 'Off')}</span>` : `<span class="badge" style="--c:#16a34a">${L('شغّال', 'On')}</span>`}</td>
         <td style="white-space:nowrap"><button class="btn sm" onclick="A.akToggle('${k.id}')">${k.active === false ? L('تشغيل', 'Turn on') : L('إيقاف', 'Turn off')}</button> <button class="btn sm red" onclick="A.akDel('${k.id}')">${ic('trash')}</button></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty">${L('ما فيش مفاتيح بعد', 'No keys yet')}</div>`}
   </div>`;
@@ -2296,7 +2298,7 @@ const A = {
     try { await DB.del('users', id); logAct('user_del', `${u?.name || ''} · ${id}`); toast(L('تم حذف المستخدم. لو تبي تمسح حسابه نهائياً: Firebase > Authentication > Users', 'User removed. To delete the login itself: Firebase > Authentication > Users')); } catch (x) { toast(x.message, 'err'); }
   },
   more() {
-    const it = [['ports', ic('map'), L('خريطة الموانئ وأسعار الشحن', 'Port map & shipping prices')], ['profit', ic('trend'), L('الأرباح', 'Profit')], ['payments', ic('cash'), L('الدفعات', 'Payments')], ['expenses', ic('receipt'), L('المصاريف', 'Expenses')], ['treasury', ic('wallet'), L('الخزينة', 'Treasury')], ['logs', ic('clock'), L('سجل العمليات', 'Activity log')], ['settings', ic('settings'), L('الإعدادات', 'Settings')], ['users', ic('lock'), L('المستخدمين والصلاحيات', 'Users & permissions')]].filter(x => !ROUTE_PERM[x[0]] || can(ROUTE_PERM[x[0]]));
+    const it = [['ports', ic('map'), L('خريطة الموانئ وأسعار الشحن', 'Port map & shipping prices')], ['profit', ic('trend'), L('الأرباح', 'Profit')], ['payments', ic('cash'), L('الدفعات', 'Payments')], ['expenses', ic('receipt'), L('المصاريف', 'Expenses')], ['treasury', ic('wallet'), L('الخزينة', 'Treasury')], ['connector', ic('key'), L('ربط Claude', 'Claude connector')], ['logs', ic('clock'), L('سجل العمليات', 'Activity log')], ['settings', ic('settings'), L('الإعدادات', 'Settings')], ['users', ic('lock'), L('المستخدمين والصلاحيات', 'Users & permissions')]].filter(x => !ROUTE_PERM[x[0]] || can(ROUTE_PERM[x[0]]));
     openModal(`<div class="sheet-list">${it.map(x => `<a href="#/${x[0]}" onclick="A.close()"><span class="ic">${x[1]}</span>${x[2]}</a>`).join('')}
       <a href="#/track" target="_blank" onclick="A.close()"><span class="ic">${ic('search')}</span>${L('صفحة التتبع للزبائن', 'Customer tracking page')}</a>
       <button onclick="A.close();A.lang()"><span class="ic">${ic('globe')}</span>${L('English', 'العربية')}</button>
@@ -2399,15 +2401,15 @@ const A = {
   akNew() {
     openModal(`<h2>${L('مفتاح ربط جديد', 'New connector key')}</h2><form onsubmit="A.akSave(event)"><div class="grid">
       <label class="f"><span>${L('الاسم', 'Name')} *</span><input name="name" required value="Claude" placeholder="${L('مثلاً: Claude معيد', 'e.g. Claude Moayed')}"></label>
-      <label class="f"><span>${L('الصلاحية', 'Access')}</span><select name="access"><option value="full">${L('كاملة: قراءة وإضافة وتعديل وحذف', 'Full: read, add, edit and delete')}</option><option value="read">${L('قراءة فقط', 'Read only')}</option></select></label></div>
+      <label class="f"><span>${L('الصلاحية', 'Access')}</span><select name="access">${can('edit') ? `<option value="full">${L('كاملة (حسب صلاحياتك): قراءة وإضافة وتعديل', 'Full (within your permissions): read, add and edit')}</option>` : ''}<option value="read">${L('قراءة فقط', 'Read only')}</option></select></label></div>
       <div class="mfoot"><button type="button" class="btn" onclick="A.close()">${L('إلغاء', 'Cancel')}</button><button class="btn pri">${L('إنشاء', 'Create')}</button></div></form>`, 'sm');
   },
   async akSave(e) {
-    e.preventDefault(); const fd = new FormData(e.target), name = (fd.get('name') || '').toString().trim() || 'Claude', access = fd.get('access') === 'read' ? 'read' : 'full';
+    e.preventDefault(); const fd = new FormData(e.target), name = (fd.get('name') || '').toString().trim() || 'Claude', access = fd.get('access') === 'full' && can('edit') ? 'full' : 'read';
     const raw = new Uint8Array(24); crypto.getRandomValues(raw); const key = 'aws_' + [...raw].map(b => b.toString(16).padStart(2, '0')).join('');
     const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(key)))].map(b => b.toString(16).padStart(2, '0')).join('');
     try {
-      await DB.merge('apikeys', hash, { name, access, prefix: key.slice(0, 10), active: true, created_at: now(), created_by: S.user?.email || '' });
+      await DB.merge('apikeys', hash, { name, access, prefix: key.slice(0, 10), active: true, owner: myEmail(), created_at: now(), created_by: S.user?.email || '' });
       logAct('settings', `${L('مفتاح ربط Claude جديد', 'New Claude connector key')}: ${name} (${access})`);
     } catch (x) { return toast(L('تعذّر الحفظ — أضف قاعدة apikeys في Firestore.', 'Could not save. Add the apikeys rule in Firestore.') + ' ' + x.message, 'err'); }
     const url = akUrl(key);
@@ -2761,7 +2763,7 @@ function startWatch() {
   unsubs.push(DB.watch('treasury', arr => { S.treasury = arr; S.loaded.treasury = true; if (S.route === 'treasury') render(); }));
   if (can('logs')) unsubs.push(DB.watch('logs', arr => { S.logs = arr; if (S.route === 'logs') render(); }, { order: 'at', limit: 300 }));
   if (isAdmin()) unsubs.push(DB.watch('users', arr => { S.users = arr; if (S.route === 'users') render(); }));
-  if (isAdmin()) unsubs.push(DB.watch('apikeys', arr => { S.apikeys = arr; if (S.route === 'settings') render(); }));
+  unsubs.push(DB.watch('apikeys', arr => { S.apikeys = arr; if (S.route === 'connector') render(); }, isAdmin() ? undefined : { where: ['owner', myEmail()] }));
 }
 let migrated = false;
 async function migrateInternal() {
