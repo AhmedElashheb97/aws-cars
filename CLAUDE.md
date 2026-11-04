@@ -66,10 +66,16 @@ You are taking over development of this app from another Claude session. Read th
 ## Money rules (the business)
 
 - **Customer pays in two stages** (`stages(v)`):
-  1. **On purchase:** bid + auction fees + office commission ($150) + other fees.
-  2. **On arrival:** towing + ocean + extras + the **whole transfer fee**.
+  1. **On purchase:** bid + auction fees + auction extras (`st: 1`, e.g. auction storage) + office commission ($150) + other fees + **the transfer fee share for this stage**.
+  2. **On arrival:** towing + ocean + other extras + **the transfer fee share for this stage**.
+  - The transfer fee is one field (`transfer_commission`), split by `feeSplit(v)` in proportion to what is sent to the US in each stage.
   - Customer payments cover stage 1 first. About 80% of customers pay stage 1 up front.
 - **Transfer fee** = `fee_cust`% (1.5%) × (bid + fees + towing + ocean + extras). It's auto-filled in the car form unless edited by hand.
+- **Extras** (`extras` [{d, a, st, rc}]):
+  - `st: 1` = paid with the auction in the US (auction storage): billed in stage 1, a pass-through (not profit, no shipping wire).
+  - `rc: true` = pays back a cost **we** already paid: counted as income that offsets the payment cost.
+  - Otherwise a shipping pass-through in stage 2 (we pay it onward by wire).
+- **Who pays payment-method losses:** PayPal fees and card/FX losses are the **company's loss** (booked on the payment in `tcostd`), not charged to the customer.
 - **Payment methods (how we pay the auction):**
   - Wire, MoneyGram and WU cost an LYD premium (about 0.12 LYD per USD, entered by hand) plus an agent fee. **Copart only** gives a 3.5% discount for these; IAAI gives none.
   - **Card** returns about 0.08 LYD per USD. That's a **gain**, and it varies per payment.
@@ -77,7 +83,7 @@ You are taking over development of this app from another Claude session. Read th
   - **Towing and shipping are paid by wire only.**
 - **Expected profit** = office + transfer fee − recorded payment costs − expected shipping wire cost (`wireEst`) + shipping margin (charged towing+ocean+extras − actual cost).
 - **Actual profit received** (`received(v)`): counts gains only.
-  - The office fee counts once stage 1 is paid. The transfer fee and shipping margin count once fully paid. Card returns and Copart discounts count from recorded payments.
+  - The office fee and the stage-1 transfer fee count once stage 1 is paid. The stage-2 transfer fee and shipping margin count once fully paid. Card returns and Copart discounts count from recorded payments.
   - **Costs are deducted only once the car has arrived (status ≥ ARRIVED_LOCAL_PORT) and is fully paid.**
 - **Profit** is shown only on the Profit page and the car page (with `profit` permission), never on the dashboard.
 - **Moving a car** to another Atlantic Express port: the "move" select in the transfers box keeps the yard towing, switches ocean to the new port's rate and adds a transfer line (an extra, not profit).
@@ -92,7 +98,7 @@ You are taking over development of this app from another Claude session. Read th
 
 **Reference check:** the Kona test car should give these numbers:
 - Inputs: bid 1250, fees 675, office 150, towing 145, ocean 1600 (LAX), extra 1600, actual cost 1695, wire rate 7.35, card payment 1925 with return 0.08, customer paid 2075.
-- Results: total **$5,499.05**, fee **$79.05**, expected profit **$246.20**, received **$170.95**.
+- Results: total **$5,499.05**, fee **$79.05** (stage 1 $28.88, stage 2 $50.17), stage 1 **$2,103.88**, expected profit **$246.20**, received **$20.95** (the customer paid $2,075, less than stage 1, so the office fee is not received yet).
 
 Test the API with a mock DB: call `require('./lib/db').setDb(mock)`, set `FIREBASE_SERVICE_ACCOUNT='{}'`, and call the handler with fake `req`/`res`.
 
