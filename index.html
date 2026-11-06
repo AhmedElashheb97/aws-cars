@@ -816,13 +816,20 @@ const ISS_C = { err: '#dc2626', warn: '#ca8a04' };
 const issBadge = l => { const e = l.filter(x => x.lvl === 'err').length, w = l.length - e; return !l.length ? `<span class="badge" style="--c:#16a34a">${L('سليم', 'OK')}</span>` : (e ? `<span class="badge" style="--c:${ISS_C.err}">${e} ${L('خطأ', 'error')}</span> ` : '') + (w ? `<span class="badge" style="--c:${ISS_C.warn}">${w} ${L('تنبيه', 'warning')}</span>` : ''); };
 const issList = l => l.map(x => `<div class="iss ${x.lvl}">${ic('alert')}<span>${x.t}</span></div>`).join('');
 function realHtml(v) {
-  const b = realBreak(v), l = acctIssues(v), row = (k, a, cls = '', sub = '') => `<div class="rc-r ${cls}"><span>${k}${sub ? ` <small>${sub}</small>` : ''}</span><b dir="ltr">${a}</b></div>`;
+  /* الربح الحقيقي كبنود ربح: عمولة المكتب + نتيجة كل دفعة (المحمّل على الزبون + العوائد - التكاليف) + باقي عمولة الحوالة + هامش الشحن + المسترد - حوالة الشحن المتوقعة = profit(v) */
+  const b = realBreak(v), l = acctIssues(v), f = v.fin || {}, x = profitSplit(v), tr = v.transfers || [], cm = tCostMap(v);
+  const ch = tr.reduce((a, t) => a + num(t.charged), 0), payNet = ch - tCost(v), feeRest = num(f.transfer_commission) - ch, sm = shipMargin(v), rc = rcSum(v), we = wireEst(v);
+  const last = tr.map(t => t.date || '').filter(Boolean).sort().pop();
+  const sg = n => (n < -0.004 ? '-' : '+') + money(r2(Math.abs(n))), cl = n => n < -0.004 ? 'bad' : 'ok';
+  const row = (k, a, cls = '', sub = '') => `<div class="rc-r ${cls}"><span>${k}${sub ? ` <small>${sub}</small>` : ''}</span><b dir="ltr">${a}</b></div>`;
   return `<div class="rcv real"><div class="rcv-h"><span>${L('الربح الحقيقي', 'Real profit')}</span><b dir="ltr" class="${b.profit >= 0 ? 'pos' : 'neg'}">${money(r2(b.profit))}</b></div>
-    ${row(L('يدفع الزبون (إجمالي السيارة)', 'Customer pays (car total)'), money(r2(b.cust)), 'ok', b.rc > 0.004 ? L(`منها ${money(r2(b.rc))} تكاليف يدفعها الزبون (مستردة)`, `incl. ${money(r2(b.rc))} costs paid back by the customer`) : '')}
-    ${row(L('المزاد (السيارة + الرسوم + التخزين)', 'Auction (car + fees + storage)'), '-' + money(r2(b.auction)), 'bad')}
-    ${row(L('الشحن والمصاريف الإضافية', 'Shipping and extras'), '-' + money(r2(b.ship)), 'bad', b.shipEst ? L('تقديري: التكلفة الفعلية غير مسجلة', 'estimated: actual cost missing') : '')}
-    ${row(L('تكاليف الدفعات (بعد العوائد)', 'Payment costs (after returns)'), (b.pay > 0 ? '-' : '+') + money(r2(Math.abs(b.pay))), b.pay > 0 ? 'bad' : 'ok')}
-    ${b.wire > 0.004 ? row(L('حوالة الشحن المتوقعة', 'Expected shipping wire'), '-' + money(r2(b.wire)), 'bad') : ''}
+    ${row(L('عمولة المكتب', 'Office commission'), sg(num(f.office_commission)), 'ok', x.r1 ? fdate(x.d1) : L('بعد دفع المرحلة 1', 'after stage 1 is paid'))}
+    ${tr.length ? row(L('ربح / خسارة دفع المزاد والحوالات', 'Profit / loss on auction payments and transfers'), sg(payNet), cl(payNet), `${tr.length} ${L('دفعة', 'payments')}${last ? ' · ' + fdate(last) : ''}`) : ''}
+    ${Math.abs(feeRest) > 0.004 ? row(L('عمولة الحوالة على الباقي', 'Transfer fee on the rest'), sg(feeRest), cl(feeRest), L('مبالغ لم تُسجل دفعتها بعد (الشحن)', 'amounts not paid yet (shipping)')) : ''}
+    ${row(L('هامش الشحن (السحب + البحري)', 'Shipping margin (towing + ocean)'), sg(sm), cl(sm), b.shipEst ? L('تكلفة الشحن الفعلية غير مسجلة', 'actual shipping cost missing') : '')}
+    ${rc > 0.004 ? row(L('تكاليف يدفعها الزبون (مستردة)', 'Costs paid back by the customer'), sg(rc), 'ok') : ''}
+    ${we > 0.004 ? row(L('حوالة الشحن المتوقعة', 'Expected shipping wire'), sg(-we), 'bad', L('لم تُدفع بعد', 'not paid yet')) : ''}
+    <div class="rc-r mute"><span>${L('يدفع الزبون', 'Customer pays')} ${money(r2(b.cust))} · ${L('تكلفتنا الحقيقية', 'Our real cost')} ${money(r2(b.cost))}</span></div>
     <div class="rc-s">${L('فحص الحسابات', 'Accounting check')} ${issBadge(l)}</div>${issList(l)}</div>`;
 }
 const advTag = v => { const o = advOut(v); return o > 0.009 ? ` <span class="advtag">${L('سلفة', 'Advance')} ${money(o)}</span>` : (advAmt(v) > 0 ? ` <span class="advtag ok">✓ ${L('سلفة مسددة', 'Advance repaid')}</span>` : ''); };
