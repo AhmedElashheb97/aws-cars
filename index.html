@@ -815,10 +815,15 @@ function acctGlobal() {
 const ISS_C = { err: '#dc2626', warn: '#ca8a04' };
 const issBadge = l => { const e = l.filter(x => x.lvl === 'err').length, w = l.length - e; return !l.length ? `<span class="badge" style="--c:#16a34a">${L('سليم', 'OK')}</span>` : (e ? `<span class="badge" style="--c:${ISS_C.err}">${e} ${L('خطأ', 'error')}</span> ` : '') + (w ? `<span class="badge" style="--c:${ISS_C.warn}">${w} ${L('تنبيه', 'warning')}</span>` : ''); };
 const issList = l => l.map(x => `<div class="iss ${x.lvl}">${ic('alert')}<span>${x.t}</span></div>`).join('');
+/* بنود الربح لكل سيارة (نفس اللي في صندوق الربح الحقيقي) — مجموعها = profit(v) */
+function profitLines(v) {
+  const f = v.fin || {}, tr = v.transfers || [], ch = tr.reduce((a, t) => a + num(t.charged), 0);
+  return { com: num(f.office_commission), pay: ch - tCost(v), feeRest: num(f.transfer_commission) - ch, sm: shipMargin(v), rc: rcSum(v), wire: -wireEst(v), n: tr.length };
+}
 function realHtml(v) {
   /* الربح الحقيقي كبنود ربح: عمولة المكتب + نتيجة كل دفعة (المحمّل على الزبون + العوائد - التكاليف) + باقي عمولة الحوالة + هامش الشحن + المسترد - حوالة الشحن المتوقعة = profit(v) */
   const b = realBreak(v), l = acctIssues(v), f = v.fin || {}, x = profitSplit(v), tr = v.transfers || [], cm = tCostMap(v);
-  const ch = tr.reduce((a, t) => a + num(t.charged), 0), payNet = ch - tCost(v), feeRest = num(f.transfer_commission) - ch, sm = shipMargin(v), rc = rcSum(v), we = wireEst(v);
+  const pl = profitLines(v), payNet = pl.pay, feeRest = pl.feeRest, sm = pl.sm, rc = pl.rc, we = -pl.wire;
   const last = tr.map(t => t.date || '').filter(Boolean).sort().pop();
   const sg = n => (n < -0.004 ? '-' : '+') + money(r2(Math.abs(n))), cl = n => n < -0.004 ? 'bad' : 'ok';
   const row = (k, a, cls = '', sub = '') => `<div class="rc-r ${cls}"><span>${k}${sub ? ` <small>${sub}</small>` : ''}</span><b dir="ltr">${a}</b></div>`;
@@ -1345,9 +1350,10 @@ function vTreasury() {
 function vProfit() {
   S.pr = S.pr || { m: new Date().toISOString().slice(0, 7), st: '' };
   const P = S.pr, inM = v => !P.m || (v.purchase_date || v.created_at || '').startsWith(P.m);
-  const rows = S.vehicles.filter(inM).map(v => { const f = v.fin || {}, com = num(f.office_commission), tr = trResult(v), sh = shipMargin(v), b = realBreak(v); return { v, fin: profitFinal(v), com, tr, sh, tot: com + tr + sh, got: realized(v), cust: b.cust, cost: b.cost, iss: acctIssues(v) }; })
+  const rows = S.vehicles.filter(inM).map(v => { const f = v.fin || {}, com = num(f.office_commission), tr = trResult(v), sh = shipMargin(v), b = realBreak(v), pl = profitLines(v); return { v, fin: profitFinal(v), com, tr, sh, tot: com + tr + sh + pl.rc, got: realized(v), cust: b.cust, cost: b.cost, iss: acctIssues(v), pay: pl.pay, feeRest: pl.feeRest, rc: pl.rc, wire: pl.wire }; })
     .filter(r => !P.st || (P.st === 'final' ? r.fin : !r.fin)).sort((a, b) => (b.v.purchase_date || '').localeCompare(a.v.purchase_date || ''));
   const sum = (l, k) => l.reduce((a, r) => a + r[k], 0), fl = rows.filter(r => r.fin), es = rows.filter(r => !r.fin);
+  const hasRc = rows.some(r => r.rc > 0.004), nc = n => `<td class="n ${n < -0.004 ? 'neg' : ''}">${money(r2(n))}</td>`;
   const exps = S.expenses.filter(e => !P.m || (e.date || '').startsWith(P.m)), ex = totalExp(exps);
   const months = [...new Set(S.vehicles.map(v => (v.purchase_date || v.created_at || '').slice(0, 7)).filter(Boolean))].sort().reverse();
   const by = key => { const m = {}; S.vehicles.filter(inM).forEach(v => { const cd = tCostD(v); (v.transfers || []).forEach(t => { const k = key(t) || '-'; const r = payResult(t.method, t.payee, t.amount, t.charged, cd[t.id] || {}); const o = m[k] = m[k] || { n: 0, amt: 0, ch: 0, cost: 0, gain: 0, net: 0 }; o.n++; o.amt += num(t.amount); o.ch += num(t.charged); o.cost += r.cost; o.gain += r.gain; o.net += r.net; }); }); return Object.entries(m).sort((a, b) => b[1].amt - a[1].amt); };
@@ -1372,9 +1378,9 @@ function vProfit() {
     ${kpi(L('أخطاء محاسبية', 'Accounting errors'), String(nErr), nErr ? '#dc2626' : '#16a34a', `${nWarn} ${L('تنبيه', 'warnings')} · ${bad.length} ${L('سيارة', 'cars')}`)}
   </div>
   ${issCard}
-  <div class="card"><h3>${L('الربح لكل سيارة', 'Profit per car')}</h3>${rows.length ? `<div class="tw"><table class="trt"><thead><tr><th>${L('السيارة', 'Car')}</th><th>${L('الزبون', 'Customer')}</th><th>${L('تاريخ الشراء', 'Purchased')}</th><th>${L('الحالة', 'Status')}</th><th class="n">${L('يدفع الزبون', 'Customer pays')}</th><th class="n">${L('تكلفتنا الحقيقية', 'Our real cost')}</th><th class="n">${L('الربح الحقيقي', 'Real profit')}</th><th class="n">${L('محصّل', 'Collected')}</th><th>${L('الفحص', 'Check')}</th></tr></thead><tbody>
-    ${rows.map(r => `<tr class="click" onclick="location.hash='#/vehicle/${r.v.id}'"><td><b>${esc(vt(r.v))}</b><div class="sub mono">${esc(r.v.vin.slice(-6))}</div></td><td>${codeTag(custCode(r.v.customer_id))}${esc(custName(r.v.customer_id))}</td><td>${fdate(r.v.purchase_date)}</td><td>${r.fin ? `<span class="badge" style="--c:#16a34a">${L('نهائي', 'Final')}</span>` : `<span class="badge" style="--c:#ca8a04">${L('تقديري', 'Estimated')}</span>`}</td><td class="n">${money(r2(r.cust))}</td><td class="n">${money(r2(r.cost))}</td><td class="n ${r.tot >= 0 ? 'pos' : 'neg'}"><b>${money(r2(r.tot))}</b></td><td class="n">${money(r2(r.got))}</td><td>${issBadge(r.iss)}</td></tr>`).join('')}
-    <tr class="t"><td colspan="4">${L('الإجمالي', 'Total')}</td><td class="n">${money(r2(sum(rows, 'cust')))}</td><td class="n">${money(r2(sum(rows, 'cost')))}</td><td class="n">${money(r2(sum(rows, 'tot')))}</td><td class="n">${money(r2(sum(rows, 'got')))}</td><td></td></tr></tbody></table></div>` : `<div class="empty">${L('لا توجد سيارات في هذه الفترة', 'No cars in this period')}</div>`}</div>
+  <div class="card"><h3>${L('الربح لكل سيارة', 'Profit per car')}</h3>${rows.length ? `<div class="tw"><table class="trt"><thead><tr><th>${L('السيارة', 'Car')}</th><th>${L('الزبون', 'Customer')}</th><th>${L('تاريخ الشراء', 'Purchased')}</th><th>${L('الحالة', 'Status')}</th><th class="n">${L('عمولة المكتب', 'Office commission')}</th><th class="n">${L('ربح / خسارة دفع المزاد والحوالات', 'Profit / loss on payments')}</th><th class="n">${L('عمولة الحوالة على الباقي', 'Transfer fee on the rest')}</th><th class="n">${L('هامش الشحن', 'Shipping margin')}</th>${hasRc ? `<th class="n">${L('مستردة من الزبون', 'Paid back')}</th>` : ''}<th class="n">${L('حوالة الشحن المتوقعة', 'Expected wire')}</th><th class="n">${L('الربح الحقيقي', 'Real profit')}</th><th class="n">${L('محصّل', 'Collected')}</th><th>${L('الفحص', 'Check')}</th></tr></thead><tbody>
+    ${rows.map(r => `<tr class="click" onclick="location.hash='#/vehicle/${r.v.id}'"><td><b>${esc(vt(r.v))}</b><div class="sub mono">${esc(r.v.vin.slice(-6))}</div></td><td>${codeTag(custCode(r.v.customer_id))}${esc(custName(r.v.customer_id))}</td><td>${fdate(r.v.purchase_date)}</td><td>${r.fin ? `<span class="badge" style="--c:#16a34a">${L('نهائي', 'Final')}</span>` : `<span class="badge" style="--c:#ca8a04">${L('تقديري', 'Estimated')}</span>`}</td><td class="n">${money(r2(r.com))}</td>${nc(r.pay)}${nc(r.feeRest)}${nc(r.sh)}${hasRc ? nc(r.rc) : ''}${nc(r.wire)}<td class="n ${r.tot >= 0 ? 'pos' : 'neg'}"><b>${money(r2(r.tot))}</b></td><td class="n">${money(r2(r.got))}</td><td>${issBadge(r.iss)}</td></tr>`).join('')}
+    <tr class="t"><td colspan="4">${L('الإجمالي', 'Total')}</td><td class="n">${money(r2(sum(rows, 'com')))}</td>${nc(sum(rows, 'pay'))}${nc(sum(rows, 'feeRest'))}${nc(sum(rows, 'sh'))}${hasRc ? nc(sum(rows, 'rc')) : ''}${nc(sum(rows, 'wire'))}<td class="n">${money(r2(sum(rows, 'tot')))}</td><td class="n">${money(r2(sum(rows, 'got')))}</td><td></td></tr></tbody></table></div>` : `<div class="empty">${L('لا توجد سيارات في هذه الفترة', 'No cars in this period')}</div>`}</div>
   <div class="two">${byTable(L('حسب طريقة الدفع', 'By payment method'), by(t => t.method), k => pmName(k))}${byTable(L('حسب الاسم / الحساب', 'By name / account'), by(t => t.src), k => k)}</div>`;
 }
 
