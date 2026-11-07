@@ -96,7 +96,7 @@ h3{font-size:15px;margin:0 0 12px}
 .stat>div:last-child{min-width:0;flex:1}
 .stat .v{font-size:22px;font-weight:800;direction:ltr;text-align:start;white-space:nowrap;overflow:hidden}
 .stat .k{color:var(--mut);font-size:12.5px;font-weight:600}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}.two>*{min-width:0}
 .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--ink);font:inherit;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap}
 .btn:hover{background:var(--soft)}
 .btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}
@@ -1364,7 +1364,8 @@ function vProfit() {
   const months = [...new Set(S.vehicles.map(v => (v.purchase_date || v.created_at || '').slice(0, 7)).filter(Boolean))].sort().reverse();
   const by = key => { const m = {}; S.vehicles.filter(inM).forEach(v => { const cd = tCostD(v); (v.transfers || []).forEach(t => { const k = key(t) || '-'; const r = payResult(t.method, t.payee, t.amount, t.charged, cd[t.id] || {}); const o = m[k] = m[k] || { n: 0, amt: 0, ch: 0, cost: 0, gain: 0, net: 0 }; o.n++; o.amt += num(t.amount); o.ch += num(t.charged); o.cost += r.cost; o.gain += r.gain; o.net += r.net; }); }); return Object.entries(m).sort((a, b) => b[1].amt - a[1].amt); };
   const byTable = (title, list, nameFn) => `<div class="card"><h3>${title}</h3>${list.length ? `<div class="tw"><table class="trt"><thead><tr><th></th><th class="n">${L('عدد', 'Count')}</th><th class="n">${L('المبلغ المدفوع', 'Amount paid')}</th><th class="n">${L('محمّل على الزبائن', 'Charged to customers')}</th><th class="n">${L('تكاليف', 'Costs')}</th><th class="n">${L('عوائد وخصومات', 'Returns and discounts')}</th><th class="n">${L('النتيجة', 'Result')}</th></tr></thead><tbody>${list.map(([k, o]) => `<tr><td><b>${esc(nameFn(k))}</b></td><td class="n">${o.n}</td><td class="n">${money(r2(o.amt))}</td><td class="n">${money(r2(o.ch))}</td><td class="n neg">${money(r2(o.cost))}</td><td class="n pos">${money(r2(o.gain))}</td><td class="n ${o.net >= 0 ? 'pos' : 'neg'}"><b>${money(r2(o.net))}</b></td></tr>`).join('')}</tbody></table></div>` : `<div class="empty">${L('لا توجد دفعات مسجلة', 'No payments recorded')}</div>`}</div>`;
-  const kpi = (k, v, c, sub = '') => `<div class="card stat" style="--c:${c}"><div><div class="k">${k}</div><div class="v" dir="ltr">${v}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div></div>`;
+  S.prRows = rows; S.prExps = exps;
+  const kpi = (k, v, c, sub = '', rk = '') => `<div class="card stat ${rk ? 'clk' : ''}" style="--c:${c}"${rk ? ` role="button" tabindex="0" onclick="A.prRep('${rk}')" onkeydown="if(event.key==='Enter')A.prRep('${rk}')"` : ''}><div><div class="k">${k}</div><div class="v" dir="ltr">${v}</div>${sub ? `<div class="sub">${sub}</div>` : ''}</div></div>`;
   const gl = acctGlobal(), bad = rows.filter(r => r.iss.length), nErr = rows.reduce((a, r) => a + r.iss.filter(x => x.lvl === 'err').length, 0) + gl.filter(x => x.lvl === 'err').length, nWarn = rows.reduce((a, r) => a + r.iss.length, 0) + gl.length - nErr;
   const issCard = `<div class="card"><h3>${ic('alert')} ${L('فحص الأخطاء المحاسبية', 'Accounting error check')} ${issBadge([...rows.flatMap(r => r.iss), ...gl])}</h3>
     ${!bad.length && !gl.length ? `<div class="empty">${L('ما فيش أخطاء محاسبية في هذه الفترة', 'No accounting errors in this period')}</div>` : ''}
@@ -1375,15 +1376,15 @@ function vProfit() {
       <select onchange="S.pr.st=this.value;render()"><option value="">${L('كل السيارات', 'All cars')}</option><option value="final" ${P.st === 'final' ? 'selected' : ''}>${L('نهائي فقط', 'Final only')}</option><option value="est" ${P.st === 'est' ? 'selected' : ''}>${L('تقديري فقط', 'Estimated only')}</option></select></div></div>
   <div class="hint" style="margin-top:-6px">${L('الربح يصبح "نهائي" بعد تسجيل دفعة الشحن للسيارة. قبل ذلك هو "تقديري" ويعتمد على تكلفة الشحن المتوقعة.', 'A car\'s profit becomes "Final" once its shipping payment is recorded. Before that it is "Estimated", based on the expected shipping cost.')}</div>
   <div class="stats">
-    ${kpi(L('ربح نهائي', 'Final profit'), money(r2(sum(fl, 'tot'))), '#16a34a', `${fl.length} ${L('سيارة', 'cars')}`)}
-    ${kpi(L('ربح تقديري', 'Estimated profit'), money(r2(sum(es, 'tot'))), '#ca8a04', `${es.length} ${L('سيارة لم يُدفع شحنها بعد', 'cars, shipping not paid yet')}`)}
-    ${kpi(L('محصّل من الزبائن', 'Collected from customers'), money(r2(sum(rows, 'got'))), '#0891b2', L('ربح دفع الزبون ثمنه', 'profit the customer has paid for'))}
-    ${kpi(L('لم يُحصّل بعد', 'Not collected yet'), money(r2(sum(rows, 'tot') - sum(rows, 'got'))), '#a16207', L('الزبون ما خلّصش', 'customer has not paid in full'))}
-    ${can('expenses') ? kpi(L('مصاريف المكتب', 'Office expenses'), money(r2(ex)), '#dc2626', `${exps.length} ${L('مصروف', 'expenses')}`) : ''}
-    ${can('expenses') ? kpi(L('صافي الربح النهائي', 'Net final profit'), money(r2(sum(fl, 'tot') - ex)), '#0f766e', L('الربح النهائي ناقص المصاريف', 'Final profit minus expenses')) : ''}
-    ${kpi(L('أخطاء محاسبية', 'Accounting errors'), String(nErr), nErr ? '#dc2626' : '#16a34a', `${nWarn} ${L('تنبيه', 'warnings')} · ${bad.length} ${L('سيارة', 'cars')}`)}
+    ${kpi(L('ربح نهائي', 'Final profit'), money(r2(sum(fl, 'tot'))), '#16a34a', `${fl.length} ${L('سيارة', 'cars')}`, 'final')}
+    ${kpi(L('ربح تقديري', 'Estimated profit'), money(r2(sum(es, 'tot'))), '#ca8a04', `${es.length} ${L('سيارة لم يُدفع شحنها بعد', 'cars, shipping not paid yet')}`, 'est')}
+    ${kpi(L('محصّل من الزبائن', 'Collected from customers'), money(r2(sum(rows, 'got'))), '#0891b2', L('ربح دفع الزبون ثمنه', 'profit the customer has paid for'), 'got')}
+    ${kpi(L('لم يُحصّل بعد', 'Not collected yet'), money(r2(sum(rows, 'tot') - sum(rows, 'got'))), '#a16207', L('الزبون ما خلّصش', 'customer has not paid in full'), 'wait')}
+    ${can('expenses') ? kpi(L('مصاريف المكتب', 'Office expenses'), money(r2(ex)), '#dc2626', `${exps.length} ${L('مصروف', 'expenses')}`, 'exp') : ''}
+    ${can('expenses') ? kpi(L('صافي الربح النهائي', 'Net final profit'), money(r2(sum(fl, 'tot') - ex)), '#0f766e', L('الربح النهائي ناقص المصاريف', 'Final profit minus expenses'), 'net') : ''}
+    ${kpi(L('أخطاء محاسبية', 'Accounting errors'), String(nErr), nErr ? '#dc2626' : '#16a34a', `${nWarn} ${L('تنبيه', 'warnings')} · ${bad.length} ${L('سيارة', 'cars')}`, 'err')}
   </div>
-  ${issCard}
+  <div id="pr-iss">${issCard}</div>
   <div class="card"><h3>${L('الربح لكل سيارة', 'Profit per car')}</h3>${rows.length ? `<div class="tw"><table class="trt"><thead><tr><th>${L('السيارة', 'Car')}</th><th>${L('الزبون', 'Customer')}</th><th>${L('تاريخ الشراء', 'Purchased')}</th><th>${L('الحالة', 'Status')}</th><th class="n">${L('عمولة المكتب', 'Office commission')}</th><th class="n">${L('ربح / خسارة دفع المزاد والحوالات', 'Profit / loss on payments')}</th><th class="n">${L('عمولة الحوالة على الباقي', 'Transfer fee on the rest')}</th><th class="n">${L('هامش الشحن', 'Shipping margin')}</th>${hasRc ? `<th class="n">${L('مستردة من الزبون', 'Paid back')}</th>` : ''}<th class="n">${L('حوالة الشحن المتوقعة', 'Expected wire')}</th><th class="n">${L('الربح الحقيقي', 'Real profit')}</th><th class="n">${L('محصّل', 'Collected')}</th><th>${L('الفحص', 'Check')}</th></tr></thead><tbody>
     ${rows.map(r => `<tr class="click" onclick="location.hash='#/vehicle/${r.v.id}'"><td><b>${esc(vt(r.v))}</b><div class="sub mono">${esc(r.v.vin.slice(-6))}</div></td><td>${codeTag(custCode(r.v.customer_id))}${esc(custName(r.v.customer_id))}</td><td>${fdate(r.v.purchase_date)}</td><td>${r.fin ? `<span class="badge" style="--c:#16a34a">${L('نهائي', 'Final')}</span>` : `<span class="badge" style="--c:#ca8a04">${L('تقديري', 'Estimated')}</span>`}</td><td class="n">${money(r2(r.com))}</td>${nc(r.pay)}${nc(r.feeRest)}${nc(r.sh)}${hasRc ? nc(r.rc) : ''}${nc(r.wire)}<td class="n ${r.tot >= 0 ? 'pos' : 'neg'}"><b>${money(r2(r.tot))}</b></td><td class="n">${money(r2(r.got))}</td><td>${issBadge(r.iss)}</td></tr>`).join('')}
     <tr class="t"><td colspan="4">${L('الإجمالي', 'Total')}</td><td class="n">${money(r2(sum(rows, 'com')))}</td>${nc(sum(rows, 'pay'))}${nc(sum(rows, 'feeRest'))}${nc(sum(rows, 'sh'))}${hasRc ? nc(sum(rows, 'rc')) : ''}${nc(sum(rows, 'wire'))}<td class="n">${money(r2(sum(rows, 'tot')))}</td><td class="n">${money(r2(sum(rows, 'got')))}</td><td></td></tr></tbody></table></div>` : `<div class="empty">${L('لا توجد سيارات في هذه الفترة', 'No cars in this period')}</div>`}</div>
@@ -2136,6 +2137,42 @@ const A = {
     A.moveInfo(); A.calc();
   },
   close() { $('#modal').innerHTML = ''; },
+  /* تقرير صغير لكل مربع في صفحة الأرباح */
+  prRep(k) {
+    if (k === 'err') { const el = $('#pr-iss'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    const rows = S.prRows || [], exps = S.prExps || [], P = S.pr || {}, per = P.m || L('كل الفترات', 'All time');
+    const nc = n => `<td class="n ${n < -0.004 ? 'neg' : ''}" dir="ltr">${money(r2(n))}</td>`, sm = (l, f) => l.reduce((a, x) => a + f(x), 0);
+    const car = r => `<td><a href="#/vehicle/${r.v.id}" onclick="A.close()"><b>${esc(vt(r.v))}</b></a><div class="sub mono">${esc((r.v.vin || '').slice(-6))}</div></td><td>${esc(custName(r.v.customer_id))}</td>`;
+    const box = (title, total, body) => openModal(`<div class="row-b"><h3 style="margin:0">${title}</h3><button class="btn sm" onclick="A.close()">✕</button></div>
+      <div class="sub" style="margin:4px 0 10px">${esc(per)} · ${L('الإجمالي', 'Total')} <b dir="ltr">${money(r2(total))}</b></div>${body}`);
+    const empty = `<div class="empty">${L('ما فيش بيانات في هذه الفترة', 'No data in this period')}</div>`;
+    if (k === 'final' || k === 'est') {
+      const l = rows.filter(r => k === 'final' ? r.fin : !r.fin), t = sm(l, r => r.tot);
+      return box(k === 'final' ? L('الربح النهائي', 'Final profit') : L('الربح التقديري', 'Estimated profit'), t, l.length ? `<div class="tw"><table class="trt"><thead><tr><th>${L('السيارة', 'Car')}</th><th>${L('الزبون', 'Customer')}</th><th class="n">${L('عمولة المكتب', 'Office')}</th><th class="n">${L('الحوالات والدفع', 'Transfers & payment')}</th><th class="n">${L('فرق الشحن', 'Shipping margin')}</th><th class="n">${L('الربح', 'Profit')}</th></tr></thead><tbody>
+        ${l.map(r => `<tr>${car(r)}${nc(r.com)}${nc(r.tot - r.com - r.sh)}${nc(r.sh)}<td class="n" dir="ltr"><b>${money(r2(r.tot))}</b></td></tr>`).join('')}
+        <tr class="t"><td colspan="2">${L('الإجمالي', 'Total')}</td>${nc(sm(l, r => r.com))}${nc(sm(l, r => r.tot - r.com - r.sh))}${nc(sm(l, r => r.sh))}<td class="n" dir="ltr">${money(r2(t))}</td></tr></tbody></table></div>
+        ${k === 'est' ? `<div class="hint">${L('تقديري لأن دفعة الشحن ما تسجلتش بعد؛ فرق الشحن محسوب على التكلفة المتوقعة.', 'Estimated because the shipping payment is not recorded yet; the shipping margin uses the expected cost.')}</div>` : ''}` : empty);
+    }
+    if (k === 'got' || k === 'wait') {
+      const l = rows.map(r => ({ r, a: k === 'got' ? r.got : r.tot - r.got })).filter(x => Math.abs(x.a) > 0.004), t = sm(l, x => x.a);
+      return box(k === 'got' ? L('المحصّل من الزبائن', 'Collected from customers') : L('لم يُحصّل بعد', 'Not collected yet'), t, l.length ? `<div class="hint" style="margin-top:0">${k === 'got' ? L('كل سيارة: المكاسب اللي استلمناها ناقص تكاليف المراحل اللي كملت. اضغط على السيارة تشوف التفاصيل.', 'Per car: gains received minus the costs of completed stages. Tap a car for details.') : L('الربح المتبقي في كل سيارة: يتحصّل لما الزبون يكمّل دفع المرحلة.', 'Profit still to collect per car: comes in when the customer completes the stage.')}</div>
+        ${l.map(x => `<details class="card" style="padding:10px 12px;margin:6px 0"><summary style="cursor:pointer;display:flex;justify-content:space-between;gap:8px;align-items:center"><span><b>${esc(vt(x.r.v))}</b> <span class="sub">· ${esc(custName(x.r.v.customer_id))}</span></span><b dir="ltr" class="${x.a < 0 ? 'neg' : ''}">${money(r2(x.a))}</b></summary>
+          <div style="margin-top:8px">${recvHtml(x.r.v)}</div><a class="btn sm" style="margin-top:6px" href="#/vehicle/${x.r.v.id}" onclick="A.close()">${L('فتح السيارة', 'Open car')}</a></details>`).join('')}` : empty);
+    }
+    if (k === 'exp') {
+      const l = [...exps].sort((a, b) => (b.date || '').localeCompare(a.date || '')), t = totalExp(l);
+      return box(L('مصاريف المكتب', 'Office expenses'), t, l.length ? `<div class="tw"><table class="trt"><thead><tr><th>${L('التاريخ', 'Date')}</th><th>${L('الصنف', 'Category')}</th><th>${L('ملاحظات', 'Notes')}</th><th class="n">${L('المبلغ', 'Amount')}</th><th class="n">$</th></tr></thead><tbody>
+        ${l.map(e => `<tr><td>${fdate(e.date)}</td><td><b>${esc(expCat(e.category))}</b></td><td style="white-space:normal">${esc(e.notes || '')}</td><td class="n" dir="ltr">${e.currency === 'LYD' ? lyd(e.amount) : money(e.amount)}</td>${nc(num(e.amount_usd))}</tr>`).join('')}
+        <tr class="t"><td colspan="4">${L('الإجمالي', 'Total')}</td>${nc(t)}</tr></tbody></table></div>` : empty);
+    }
+    if (k === 'net') {
+      const fl = rows.filter(r => r.fin), fp = sm(fl, r => r.tot), ex = totalExp(exps);
+      return box(L('صافي الربح النهائي', 'Net final profit'), fp - ex, `<div class="tw"><table class="trt"><tbody>
+        <tr class="click" onclick="A.prRep('final')"><td>${L('الربح النهائي', 'Final profit')} (${fl.length} ${L('سيارة', 'cars')})</td>${nc(fp)}</tr>
+        <tr class="click" onclick="A.prRep('exp')"><td>${L('ناقص مصاريف المكتب', 'Less office expenses')} (${exps.length})</td>${nc(-ex)}</tr>
+        <tr class="t"><td>${L('الصافي', 'Net')}</td>${nc(fp - ex)}</tr></tbody></table></div>`);
+    }
+  },
   lang() { S.lang = S.lang === 'ar' ? 'en' : 'ar'; localStorage.setItem('cop_lang', S.lang); rerender(); },
   async login(e) { e.preventDefault(); try { await DB.login($('#le').value.trim(), $('#lp').value); } catch (x) { renderLogin(L('البريد أو كلمة المرور غير صحيحة', 'Invalid email or password')); } },
   async logout() { await DB.logout(); },
